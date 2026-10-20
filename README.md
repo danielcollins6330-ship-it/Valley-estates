@@ -4,7 +4,7 @@ A mobile farming strategy game set in Ferguson Valley, WA.
 
 Play it on the web at [the GitHub Pages site](https://danielcollins6330-ship-it.github.io/Valley-estates/). The privacy policy is [privacy.html](privacy.html). Credits are in [CREDITS.md](CREDITS.md). Store listing draft: [STORE_LISTING.md](STORE_LISTING.md).
 
-The Android and iOS apps use Capacitor (`com.littleridgeestate.valleyestates`). They bundle the same files as the website, stay in portrait, run fullscreen, and keep the save in local storage on the device.
+The Android and iOS apps use Capacitor (`com.littleridgeestate.valleyestates`). They bundle the same files as the website, run fullscreen, and keep the save in local storage on the device. iPhone stays portrait. Foldables, Android split-screen, and iPad multitasking can rotate and resize without restarting the activity.
 
 ## Web files
 

@@ -110,7 +110,7 @@ Play requires at least two phone screenshots. JPEG or 24-bit PNG, sides between 
 Still required before submission, not generated here:
 
 - Apple 6.7-inch iPhone screenshots, 1290×2796 (required by current App Store Connect). The 1242×2688 set can be rescaled only as a temporary stand-in; capture native 6.7-inch shots before review.
-- Apple 13-inch iPad screenshots, 2064×2752, if the app is offered on iPad. The project allows iPad in portrait.
+- Apple 13-inch iPad screenshots, 2064×2752, if the app is offered on iPad. iPad supports all four orientations so Split View and Slide Over work.
 - Play 7-inch tablet (optional) and 10-inch tablet (optional).
 - A short preview video is optional on both stores.
 
