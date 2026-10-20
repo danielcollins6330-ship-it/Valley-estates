@@ -89,7 +89,7 @@ Likely outcomes if the forms are answered as above: Apple 9+ (alcohol reference)
 | Play icon 512×512 | `store/graphics/play-icon-512.png` | Play Console high-res icon |
 | App Store icon 1024×1024 | `store/graphics/appstore-icon-1024.png` | App Store Connect |
 | Feature graphic 1024×500 | `store/graphics/feature-graphic-1024x500.png` | Play feature graphic (required) |
-| Adaptive / iOS icon sources | `resources/brand/` | Generated into `android/` and `ios/` |
+| Adaptive / iOS icon sources | `resources/brand/` | Speckle Park cow and Babydoll sheep painting, generated into `android/` and `ios/` |
 | Phone screenshots | `store/screenshots/` | See sizes below |
 
 ## Screenshots
