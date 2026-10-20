@@ -1,0 +1,26 @@
+{
+  "name": "valley-estates",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Valley Estates — a Ferguson Valley farming strategy game",
+  "scripts": {
+    "www": "node scripts/sync-www.mjs",
+    "sync": "node scripts/sync-www.mjs && cap sync",
+    "assets": "node scripts/generate-brand.mjs && capacitor-assets generate --android --ios --assetPath resources/brand --iconBackgroundColor '#2c4a28' --iconBackgroundColorDark '#1d140b' --splashBackgroundColor '#1d140b' --splashBackgroundColorDark '#1d140b' && node scripts/fix-adaptive-icons.mjs",
+    "android:aab": "npm run sync && cd android && ./gradlew bundleRelease",
+    "screenshots": "node scripts/capture-screenshots.mjs"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.5.3",
+    "@capacitor/core": "8.5.3",
+    "@capacitor/ios": "8.5.3",
+    "@capacitor/splash-screen": "8.0.2",
+    "@capacitor/status-bar": "8.0.4"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "3.0.5",
+    "@capacitor/cli": "8.5.3",
+    "@resvg/resvg-js": "2.6.2",
+    "puppeteer-core": "25.15.0"
+  }
+}
