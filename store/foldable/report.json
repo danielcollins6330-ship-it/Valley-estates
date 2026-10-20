@@ -1,0 +1,257 @@
+[
+  {
+    "name": "cover-904x2316",
+    "metrics": {
+      "W": 904,
+      "H": 2316,
+      "DPR": 1,
+      "bufW": 631,
+      "bufH": 1619,
+      "pr": 0.6990500863557858,
+      "clientW": 904,
+      "clientH": 2316,
+      "cls": "layout-tall",
+      "panel": {
+        "left": 0,
+        "top": 2136,
+        "right": 904,
+        "bottom": 2316,
+        "width": 904,
+        "height": 180
+      },
+      "bar": {
+        "left": 0,
+        "right": 904,
+        "top": 0,
+        "width": 904
+      },
+      "mini": {
+        "left": 794,
+        "right": 898,
+        "top": 60,
+        "width": 104,
+        "height": 104
+      },
+      "seed": 557658437,
+      "coins": 4242,
+      "frames": 11
+    },
+    "variance": 41.3,
+    "targets": 10
+  },
+  {
+    "name": "inner-1812x2176",
+    "metrics": {
+      "W": 1812,
+      "H": 2176,
+      "DPR": 1,
+      "bufW": 1267,
+      "bufH": 1522,
+      "pr": 0.6994485294117647,
+      "clientW": 1812,
+      "clientH": 2176,
+      "cls": "layout-square",
+      "panel": {
+        "left": 0,
+        "top": 2008,
+        "right": 1812,
+        "bottom": 2176,
+        "width": 1812,
+        "height": 168
+      },
+      "bar": {
+        "left": 0,
+        "right": 1812,
+        "top": 0,
+        "width": 1812
+      },
+      "mini": {
+        "left": 1702,
+        "right": 1806,
+        "top": 60,
+        "width": 104,
+        "height": 104
+      },
+      "seed": 557658437,
+      "coins": 4242,
+      "frames": 20
+    },
+    "variance": 40.3,
+    "targets": 10
+  },
+  {
+    "name": "landscape-2208x1840",
+    "metrics": {
+      "W": 2208,
+      "H": 1840,
+      "DPR": 1,
+      "bufW": 1544,
+      "bufH": 1287,
+      "pr": 0.6994565217391304,
+      "clientW": 2208,
+      "clientH": 1840,
+      "cls": "layout-wide",
+      "panel": {
+        "left": 1868,
+        "top": 58,
+        "right": 2208,
+        "bottom": 1840,
+        "width": 340,
+        "height": 1782
+      },
+      "bar": {
+        "left": 0,
+        "right": 2208,
+        "top": 0,
+        "width": 2208
+      },
+      "mini": {
+        "left": 1754,
+        "right": 1858,
+        "top": 60,
+        "width": 104,
+        "height": 104
+      },
+      "seed": 557658437,
+      "coins": 4242,
+      "frames": 29
+    },
+    "variance": 39.6,
+    "targets": 10
+  },
+  {
+    "name": "window-1280x800",
+    "metrics": {
+      "W": 1280,
+      "H": 800,
+      "DPR": 1,
+      "bufW": 896,
+      "bufH": 560,
+      "pr": 0.7,
+      "clientW": 1280,
+      "clientH": 800,
+      "cls": "layout-wide",
+      "panel": {
+        "left": 940,
+        "top": 58,
+        "right": 1280,
+        "bottom": 800,
+        "width": 340,
+        "height": 742
+      },
+      "bar": {
+        "left": 0,
+        "right": 1280,
+        "top": 0,
+        "width": 1280
+      },
+      "mini": {
+        "left": 826,
+        "right": 930,
+        "top": 60,
+        "width": 104,
+        "height": 104
+      },
+      "seed": 557658437,
+      "coins": 4242,
+      "frames": 40
+    },
+    "variance": 37.5,
+    "targets": 10
+  },
+  {
+    "name": "dual-segment",
+    "hinge": [
+      882,
+      930
+    ],
+    "cls": "layout-tall seg-h",
+    "buttons": [
+      {
+        "id": "bar",
+        "left": 0,
+        "right": 882,
+        "top": 0,
+        "bottom": 33,
+        "width": 882
+      },
+      {
+        "id": "sub",
+        "left": 0,
+        "right": 882,
+        "top": 36,
+        "bottom": 57,
+        "width": 882
+      },
+      {
+        "id": "goal",
+        "left": 6,
+        "right": 264,
+        "top": 60,
+        "bottom": 142,
+        "width": 258
+      },
+      {
+        "id": "mini",
+        "left": 772,
+        "right": 876,
+        "top": 60,
+        "bottom": 164,
+        "width": 104
+      },
+      {
+        "id": "side",
+        "left": 6,
+        "right": 52,
+        "top": 1832,
+        "bottom": 1984,
+        "width": 46
+      },
+      {
+        "id": "rside",
+        "left": 830,
+        "right": 876,
+        "top": 1779,
+        "bottom": 1984,
+        "width": 46
+      },
+      {
+        "id": "panel",
+        "left": 0,
+        "right": 882,
+        "top": 1996,
+        "bottom": 2176,
+        "width": 882
+      },
+      {
+        "id": "modal",
+        "left": 0,
+        "right": 0,
+        "top": 0,
+        "bottom": 0,
+        "width": 0
+      }
+    ],
+    "variance": 34.7
+  },
+  {
+    "name": "dpr-cap",
+    "pr": 1.1760110294117647,
+    "buf": [
+      2130,
+      2559
+    ],
+    "css": [
+      1812,
+      2176
+    ]
+  },
+  {
+    "name": "reload",
+    "restored": {
+      "seed": 557658437,
+      "coins": 4242,
+      "units": 3
+    }
+  }
+]

@@ -8,7 +8,8 @@
     "sync": "node scripts/sync-www.mjs && cap sync",
     "assets": "node scripts/generate-brand.mjs",
     "android:aab": "npm run sync && cd android && ./gradlew bundleRelease",
-    "screenshots": "node scripts/capture-screenshots.mjs"
+    "screenshots": "node scripts/capture-screenshots.mjs",
+    "foldable": "node scripts/capture-foldable.mjs"
   },
   "dependencies": {
     "@capacitor/android": "8.5.3",
