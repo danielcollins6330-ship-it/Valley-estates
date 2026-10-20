@@ -29,10 +29,16 @@ jobs:
         with:
           enablement: true
 
+      - name: Stage the web root
+        run: |
+          mkdir -p _site/assets
+          cp index.html game3d.js privacy.html CREDITS.md README.md .nojekyll _site/
+          cp assets/textures.js _site/assets/
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: _site
 
       - name: Deploy to GitHub Pages
         id: deployment

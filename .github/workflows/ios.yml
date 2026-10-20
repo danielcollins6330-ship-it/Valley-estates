@@ -1,0 +1,54 @@
+name: iOS simulator build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  simulator:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Bundle the game into the native project
+        run: npm run sync
+
+      - name: Build an unsigned simulator app
+        run: |
+          xcodebuild \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Release \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "$RUNNER_TEMP/ios-derived" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
+
+      - name: Zip the simulator app
+        run: |
+          APP=$(find "$RUNNER_TEMP/ios-derived/Build/Products" -name 'App.app' -type d | head -1)
+          test -n "$APP"
+          ditto -c -k --keepParent "$APP" valley-estates-ios-simulator.zip
+
+      - name: Upload simulator build
+        uses: actions/upload-artifact@v4
+        with:
+          name: valley-estates-ios-simulator
+          path: valley-estates-ios-simulator.zip
+          if-no-files-found: error

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="500" viewBox="0 0 1024 500">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f6d27a"/>
+      <stop offset="55%" stop-color="#e9924a"/>
+      <stop offset="100%" stop-color="#c45c3e"/>
+    </linearGradient>
+    <linearGradient id="hillA" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8aaa62"/>
+      <stop offset="100%" stop-color="#5f8144"/>
+    </linearGradient>
+    <linearGradient id="hillB" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4d6b34"/>
+      <stop offset="100%" stop-color="#2f4a24"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="500" fill="url(#sky)"/>
+  <circle cx="860" cy="110" r="54" fill="#fff3c4"/>
+  <path d="M0 230 C 180 160, 320 250, 520 190 C 740 120, 880 210, 1024 170 L 1024 500 L 0 500 Z" fill="url(#hillA)"/>
+  <path d="M0 340 C 200 270, 420 390, 680 310 C 860 260, 940 340, 1024 300 L 1024 500 L 0 500 Z" fill="url(#hillB)"/>
+  <path d="M70 390 Q 512 362 954 390" fill="none" stroke="#1d3314" stroke-width="8" stroke-linecap="round"/><ellipse cx="125.25" cy="374.5374709835484" rx="7" ry="11" fill="#3f6a28"/><ellipse cx="235.75" cy="364.44403347545114" rx="7" ry="11" fill="#3f6a28"/><ellipse cx="346.25" cy="356.71885085552873" rx="7" ry="11" fill="#3f6a28"/><ellipse cx="456.75" cy="352.5380121487095" rx="7" ry="11" fill="#3f6a28"/><ellipse cx="567.25" cy="352.5380121487095" rx="7" ry="11" fill="#3f6a28"/><ellipse cx="677.75" cy="356.71885085552873" rx="7" ry="11" fill="#3f6a28"/><ellipse cx="788.25" cy="364.44403347545114" rx="7" ry="11" fill="#3f6a28"/><ellipse cx="898.75" cy="374.5374709835484" rx="7" ry="11" fill="#3f6a28"/><path d="M92 426 Q 512 398 932 426" fill="none" stroke="#1d3314" stroke-width="9.4" stroke-linecap="round"/><ellipse cx="144.5" cy="410.5374709835484" rx="8" ry="12" fill="#3f6a28"/><ellipse cx="249.5" cy="400.44403347545114" rx="8" ry="12" fill="#3f6a28"/><ellipse cx="354.5" cy="392.71885085552873" rx="8" ry="12" fill="#3f6a28"/><ellipse cx="459.5" cy="388.5380121487095" rx="8" ry="12" fill="#3f6a28"/><ellipse cx="564.5" cy="388.5380121487095" rx="8" ry="12" fill="#3f6a28"/><ellipse cx="669.5" cy="392.71885085552873" rx="8" ry="12" fill="#3f6a28"/><ellipse cx="774.5" cy="400.44403347545114" rx="8" ry="12" fill="#3f6a28"/><ellipse cx="879.5" cy="410.5374709835484" rx="8" ry="12" fill="#3f6a28"/><path d="M114 462 Q 512 434 910 462" fill="none" stroke="#1d3314" stroke-width="10.8" stroke-linecap="round"/><ellipse cx="163.75" cy="446.5374709835484" rx="9" ry="13" fill="#3f6a28"/><ellipse cx="263.25" cy="436.44403347545114" rx="9" ry="13" fill="#3f6a28"/><ellipse cx="362.75" cy="428.71885085552873" rx="9" ry="13" fill="#3f6a28"/><ellipse cx="462.25" cy="424.5380121487095" rx="9" ry="13" fill="#3f6a28"/><ellipse cx="561.75" cy="424.5380121487095" rx="9" ry="13" fill="#3f6a28"/><ellipse cx="661.25" cy="428.71885085552873" rx="9" ry="13" fill="#3f6a28"/><ellipse cx="760.75" cy="436.44403347545114" rx="9" ry="13" fill="#3f6a28"/><ellipse cx="860.25" cy="446.5374709835484" rx="9" ry="13" fill="#3f6a28"/>
+  
+    <g transform="translate(250 300) scale(1.35)">
+      <rect x="-70" y="8" width="150" height="18" rx="3" fill="#c4a574"/>
+      <rect x="-78" y="22" width="166" height="10" fill="#8d6a3f"/>
+      <rect x="-46" y="-36" width="92" height="70" fill="#f4e4c4"/>
+      <path d="M-62 -36 L 0 -92 L 62 -36 Z" fill="#a33b24"/>
+      <rect x="28" y="-78" width="14" height="36" fill="#6b3a32"/>
+      <rect x="-14" y="-4" width="22" height="38" fill="#6b3a32"/>
+      <rect x="-40" y="-16" width="16" height="16" fill="#9fd0e0"/>
+      <rect x="18" y="-16" width="16" height="16" fill="#9fd0e0"/>
+    </g>
+  
+  
+    <g transform="translate(430 270) scale(1.5)">
+      <path d="M0 -8 C 18 -36, 40 -28, 28 -6" fill="none" stroke="#2f6b1f" stroke-width="6"/>
+      <ellipse cx="34" cy="-24" rx="16" ry="8" fill="#3f6a28" transform="rotate(-30 34 -24)"/>
+      <circle cx="-18" cy="10" r="16" fill="#6b2142"/><circle cx="0" cy="6" r="16" fill="#6b2142"/><circle cx="18" cy="12" r="16" fill="#6b2142"/><circle cx="-10" cy="28" r="16" fill="#6b2142"/><circle cx="12" cy="30" r="16" fill="#6b2142"/><circle cx="0" cy="46" r="16" fill="#6b2142"/><circle cx="-22" cy="44" r="16" fill="#6b2142"/><circle cx="22" cy="48" r="16" fill="#6b2142"/>
+      <circle cx="6" cy="22" r="7" fill="#f3d2dc" opacity="0.7"/>
+    </g>
+  
+  <text x="620" y="230" fill="#fff8e6" font-family="Liberation Serif, DejaVu Serif, serif" font-size="64">Valley Estates</text>
+  <text x="620" y="278" fill="#fff8e6" font-family="Inter, Liberation Sans, sans-serif" font-size="24">A farming strategy game</text>
+</svg>
