@@ -1,178 +1,259 @@
-import { mkdirSync, writeFileSync } from "node:fs";
-import { Resvg } from "@resvg/resvg-js";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import sharp from "sharp";
 
+const sourcePath = "resources/brand/logo-source.jpg";
+const safeScale = 66 / 108;
+
+const androidLauncher = [
+  ["ldpi", 36],
+  ["mdpi", 48],
+  ["hdpi", 72],
+  ["xhdpi", 96],
+  ["xxhdpi", 144],
+  ["xxxhdpi", 192],
+];
+
+const androidAdaptive = [
+  ["ldpi", 81],
+  ["mdpi", 108],
+  ["hdpi", 162],
+  ["xhdpi", 216],
+  ["xxhdpi", 324],
+  ["xxxhdpi", 432],
+];
+
+const androidSplash = [
+  ["drawable", 320, 480],
+  ["drawable-land-ldpi", 320, 240],
+  ["drawable-land-mdpi", 480, 320],
+  ["drawable-land-hdpi", 800, 480],
+  ["drawable-land-xhdpi", 1280, 720],
+  ["drawable-land-xxhdpi", 1600, 960],
+  ["drawable-land-xxxhdpi", 1920, 1280],
+  ["drawable-port-ldpi", 240, 320],
+  ["drawable-port-mdpi", 320, 480],
+  ["drawable-port-hdpi", 480, 800],
+  ["drawable-port-xhdpi", 720, 1280],
+  ["drawable-port-xxhdpi", 960, 1600],
+  ["drawable-port-xxxhdpi", 1280, 1920],
+];
+
+const iosIcons = [
+  ["iphone", "20x20", "2x", 40],
+  ["iphone", "20x20", "3x", 60],
+  ["iphone", "29x29", "2x", 58],
+  ["iphone", "29x29", "3x", 87],
+  ["iphone", "40x40", "2x", 80],
+  ["iphone", "40x40", "3x", 120],
+  ["iphone", "60x60", "2x", 120],
+  ["iphone", "60x60", "3x", 180],
+  ["ipad", "20x20", "1x", 20],
+  ["ipad", "20x20", "2x", 40],
+  ["ipad", "29x29", "1x", 29],
+  ["ipad", "29x29", "2x", 58],
+  ["ipad", "40x40", "1x", 40],
+  ["ipad", "40x40", "2x", 80],
+  ["ipad", "76x76", "1x", 76],
+  ["ipad", "76x76", "2x", 152],
+  ["ipad", "83.5x83.5", "2x", 167],
+  ["ios-marketing", "1024x1024", "1x", 1024],
+];
+
+function ensureDir(file) {
+  mkdirSync(dirname(file), { recursive: true });
+}
+
+async function writePng(pipeline, file, { opaque = false } = {}) {
+  ensureDir(file);
+  let image = pipeline;
+  if (opaque) {
+    image = image.flatten({ background: "#1d140b" }).removeAlpha();
+  }
+  await image.png({ compressionLevel: 9 }).toFile(file);
+}
+
+async function squareLogo(size) {
+  const source = readFileSync(sourcePath);
+  const meta = await sharp(source).metadata();
+  const side = Math.min(meta.width ?? 0, meta.height ?? 0);
+  const left = Math.floor(((meta.width ?? side) - side) / 2);
+  const top = Math.floor(((meta.height ?? side) - side) / 2);
+  return sharp(source)
+    .extract({ left, top, width: side, height: side })
+    .resize(size, size, { fit: "fill", kernel: "lanczos3" });
+}
+
+async function blurredCover(width, height) {
+  const source = await (await squareLogo(1024)).png().toBuffer();
+  return sharp(source)
+    .resize(width, height, { fit: "cover", position: "centre" })
+    .blur(width > 800 ? 24 : 8)
+    .modulate({ brightness: 0.92 });
+}
+
+async function splashCanvas(size, { dark = false } = {}) {
+  const background = await (await blurredCover(size, size)).png().toBuffer();
+  const logoSize = Math.round(size * 0.5);
+  const logo = await (await squareLogo(logoSize)).png().toBuffer();
+  const title = Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}">
+  <rect x="${(size - logoSize) / 2}" y="${size / 2 - logoSize / 2 - size * 0.07}" width="${logoSize}" height="${size * 0.09}" rx="${size * 0.02}" fill="#1d140bcc"/>
+  <text x="50%" y="${size / 2 - logoSize / 2 - size * 0.012}" text-anchor="middle" fill="#fff8e6" font-family="Liberation Serif, DejaVu Serif, serif" font-size="${Math.round(size * 0.045)}" font-weight="700">Valley Estates</text>
+</svg>`);
+  let image = sharp(background).composite([
+    { input: logo, gravity: "centre" },
+    { input: title, gravity: "centre" },
+  ]);
+  if (dark) {
+    image = image.modulate({ brightness: 0.62, saturation: 0.85 });
+  }
+  return image;
+}
+
+async function featureGraphic() {
+  const background = await (await blurredCover(1024, 500)).png().toBuffer();
+  const logo = await (await squareLogo(420)).png().toBuffer();
+  const title = Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="500">
+  <rect x="486" y="188" width="500" height="124" rx="22" fill="#1d140bcc"/>
+  <text x="736" y="268" text-anchor="middle" fill="#fff8e6" font-family="Liberation Serif, DejaVu Serif, serif" font-size="64" font-weight="700">Valley Estates</text>
+</svg>`);
+  return sharp(background).composite([
+    { input: logo, left: 40, top: 40 },
+    { input: title, left: 0, top: 0 },
+  ]);
+}
+
+function circleMask(size) {
+  return Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}"><circle cx="${size / 2}" cy="${size / 2}" r="${size / 2}" fill="#fff"/></svg>`);
+}
+
+async function adaptiveForeground(size) {
+  const inner = Math.round(size * safeScale);
+  const logo = await (await squareLogo(inner)).png().toBuffer();
+  const offset = Math.floor((size - inner) / 2);
+  return sharp({
+    create: { width: size, height: size, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } },
+  }).composite([{ input: logo, left: offset, top: offset }]);
+}
+
+function writeIco(file, images) {
+  const header = Buffer.alloc(6);
+  header.writeUInt16LE(0, 0);
+  header.writeUInt16LE(1, 2);
+  header.writeUInt16LE(images.length, 4);
+  const entries = Buffer.alloc(16 * images.length);
+  let offset = 6 + entries.length;
+  for (let i = 0; i < images.length; i += 1) {
+    const image = images[i];
+    const at = i * 16;
+    entries.writeUInt8(image.size >= 256 ? 0 : image.size, at);
+    entries.writeUInt8(image.size >= 256 ? 0 : image.size, at + 1);
+    entries.writeUInt16LE(1, at + 4);
+    entries.writeUInt16LE(32, at + 6);
+    entries.writeUInt32LE(image.buffer.length, at + 8);
+    entries.writeUInt32LE(offset, at + 12);
+    offset += image.buffer.length;
+  }
+  writeFileSync(file, Buffer.concat([header, entries, ...images.map((image) => image.buffer)]));
+}
+
+const master = await (await squareLogo(1024)).png().toBuffer();
 mkdirSync("resources/brand", { recursive: true });
 mkdirSync("store/graphics", { recursive: true });
+mkdirSync("assets", { recursive: true });
 
-const font = "Inter, Liberation Sans, sans-serif";
-const serif = "Liberation Serif, DejaVu Serif, serif";
+await writePng(sharp(master), "resources/brand/icon-only.png", { opaque: true });
+await writePng(sharp(master).resize(512, 512), "store/graphics/play-icon-512.png", { opaque: true });
+await writePng(sharp(master), "store/graphics/appstore-icon-1024.png", { opaque: true });
+await writePng(await blurredCover(1024, 1024), "resources/brand/icon-background.png", { opaque: true });
+await writePng(await adaptiveForeground(1024), "resources/brand/icon-foreground.png");
+await writePng(await splashCanvas(2732), "resources/brand/splash.png", { opaque: true });
+await writePng(await splashCanvas(2732, { dark: true }), "resources/brand/splash-dark.png", { opaque: true });
+await writePng(await featureGraphic(), "store/graphics/feature-graphic-1024x500.png", { opaque: true });
+await writePng(sharp(master).resize(256, 256), "assets/logo.png", { opaque: true });
 
-function render(svg, width, file) {
-  const png = new Resvg(svg, {
-    fitTo: { mode: "width", value: width },
-    font: { fontDirs: ["/usr/share/fonts"], loadSystemFonts: true },
-  })
-    .render()
-    .asPng();
-  writeFileSync(file, png);
+for (const [density, size] of androidLauncher) {
+  const dir = `android/app/src/main/res/mipmap-${density}`;
+  await writePng(sharp(master).resize(size, size), join(dir, "ic_launcher.png"), { opaque: true });
+  const round = await sharp(master)
+    .resize(size, size)
+    .composite([{ input: circleMask(size), blend: "dest-in" }])
+    .png()
+    .toBuffer();
+  await writePng(sharp(round), join(dir, "ic_launcher_round.png"));
 }
 
-function skyDefs({ dusk = false } = {}) {
-  const skyTop = dusk ? "#2a1c3a" : "#f6d27a";
-  const skyMid = dusk ? "#6a3a4a" : "#e9924a";
-  const skyBot = dusk ? "#1d140b" : "#d86a45";
-  return `
-    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="${skyTop}"/>
-      <stop offset="48%" stop-color="${skyMid}"/>
-      <stop offset="100%" stop-color="${skyBot}"/>
-    </linearGradient>
-    <linearGradient id="hillA" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="${dusk ? "#3e5a34" : "#8aaa62"}"/>
-      <stop offset="100%" stop-color="${dusk ? "#2c4226" : "#5f8144"}"/>
-    </linearGradient>
-    <linearGradient id="hillB" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="${dusk ? "#24361f" : "#4d6b34"}"/>
-      <stop offset="100%" stop-color="${dusk ? "#152214" : "#2f4a24"}"/>
-    </linearGradient>
-  `;
+for (const [density, size] of androidAdaptive) {
+  const dir = `android/app/src/main/res/mipmap-${density}`;
+  await writePng(await blurredCover(size, size), join(dir, "ic_launcher_background.png"), { opaque: true });
+  await writePng(await adaptiveForeground(size), join(dir, "ic_launcher_foreground.png"));
 }
 
-function valley({ dusk = false, sunY = 230 } = {}) {
-  const sun = dusk ? "#f0c9a0" : "#fff3c4";
-  return `
-    <rect width="1024" height="1024" fill="url(#sky)"/>
-    <circle cx="760" cy="${sunY}" r="92" fill="${sun}"/>
-    <circle cx="760" cy="${sunY}" r="140" fill="${sun}" opacity="0.28"/>
-    <path d="M0 500 C 160 390, 300 540, 500 450 C 700 360, 860 490, 1024 420 L 1024 1024 L 0 1024 Z" fill="url(#hillA)"/>
-    <path d="M0 680 C 220 560, 400 760, 640 640 C 840 540, 920 700, 1024 620 L 1024 1024 L 0 1024 Z" fill="url(#hillB)"/>
-  `;
+const splash = await (await splashCanvas(2732)).png().toBuffer();
+const splashDark = await (await splashCanvas(2732, { dark: true })).png().toBuffer();
+
+function nightFolder(folder) {
+  if (folder === "drawable") return "drawable-night";
+  return folder.replace(/-(l|m|h|xh|xxh|xxxh)dpi$/, "-night-$1dpi");
 }
 
-function vines(y0, rows) {
-  let out = "";
-  for (let i = 0; i < rows; i++) {
-    const y = y0 + i * 36;
-    const inset = 70 + i * 22;
-    const stroke = 8 + i * 1.4;
-    out += `<path d="M${inset} ${y} Q 512 ${y - 28} ${1024 - inset} ${y}" fill="none" stroke="#1d3314" stroke-width="${stroke}" stroke-linecap="round"/>`;
-    for (let p = 0; p < 8; p++) {
-      const t = (p + 0.5) / 8;
-      const x = inset + (1024 - inset * 2) * t;
-      const cy = y - Math.sin(Math.PI * t) * 28;
-      out += `<ellipse cx="${x}" cy="${cy - 10}" rx="${7 + i}" ry="${11 + i}" fill="#3f6a28"/>`;
-    }
+for (const [folder, width, height] of androidSplash) {
+  await writePng(
+    sharp(splash).resize(width, height, { fit: "cover", position: "centre" }),
+    `android/app/src/main/res/${folder}/splash.png`,
+    { opaque: true },
+  );
+  const nightWidth = folder === "drawable" ? 320 : width;
+  const nightHeight = folder === "drawable" ? 240 : height;
+  await writePng(
+    sharp(splashDark).resize(nightWidth, nightHeight, { fit: "cover", position: "centre" }),
+    `android/app/src/main/res/${nightFolder(folder)}/splash.png`,
+    { opaque: true },
+  );
+}
+
+const iosDir = "ios/App/App/Assets.xcassets/AppIcon.appiconset";
+const iosImages = [];
+for (const [idiom, size, scale, pixels] of iosIcons) {
+  const filename = idiom === "ios-marketing" ? "Icon-1024.png" : `Icon-${size}@${scale}.png`;
+  await writePng(sharp(master).resize(pixels, pixels), join(iosDir, filename), { opaque: true });
+  iosImages.push({ idiom, size, scale, filename });
+}
+writeFileSync(
+  join(iosDir, "Contents.json"),
+  `${JSON.stringify({ images: iosImages.map(({ idiom, size, scale, filename }) => ({ idiom, size, scale, filename })), info: { author: "xcode", version: 1 } }, null, 2)}\n`,
+);
+
+const splashSet = "ios/App/App/Assets.xcassets/Splash.imageset";
+for (const name of ["Default@1x~universal~anyany.png", "Default@2x~universal~anyany.png", "Default@3x~universal~anyany.png"]) {
+  await writePng(sharp(splash), join(splashSet, name), { opaque: true });
+}
+for (const name of ["Default@1x~universal~anyany-dark.png", "Default@2x~universal~anyany-dark.png", "Default@3x~universal~anyany-dark.png"]) {
+  await writePng(sharp(splashDark), join(splashSet, name), { opaque: true });
+}
+
+const faviconSizes = [16, 32, 48];
+const faviconPngs = [];
+for (const size of faviconSizes) {
+  const buffer = await sharp(master).resize(size, size).flatten({ background: "#1d140b" }).removeAlpha().png().toBuffer();
+  faviconPngs.push({ size, buffer });
+  if (size !== 48) {
+    await writePng(sharp(buffer), `favicon-${size}.png`, { opaque: true });
   }
-  return out;
+}
+writeIco("favicon.ico", faviconPngs);
+await writePng(sharp(master).resize(180, 180), "apple-touch-icon.png", { opaque: true });
+
+const adaptiveXml = `<?xml version="1.0" encoding="utf-8"?>
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@mipmap/ic_launcher_background"/>
+    <foreground android:drawable="@mipmap/ic_launcher_foreground"/>
+</adaptive-icon>
+`;
+for (const name of ["ic_launcher.xml", "ic_launcher_round.xml"]) {
+  writeFileSync(`android/app/src/main/res/mipmap-anydpi-v26/${name}`, adaptiveXml);
 }
 
-function homestead(cx, cy, scale) {
-  const s = scale;
-  return `
-    <g transform="translate(${cx} ${cy}) scale(${s})">
-      <rect x="-70" y="8" width="150" height="18" rx="3" fill="#c4a574"/>
-      <rect x="-78" y="22" width="166" height="10" fill="#8d6a3f"/>
-      <rect x="-46" y="-36" width="92" height="70" fill="#f4e4c4"/>
-      <path d="M-62 -36 L 0 -92 L 62 -36 Z" fill="#a33b24"/>
-      <rect x="28" y="-78" width="14" height="36" fill="#6b3a32"/>
-      <rect x="-14" y="-4" width="22" height="38" fill="#6b3a32"/>
-      <rect x="-40" y="-16" width="16" height="16" fill="#9fd0e0"/>
-      <rect x="18" y="-16" width="16" height="16" fill="#9fd0e0"/>
-    </g>
-  `;
-}
-
-function grapes(cx, cy, scale) {
-  const dots = [
-    [-18, 10], [0, 6], [18, 12], [-10, 28], [12, 30], [0, 46], [-22, 44], [22, 48],
-  ];
-  const circles = dots
-    .map(([x, y]) => `<circle cx="${x}" cy="${y}" r="16" fill="#6b2142"/>`)
-    .join("");
-  return `
-    <g transform="translate(${cx} ${cy}) scale(${scale})">
-      <path d="M0 -8 C 18 -36, 40 -28, 28 -6" fill="none" stroke="#2f6b1f" stroke-width="6"/>
-      <ellipse cx="34" cy="-24" rx="16" ry="8" fill="#3f6a28" transform="rotate(-30 34 -24)"/>
-      ${circles}
-      <circle cx="6" cy="22" r="7" fill="#f3d2dc" opacity="0.7"/>
-    </g>
-  `;
-}
-
-const iconOnly = `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-  <defs>${skyDefs()}</defs>
-  ${valley()}
-  ${vines(760, 6)}
-  ${homestead(390, 700, 2.15)}
-  ${grapes(690, 640, 2.4)}
-</svg>`;
-
-const iconBackground = `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-  <defs>${skyDefs()}</defs>
-  ${valley()}
-  ${vines(780, 5)}
-</svg>`;
-
-const iconForeground = `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-  ${homestead(430, 560, 2.5)}
-  ${grapes(680, 500, 2.7)}
-</svg>`;
-
-function splash({ dusk = false } = {}) {
-  const title = dusk ? "#f6e7c8" : "#fff8e6";
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="2732" height="2732" viewBox="0 0 1024 1024">
-  <defs>${skyDefs({ dusk })}</defs>
-  ${valley({ dusk, sunY: 300 })}
-  ${vines(790, 5)}
-  ${homestead(430, 680, 1.9)}
-  ${grapes(700, 620, 1.9)}
-  <rect x="170" y="330" width="684" height="128" rx="28" fill="#1d140bcc"/>
-  <text x="512" y="408" text-anchor="middle" fill="${title}" font-family="${serif}" font-size="68" font-weight="700">Valley Estates</text>
-  <text x="512" y="448" text-anchor="middle" fill="${title}" font-family="${font}" font-size="26">Ferguson Valley</text>
-</svg>`;
-}
-
-const feature = `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="500" viewBox="0 0 1024 500">
-  <defs>
-    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#f6d27a"/>
-      <stop offset="55%" stop-color="#e9924a"/>
-      <stop offset="100%" stop-color="#c45c3e"/>
-    </linearGradient>
-    <linearGradient id="hillA" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#8aaa62"/>
-      <stop offset="100%" stop-color="#5f8144"/>
-    </linearGradient>
-    <linearGradient id="hillB" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#4d6b34"/>
-      <stop offset="100%" stop-color="#2f4a24"/>
-    </linearGradient>
-  </defs>
-  <rect width="1024" height="500" fill="url(#sky)"/>
-  <circle cx="860" cy="110" r="54" fill="#fff3c4"/>
-  <path d="M0 230 C 180 160, 320 250, 520 190 C 740 120, 880 210, 1024 170 L 1024 500 L 0 500 Z" fill="url(#hillA)"/>
-  <path d="M0 340 C 200 270, 420 390, 680 310 C 860 260, 940 340, 1024 300 L 1024 500 L 0 500 Z" fill="url(#hillB)"/>
-  ${vines(390, 3)}
-  ${homestead(250, 300, 1.35)}
-  ${grapes(430, 270, 1.5)}
-  <text x="620" y="230" fill="#fff8e6" font-family="${serif}" font-size="64">Valley Estates</text>
-  <text x="620" y="278" fill="#fff8e6" font-family="${font}" font-size="24">A farming strategy game</text>
-</svg>`;
-
-render(iconOnly, 1024, "resources/brand/icon-only.png");
-render(iconBackground, 1024, "resources/brand/icon-background.png");
-render(iconForeground, 1024, "resources/brand/icon-foreground.png");
-render(splash({ dusk: false }), 2732, "resources/brand/splash.png");
-render(splash({ dusk: true }), 2732, "resources/brand/splash-dark.png");
-render(iconOnly, 512, "store/graphics/play-icon-512.png");
-render(iconOnly, 1024, "store/graphics/appstore-icon-1024.png");
-render(feature, 1024, "store/graphics/feature-graphic-1024x500.png");
-
-writeFileSync("resources/brand/icon-only.svg", iconOnly);
-writeFileSync("resources/brand/splash.svg", splash({ dusk: false }));
-writeFileSync("store/graphics/feature-graphic.svg", feature);
+console.log("brand assets written");
