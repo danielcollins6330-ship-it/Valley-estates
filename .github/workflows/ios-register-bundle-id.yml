@@ -1,0 +1,31 @@
+name: Register iOS bundle ID
+
+on:
+  workflow_dispatch:
+  workflow_call:
+  push:
+    tags:
+      - register-bundle-id
+
+permissions:
+  contents: read
+
+jobs:
+  register:
+    name: Register com.littleridgeestate.valleyestates
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Register the bundle ID
+        env:
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
+        run: node scripts/register-ios-bundle-id.mjs
