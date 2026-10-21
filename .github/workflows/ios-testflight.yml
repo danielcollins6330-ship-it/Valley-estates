@@ -103,46 +103,58 @@ jobs:
           echo "KEY_FILE=${key_file}" >> "${GITHUB_ENV}"
           echo "Stored the API key in a private temp file. It is not printed."
 
-      - name: Register a CI device for development profiles
+      - name: Prepare App Store signing
         env:
           ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
-        run: node scripts/register-ios-ci-device.mjs
+        run: node scripts/prepare-ios-app-store-signing.mjs
 
       - name: Archive the iOS app
         run: |
           set -euo pipefail
           echo "Build number ${GITHUB_RUN_NUMBER} (marketing version stays 1.0 unless the Xcode project changes)."
-          # Automatic signing stays on the project identity (iPhone Developer) so the
-          # simulator workflow is unchanged. A registered device lets Xcode create the
-          # development profile. Export re-signs the archive for the App Store.
+          # The committed project stays automatic for the simulator workflow.
+          # This job switches the checkout to the App Store profile created above.
+          # An App Store profile does not need a registered device.
+          security unlock-keychain -p "$(cat "${KEYCHAIN_PASSWORD_FILE}")" "${KEYCHAIN_PATH}"
+          sed -i '' \
+            -e 's/CODE_SIGN_STYLE = Automatic;/CODE_SIGN_STYLE = Manual;/' \
+            -e 's/CODE_SIGN_IDENTITY = "iPhone Developer";/CODE_SIGN_IDENTITY = "Apple Distribution";/' \
+            ios/App/App.xcodeproj/project.pbxproj
           xcodebuild \
             -project ios/App/App.xcodeproj \
             -scheme App \
             -configuration Release \
             -destination 'generic/platform=iOS' \
             -archivePath "${RUNNER_TEMP}/ValleyEstates.xcarchive" \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath "${KEY_FILE}" \
-            -authenticationKeyID "${ASC_KEY_ID}" \
-            -authenticationKeyIssuerID "${ASC_ISSUER_ID}" \
             DEVELOPMENT_TEAM="${APPLE_TEAM_ID}" \
-            CODE_SIGN_STYLE=Automatic \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="$(cat "${SIGNING_IDENTITY_FILE}")" \
+            PROVISIONING_PROFILE_SPECIFIER="${PROFILE_NAME}" \
+            OTHER_CODE_SIGN_FLAGS="--keychain ${KEYCHAIN_PATH}" \
             CURRENT_PROJECT_VERSION="${GITHUB_RUN_NUMBER}" \
             archive
 
       - name: Export the App Store IPA
         run: |
           set -euo pipefail
-          python3 -c 'import os, pathlib; team=os.environ["APPLE_TEAM_ID"].strip(); pathlib.Path(os.environ["RUNNER_TEMP"], "ExportOptions.plist").write_text("""<?xml version="1.0" encoding="UTF-8"?>
+          security unlock-keychain -p "$(cat "${KEYCHAIN_PASSWORD_FILE}")" "${KEYCHAIN_PATH}"
+          python3 -c 'import os, pathlib; team=os.environ["APPLE_TEAM_ID"].strip(); profile=os.environ["PROFILE_NAME"]; identity=pathlib.Path(os.environ["SIGNING_IDENTITY_FILE"]).read_text().strip(); esc=lambda value: value.replace("&","&amp;").replace("<","&lt;").replace(">","&gt;"); pathlib.Path(os.environ["RUNNER_TEMP"], "ExportOptions.plist").write_text("""<?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
           <dict>
             <key>method</key>
             <string>app-store</string>
             <key>signingStyle</key>
-            <string>automatic</string>
+            <string>manual</string>
             <key>teamID</key>
             <string>%s</string>
+            <key>signingCertificate</key>
+            <string>%s</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>com.littleridgeestate.valleyestates</key>
+              <string>%s</string>
+            </dict>
             <key>destination</key>
             <string>export</string>
             <key>uploadSymbols</key>
@@ -151,16 +163,12 @@ jobs:
             <false/>
           </dict>
           </plist>
-          """ % team)'
+          """ % (esc(team), esc(identity), esc(profile)))'
           xcodebuild \
             -exportArchive \
             -archivePath "${RUNNER_TEMP}/ValleyEstates.xcarchive" \
             -exportPath "${RUNNER_TEMP}/ipa" \
-            -exportOptionsPlist "${RUNNER_TEMP}/ExportOptions.plist" \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath "${KEY_FILE}" \
-            -authenticationKeyID "${ASC_KEY_ID}" \
-            -authenticationKeyIssuerID "${ASC_ISSUER_ID}"
+            -exportOptionsPlist "${RUNNER_TEMP}/ExportOptions.plist"
           ipa="$(find "${RUNNER_TEMP}/ipa" -name '*.ipa' -print -quit)"
           if [ -z "${ipa}" ]; then
             echo "Export did not produce an IPA."
@@ -193,4 +201,8 @@ jobs:
           set -euo pipefail
           rm -f "${KEY_FILE:-}"
           rm -f "${HOME}/.private_keys"/AuthKey_*.p8
-          echo "Removed the API key file."
+          if [ -n "${KEYCHAIN_PATH:-}" ]; then
+            security delete-keychain "${KEYCHAIN_PATH}" || true
+          fi
+          rm -rf "${SIGNING_DIR:-}"
+          echo "Removed the API key and signing keychain."
