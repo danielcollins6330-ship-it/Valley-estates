@@ -1,6 +1,6 @@
 # Valley Estates v4 — Credits & Licences
 
-All third-party assets below are **CC0 1.0 (public domain)** or MIT — free for commercial use, no attribution required (credited anyway).
+The textures and code below are **CC0 1.0 (public domain)** or MIT — free for commercial use, no attribution required (credited anyway). Sound files use a mix of CC0, CC BY and CC BY-SA. Every clip, its source and its licence are in [AUDIO_CREDITS.md](AUDIO_CREDITS.md).
 
 ## Textures — Poly Haven (CC0 1.0, https://polyhaven.com/license)
 Downloaded at 1K (diffuse + OpenGL normal), converted to WebP (diffuse 1024², normals 512²) and embedded as data URIs in `assets/textures.js` (needed so WebGL can use them when opened from `file://`).
