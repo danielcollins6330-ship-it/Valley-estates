@@ -26,7 +26,7 @@ Release builds run in GitHub Actions. Android signing still uses the keystore se
 
 After that id exists, create the app yourself: App Store Connect → My Apps → + → New App, and choose this bundle id. The TestFlight upload cannot succeed until that app record exists.
 
-`.github/workflows/ios-testflight.yml` runs on a `v*` tag or when someone starts it with `workflow_dispatch`. It registers the bundle id, builds the web bundle, runs `cap sync ios`, archives with automatic signing, exports an App Store IPA, and uploads that IPA to TestFlight. The upload does not submit the app for App Store review.
+`.github/workflows/ios-testflight.yml` runs on a `v*` tag or when someone starts it with `workflow_dispatch`. It registers the bundle id, builds the web bundle, runs `cap sync ios`, creates an Apple Distribution certificate and an App Store profile for that run, archives with that profile, exports an IPA, and uploads that IPA to TestFlight. The upload does not submit the app for App Store review. Apple limits how many distribution certificates a team can hold, so revoke an unused CI certificate before a later run if Apple refuses to create another one.
 
 Add these repository secrets (Settings → Secrets and variables → Actions):
 
