@@ -32,10 +32,16 @@ jobs:
           ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
         run: |
           set -euo pipefail
+          # Pasted secrets often include a trailing newline. Xcode then looks for a team
+          # whose id contains that line break and reports "No Account for Team".
+          trim() { printf '%s' "$1" | tr -d '[:space:]'; }
+          issuer="$(trim "${ASC_ISSUER_ID}")"
+          key_id="$(trim "${ASC_KEY_ID}")"
+          team_id="$(trim "${APPLE_TEAM_ID}")"
           missing=()
-          [ -z "${ASC_ISSUER_ID}" ] && missing+=("ASC_ISSUER_ID")
-          [ -z "${ASC_KEY_ID}" ] && missing+=("ASC_KEY_ID")
-          [ -z "${APPLE_TEAM_ID}" ] && missing+=("APPLE_TEAM_ID")
+          [ -z "${issuer}" ] && missing+=("ASC_ISSUER_ID")
+          [ -z "${key_id}" ] && missing+=("ASC_KEY_ID")
+          [ -z "${team_id}" ] && missing+=("APPLE_TEAM_ID")
           [ -z "${ASC_API_KEY_P8}" ] && missing+=("ASC_API_KEY_P8")
           if [ "${#missing[@]}" -gt 0 ]; then
             echo "Missing GitHub Actions secret(s): ${missing[*]}"
@@ -44,6 +50,25 @@ jobs:
             echo "Create the App Store Connect app record for com.littleridgeestate.valleyestates before uploading."
             exit 1
           fi
+          if ! printf '%s' "${issuer}" | grep -Eq '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'; then
+            echo "ASC_ISSUER_ID must be the Issuer ID UUID from App Store Connect → Users and Access → Integrations."
+            echo "Spaces and line breaks were removed, and the value still does not match."
+            exit 1
+          fi
+          if ! printf '%s' "${key_id}" | grep -Eq '^[A-Za-z0-9]{10}$'; then
+            echo "ASC_KEY_ID must be the 10-character Key ID from App Store Connect, with no extra characters."
+            exit 1
+          fi
+          if ! printf '%s' "${team_id}" | grep -Eq '^[A-Za-z0-9]{10}$'; then
+            echo "APPLE_TEAM_ID must be the 10-character Team ID from Apple Developer → Membership details."
+            echo "Spaces and line breaks were removed, and the value still does not match."
+            exit 1
+          fi
+          {
+            echo "ASC_ISSUER_ID=${issuer}"
+            echo "ASC_KEY_ID=${key_id}"
+            echo "APPLE_TEAM_ID=${team_id}"
+          } >> "${GITHUB_ENV}"
           echo "App Store Connect secrets are present. The API key will not be printed."
 
       - name: Setup Node
@@ -60,7 +85,6 @@ jobs:
 
       - name: Write the App Store Connect API key
         env:
-          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
         run: |
           set -euo pipefail
@@ -80,10 +104,6 @@ jobs:
           echo "Stored the API key in a private temp file. It is not printed."
 
       - name: Archive the iOS app
-        env:
-          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
-          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           set -euo pipefail
           echo "Build number ${GITHUB_RUN_NUMBER} (marketing version stays 1.0 unless the Xcode project changes)."
@@ -103,13 +123,9 @@ jobs:
             archive
 
       - name: Export the App Store IPA
-        env:
-          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
-          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           set -euo pipefail
-          python3 -c 'import os, pathlib; team=os.environ["APPLE_TEAM_ID"]; pathlib.Path(os.environ["RUNNER_TEMP"], "ExportOptions.plist").write_text("""<?xml version="1.0" encoding="UTF-8"?>
+          python3 -c 'import os, pathlib; team=os.environ["APPLE_TEAM_ID"].strip(); pathlib.Path(os.environ["RUNNER_TEMP"], "ExportOptions.plist").write_text("""<?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
           <dict>
@@ -153,9 +169,6 @@ jobs:
           if-no-files-found: error
 
       - name: Upload to TestFlight
-        env:
-          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
-          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
         run: |
           set -euo pipefail
           # Delivers the build to TestFlight only. This does not submit the app for App Store review.
