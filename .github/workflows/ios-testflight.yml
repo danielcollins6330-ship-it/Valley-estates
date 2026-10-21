@@ -107,6 +107,8 @@ jobs:
         run: |
           set -euo pipefail
           echo "Build number ${GITHUB_RUN_NUMBER} (marketing version stays 1.0 unless the Xcode project changes)."
+          # The project identity stays iPhone Developer for the simulator workflow.
+          # TestFlight needs Apple Distribution. A development profile would require a registered device.
           xcodebuild \
             -project ios/App/App.xcodeproj \
             -scheme App \
@@ -119,6 +121,8 @@ jobs:
             -authenticationKeyIssuerID "${ASC_ISSUER_ID}" \
             DEVELOPMENT_TEAM="${APPLE_TEAM_ID}" \
             CODE_SIGN_STYLE=Automatic \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
+            'CODE_SIGN_IDENTITY[sdk=iphoneos*]=Apple Distribution' \
             CURRENT_PROJECT_VERSION="${GITHUB_RUN_NUMBER}" \
             archive
 
