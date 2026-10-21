@@ -13,7 +13,7 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
 html,body{margin:0;height:100%;overflow:hidden;background:#1d140b;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#fff;touch-action:none;overscroll-behavior:none}
 #cv,#hud{position:fixed;inset:0;width:100%;height:100%;display:block}#hud{pointer-events:none;z-index:1}
-:root{--safe-t:env(safe-area-inset-top,0px);--safe-r:env(safe-area-inset-right,0px);--safe-b:env(safe-area-inset-bottom,0px);--safe-l:env(safe-area-inset-left,0px);--hud-left:0px;--hud-top:0px;--hud-width:100%;--hud-height:100%;--panel-h:200px;--panel-w:100%;--chrome-bottom:calc(100% - var(--hud-top) - var(--hud-height))}
+:root{--safe-t:env(safe-area-inset-top,0px);--safe-r:env(safe-area-inset-right,0px);--safe-b:env(safe-area-inset-bottom,0px);--safe-l:env(safe-area-inset-left,0px);--hud-left:0px;--hud-top:0px;--hud-width:100%;--hud-height:100%;--panel-h:200px;--panel-w:100%;--chrome-bottom:calc(100% - var(--hud-top) - var(--hud-height));--btn:46px;--mini:104px;--mini-gap:6px}
 #bar{position:fixed;top:var(--hud-top);left:var(--hud-left);width:var(--hud-width);right:auto;display:flex;gap:2px;justify-content:space-between;padding:calc(6px + var(--safe-t)) calc(6px + var(--safe-r)) 6px calc(6px + var(--safe-l));background:linear-gradient(#3d2a17ee,#2a1c0edd);font-size:12.5px;font-weight:700;z-index:5;overflow-x:auto;scrollbar-width:none}
 #bar::-webkit-scrollbar{display:none}
 #bar span{background:#0003;border-radius:8px;padding:3px 5px;white-space:nowrap;flex:0 0 auto}
@@ -21,10 +21,10 @@ html,body{margin:0;height:100%;overflow:hidden;background:#1d140b;font-family:sy
 #goal{position:fixed;top:calc(var(--hud-top) + 60px + var(--safe-t));left:calc(var(--hud-left) + 6px + var(--safe-l));max-width:min(258px,calc(var(--hud-width) - 128px));background:#fff8e6f0;color:#3b2a14;border-radius:12px;padding:7px 9px;font-size:12px;z-index:5;box-shadow:0 2px 8px #0005;border-left:5px solid #e8a33d}
 #goal b{color:#7a3d0c}
 #goal.min .hint{display:none}
-#mini{position:fixed;top:calc(var(--hud-top) + 60px + var(--safe-t));left:calc(var(--hud-left) + var(--hud-width) - 110px - var(--safe-r));right:auto;width:104px;height:104px;border:2px solid #f6e3b4;border-radius:8px;z-index:5;background:#000;box-shadow:0 2px 8px #0006}
+#mini{position:fixed;top:calc(var(--hud-top) + 60px + var(--safe-t));left:calc(var(--hud-left) + var(--hud-width) - var(--mini) - var(--mini-gap) - var(--safe-r));right:auto;width:var(--mini);height:var(--mini);border:2px solid #f6e3b4;border-radius:8px;z-index:5;background:#000;box-shadow:0 2px 8px #0006}
 #side{position:fixed;left:calc(var(--hud-left) + 6px + var(--safe-l));display:flex;flex-direction:column;gap:7px;z-index:5;bottom:calc(var(--chrome-bottom) + var(--panel-h) + 12px + var(--safe-b))}
-#rside{position:fixed;left:calc(var(--hud-left) + var(--hud-width) - 52px - var(--safe-r));right:auto;display:flex;flex-direction:column;gap:7px;z-index:5;bottom:calc(var(--chrome-bottom) + var(--panel-h) + 12px + var(--safe-b))}
-.rb{width:46px;height:46px;min-width:44px;min-height:44px;border-radius:14px;border:none;background:#3d2a17e6;color:#fff;font-size:21px;box-shadow:0 2px 6px #0006;position:relative}
+#rside{position:fixed;left:calc(var(--hud-left) + var(--hud-width) - var(--btn) - 6px - var(--safe-r));right:auto;display:flex;flex-direction:column;gap:7px;z-index:5;bottom:calc(var(--chrome-bottom) + var(--panel-h) + 12px + var(--safe-b))}
+.rb{width:var(--btn);height:var(--btn);min-width:44px;min-height:44px;border-radius:14px;border:none;background:#3d2a17e6;color:#fff;font-size:21px;box-shadow:0 2px 6px #0006;position:relative}
 .rb.on{background:#e8a33d}
 .rb i{position:absolute;top:-4px;right:-4px;background:#d33;border-radius:9px;font-size:11px;font-style:normal;padding:1px 5px}
 #panel{position:fixed;left:var(--hud-left);width:var(--hud-width);right:auto;bottom:var(--chrome-bottom);height:var(--panel-h);background:linear-gradient(#4a321bf2,#2d1e0ff8);border-top:3px solid #c98b3c;z-index:6;padding:8px 10px calc(8px + var(--safe-b));overflow-y:auto}
@@ -57,8 +57,8 @@ html.layout-tall #bar{font-size:11px}
 html.layout-square{--panel-h:min(168px,24vh)}
 html.layout-wide{--panel-h:0px;--panel-w:min(340px,38vw)}
 html.layout-wide #panel{top:calc(var(--hud-top) + 58px + var(--safe-t));bottom:var(--chrome-bottom);height:auto;width:var(--panel-w);left:calc(var(--hud-left) + var(--hud-width) - var(--panel-w));border-top:none;border-left:3px solid #c98b3c}
-html.layout-wide #mini{left:calc(var(--hud-left) + var(--hud-width) - var(--panel-w) - 114px - var(--safe-r))}
-html.layout-wide #rside{left:calc(var(--hud-left) + var(--hud-width) - var(--panel-w) - 58px - var(--safe-r))}
+html.layout-wide #mini{left:calc(var(--hud-left) + var(--hud-width) - var(--panel-w) - var(--mini) - 10px - var(--safe-r))}
+html.layout-wide #rside{left:calc(var(--hud-left) + var(--hud-width) - var(--panel-w) - var(--btn) - 12px - var(--safe-r))}
 html.layout-wide #goal{max-width:min(258px,calc(var(--hud-width) - var(--panel-w) - 130px))}
 html.layout-wide #toasts{width:calc(var(--hud-width) - var(--panel-w) - 70px)}
 html.layout-wide #sheet{width:min(480px,100%);margin-bottom:12px;border-radius:20px}
@@ -66,6 +66,21 @@ html.layout-wide #sheet{width:min(480px,100%);margin-bottom:12px;border-radius:2
  #bar{font-size:11px}
  #goal{font-size:11px;max-width:min(190px,calc(var(--hud-width) - 108px))}
  #mini{width:84px;height:84px;left:calc(var(--hud-left) + var(--hud-width) - 90px - var(--safe-r))}
+}
+@media (min-width:900px){
+ :root{--btn:56px;--mini:132px;--mini-gap:12px}
+ #bar{font-size:16px}
+ #bar span{padding:5px 8px}
+ #sub{font-size:14px}
+ #goal{font-size:15px;padding:10px 12px}
+ .btn{font-size:15px;min-height:48px;padding:10px 12px}
+ .rb{font-size:24px;border-radius:16px}
+ html.layout-wide #goal{max-width:min(360px,calc(var(--hud-width) - var(--panel-w) - var(--mini) - 40px))}
+}
+@media (min-width:900px) and (max-aspect-ratio:4/5){
+ :root{--panel-h:min(280px,24vh)}
+ #goal{max-width:min(480px,calc(var(--hud-width) - var(--mini) - 40px))}
+ #toasts{top:calc(var(--hud-top) + 210px + var(--safe-t));width:min(420px,calc(var(--hud-width) - var(--mini) - 40px))}
 }
 @media (horizontal-viewport-segments: 2){
  :root{--hud-left:env(viewport-segment-left 0 0,0px);--hud-top:env(viewport-segment-top 0 0,0px);--hud-width:env(viewport-segment-width 0 0,50vw);--hud-height:env(viewport-segment-height 0 0,100vh)}
