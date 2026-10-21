@@ -22,9 +22,13 @@ Release builds run in GitHub Actions. Android signing still uses the keystore se
 
 ## TestFlight
 
-`.github/workflows/ios-testflight.yml` runs on a `v*` tag or when someone starts it with `workflow_dispatch`. It builds the web bundle, runs `cap sync ios`, archives with automatic signing, exports an App Store IPA, and uploads that IPA to TestFlight. The upload does not submit the app for App Store review.
+`.github/workflows/ios-register-bundle-id.yml` registers the iOS bundle id `com.littleridgeestate.valleyestates` (name Valley Estates) with the App Store Connect API. If that id already exists, the step succeeds. Run it from the Actions tab, or let the TestFlight workflow run it first. It does not create the app record and does not submit anything for review.
 
-The App Store Connect app record has to exist first, with bundle id `com.littleridgeestate.valleyestates`. This workflow cannot create that record. After the record exists, add these repository secrets (Settings → Secrets and variables → Actions):
+After that id exists, create the app yourself: App Store Connect → My Apps → + → New App, and choose this bundle id. The TestFlight upload cannot succeed until that app record exists.
+
+`.github/workflows/ios-testflight.yml` runs on a `v*` tag or when someone starts it with `workflow_dispatch`. It registers the bundle id, builds the web bundle, runs `cap sync ios`, archives with automatic signing, exports an App Store IPA, and uploads that IPA to TestFlight. The upload does not submit the app for App Store review.
+
+Add these repository secrets (Settings → Secrets and variables → Actions):
 
 - `ASC_ISSUER_ID` — App Store Connect API issuer id
 - `ASC_KEY_ID` — the key id

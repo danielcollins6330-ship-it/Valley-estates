@@ -10,8 +10,14 @@ permissions:
   contents: read
 
 jobs:
+  register-bundle-id:
+    name: Register bundle ID
+    uses: ./.github/workflows/ios-register-bundle-id.yml
+    secrets: inherit
+
   testflight:
     name: Archive and upload to TestFlight
+    needs: register-bundle-id
     runs-on: macos-latest
     timeout-minutes: 90
     steps:
