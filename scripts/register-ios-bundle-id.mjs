@@ -12,7 +12,9 @@ export function isAlreadyExists(status, body) {
   return errors.every((error) => {
     const code = String(error.code || "");
     const text = `${error.title || ""} ${error.detail || ""}`;
-    return code.includes("DUPLICATE") || /already exists/i.test(text);
+    return code.includes("DUPLICATE")
+      || /already exists/i.test(text)
+      || /not available/i.test(text);
   });
 }
 
@@ -49,6 +51,20 @@ async function readJson(response) {
   } catch {
     return { errors: [{ title: "Response was not JSON", detail: text.slice(0, 300) }] };
   }
+}
+
+async function lookupBundleId(token) {
+  const checkUrl = new URL(API);
+  checkUrl.searchParams.set("filter[identifier]", BUNDLE_ID);
+  const check = await fetch(checkUrl, { headers: { Authorization: `Bearer ${token}` } });
+  const checkBody = await readJson(check);
+  const found = (checkBody.data || []).find((item) => item.attributes?.identifier === BUNDLE_ID);
+  return { ok: check.ok, status: check.status, body: checkBody, found };
+}
+
+function logConfirmed(found) {
+  console.log(`Confirmed ${found.attributes.identifier} on ${found.attributes.platform}, name "${found.attributes.name}", id ${found.id}.`);
+  console.log("App Store Connect still needs the app record: My Apps → + → New App, using this bundle ID. TestFlight upload cannot succeed until that record exists. This step does not submit anything for review.");
 }
 
 async function main() {
@@ -91,10 +107,25 @@ async function main() {
     }),
   });
   const body = await readJson(response);
+  if (response.status === 409) {
+    const existing = await lookupBundleId(token);
+    if (existing.found) {
+      console.log(`Bundle ID ${BUNDLE_ID} is already registered on this team. Treating that as success.`);
+      logConfirmed(existing.found);
+      return;
+    }
+    console.error(`App Store Connect rejected bundle ID registration with HTTP ${response.status}.`);
+    console.error(publicError(body));
+    if (isAlreadyExists(response.status, body)) {
+      console.error(`Apple reports ${BUNDLE_ID} is already taken, and this API key cannot see it. The identifier is registered to another Apple team.`);
+    } else {
+      console.error(`No bundle ID named ${BUNDLE_ID} is visible to this API key.`);
+    }
+    process.exit(1);
+  }
+
   if (response.status === 201) {
     console.log(`Registered bundle ID ${BUNDLE_ID} (${body.data?.id || "created"}).`);
-  } else if (isAlreadyExists(response.status, body)) {
-    console.log(`Bundle ID ${BUNDLE_ID} already exists. Treating that as success.`);
   } else {
     console.error(`App Store Connect rejected bundle ID registration with HTTP ${response.status}.`);
     console.error(publicError(body));
@@ -112,18 +143,13 @@ async function main() {
     process.exit(1);
   }
 
-  const checkUrl = new URL(API);
-  checkUrl.searchParams.set("filter[identifier]", BUNDLE_ID);
-  const check = await fetch(checkUrl, { headers: { Authorization: `Bearer ${token}` } });
-  const checkBody = await readJson(check);
-  const found = (checkBody.data || []).find((item) => item.attributes?.identifier === BUNDLE_ID);
-  if (!check.ok || !found) {
+  const check = await lookupBundleId(token);
+  if (!check.ok || !check.found) {
     console.error(`The bundle ID was not readable after registration (HTTP ${check.status}).`);
-    console.error(publicError(checkBody));
+    console.error(publicError(check.body));
     process.exit(1);
   }
-  console.log(`Confirmed ${found.attributes.identifier} on ${found.attributes.platform}, name "${found.attributes.name}", id ${found.id}.`);
-  console.log("App Store Connect still needs the app record: My Apps → + → New App, using this bundle ID. TestFlight upload cannot succeed until that record exists. This step does not submit anything for review.");
+  logConfirmed(check.found);
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
