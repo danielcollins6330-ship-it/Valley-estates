@@ -98,8 +98,16 @@ async function main() {
   } else {
     console.error(`App Store Connect rejected bundle ID registration with HTTP ${response.status}.`);
     console.error(publicError(body));
-    if (response.status === 401 || response.status === 403) {
-      console.error("Check that ASC_ISSUER_ID and ASC_KEY_ID match this .p8 key, and that the key role is Admin or App Manager.");
+    if (response.status === 401) {
+      console.error("The API key was rejected. Check that ASC_ISSUER_ID and ASC_KEY_ID belong to this .p8 file.");
+    }
+    if (response.status === 403) {
+      console.error("Apple authenticated the key and refused to register a bundle ID.");
+      console.error("The key must be an Account Holder or Admin key. App Manager and lower roles cannot create bundle IDs.");
+      console.error("Create an Admin API key and replace ASC_KEY_ID and ASC_API_KEY_P8, or register the identifier by hand:");
+      console.error("Apple Developer → Certificates, Identifiers & Profiles → Identifiers → + → App IDs → App.");
+      console.error(`Use the explicit bundle ID ${BUNDLE_ID} and the name "${APP_NAME}".`);
+      console.error("Then create the app: App Store Connect → My Apps → + → New App.");
     }
     process.exit(1);
   }
