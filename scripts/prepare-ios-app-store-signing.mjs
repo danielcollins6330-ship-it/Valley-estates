@@ -47,6 +47,27 @@ async function readJson(response) {
   }
 }
 
+const APPLE_INTERMEDIATES = [
+  "https://www.apple.com/certificateauthority/AppleWWDRCAG3.cer",
+  "https://www.apple.com/certificateauthority/AppleWWDRCAG4.cer",
+  "https://www.apple.com/certificateauthority/AppleWWDRCAG5.cer",
+  "https://www.apple.com/certificateauthority/AppleWWDRCAG6.cer",
+];
+
+async function importAppleIntermediates(keychainPath) {
+  for (const url of APPLE_INTERMEDIATES) {
+    const response = await fetch(url);
+    if (!response.ok) continue;
+    const bytes = Buffer.from(await response.arrayBuffer());
+    const cerPath = path.join(path.dirname(keychainPath), path.basename(url));
+    writeFileSync(cerPath, bytes);
+    const imported = spawnSync("security", ["import", cerPath, "-k", keychainPath, "-A"], { encoding: "utf8" });
+    if (imported.status === 0) {
+      console.log(`Imported ${path.basename(url)}.`);
+    }
+  }
+}
+
 function appendEnv(name, value) {
   const envFile = process.env.GITHUB_ENV;
   if (!envFile) return;
@@ -207,15 +228,26 @@ async function main() {
     chmodSync(p12Path, 0o600);
     run("security", importArgs);
   }
+  await importAppleIntermediates(keychainPath);
   run("security", ["set-key-partition-list", "-S", "apple-tool:,apple:,codesign:", "-s", "-k", keychainPassword, keychainPath]);
   const existing = run("security", ["list-keychains", "-d", "user"]);
   const keychains = existing.split("\n").map((line) => line.trim().replace(/^"|"$/g, "")).filter(Boolean);
   run("security", ["list-keychains", "-d", "user", "-s", keychainPath, ...keychains]);
 
-  const identities = run("security", ["find-identity", "-v", "-p", "codesigning", keychainPath]);
-  const match = identities.match(/"([^"]*Apple Distribution[^"]*)"/);
+  let identities = run("security", ["find-identity", "-v", "-p", "codesigning", keychainPath]);
+  let match = identities.match(/"([^"]*(?:Apple|iPhone) Distribution[^"]*)"/);
   if (!match) {
-    console.error("The distribution certificate was imported, but codesign cannot see an Apple Distribution identity.");
+    run("openssl", ["pkcs12", "-export", "-legacy", ...pkcs12Args.slice(2)]);
+    chmodSync(p12Path, 0o600);
+    run("security", importArgs);
+    run("security", ["set-key-partition-list", "-S", "apple-tool:,apple:,codesign:", "-s", "-k", keychainPassword, keychainPath]);
+    identities = run("security", ["find-identity", "-v", "-p", "codesigning", keychainPath]);
+    match = identities.match(/"([^"]*(?:Apple|iPhone) Distribution[^"]*)"/);
+  }
+  if (!match) {
+    const summary = identities.split("\n").map((line) => line.trim()).find((line) => /valid identities/i.test(line));
+    console.error("The distribution certificate was imported, but codesign cannot see a distribution identity.");
+    if (summary) console.error(summary);
     process.exit(1);
   }
   writeFileSync(identityPath, match[1], { mode: 0o600 });
