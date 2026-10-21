@@ -103,12 +103,18 @@ jobs:
           echo "KEY_FILE=${key_file}" >> "${GITHUB_ENV}"
           echo "Stored the API key in a private temp file. It is not printed."
 
+      - name: Register a CI device for development profiles
+        env:
+          ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
+        run: node scripts/register-ios-ci-device.mjs
+
       - name: Archive the iOS app
         run: |
           set -euo pipefail
           echo "Build number ${GITHUB_RUN_NUMBER} (marketing version stays 1.0 unless the Xcode project changes)."
-          # The project identity stays iPhone Developer for the simulator workflow.
-          # TestFlight needs Apple Distribution. A development profile would require a registered device.
+          # Automatic signing stays on the project identity (iPhone Developer) so the
+          # simulator workflow is unchanged. A registered device lets Xcode create the
+          # development profile. Export re-signs the archive for the App Store.
           xcodebuild \
             -project ios/App/App.xcodeproj \
             -scheme App \
@@ -121,8 +127,6 @@ jobs:
             -authenticationKeyIssuerID "${ASC_ISSUER_ID}" \
             DEVELOPMENT_TEAM="${APPLE_TEAM_ID}" \
             CODE_SIGN_STYLE=Automatic \
-            CODE_SIGN_IDENTITY="Apple Distribution" \
-            'CODE_SIGN_IDENTITY[sdk=iphoneos*]=Apple Distribution' \
             CURRENT_PROJECT_VERSION="${GITHUB_RUN_NUMBER}" \
             archive
 
