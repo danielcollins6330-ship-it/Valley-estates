@@ -18,4 +18,17 @@ npm run assets   # regenerate icons and splash screens
 npm run sync     # copy the game into android/ and ios/
 ```
 
-Release builds run in GitHub Actions. See `STORE_LISTING.md` for what a store account owner still has to sign and upload.
+Release builds run in GitHub Actions. Android signing still uses the keystore secrets in `.github/workflows/android.yml`. See `STORE_LISTING.md` for the store listing. iOS TestFlight is below.
+
+## TestFlight
+
+`.github/workflows/ios-testflight.yml` runs on a `v*` tag or when someone starts it with `workflow_dispatch`. It builds the web bundle, runs `cap sync ios`, archives with automatic signing, exports an App Store IPA, and uploads that IPA to TestFlight. The upload does not submit the app for App Store review.
+
+The App Store Connect app record has to exist first, with bundle id `com.littleridgeestate.valleyestates`. This workflow cannot create that record. After the record exists, add these repository secrets (Settings → Secrets and variables → Actions):
+
+- `ASC_ISSUER_ID` — App Store Connect API issuer id
+- `ASC_KEY_ID` — the key id
+- `APPLE_TEAM_ID` — the Apple Developer team id
+- `ASC_API_KEY_P8` — the full `.p8` file, including the `BEGIN` and `END` lines
+
+The workflow stops immediately if any of those secrets is missing. It writes the `.p8` to a private temp file for `xcodebuild` and `altool`, and it does not print the key. The TestFlight build number is the GitHub Actions run number. The marketing version stays the `1.0` set in the Xcode project.

@@ -1,0 +1,169 @@
+name: iOS TestFlight
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  testflight:
+    name: Archive and upload to TestFlight
+    runs-on: macos-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Require App Store Connect secrets
+        env:
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
+        run: |
+          set -euo pipefail
+          missing=()
+          [ -z "${ASC_ISSUER_ID}" ] && missing+=("ASC_ISSUER_ID")
+          [ -z "${ASC_KEY_ID}" ] && missing+=("ASC_KEY_ID")
+          [ -z "${APPLE_TEAM_ID}" ] && missing+=("APPLE_TEAM_ID")
+          [ -z "${ASC_API_KEY_P8}" ] && missing+=("ASC_API_KEY_P8")
+          if [ "${#missing[@]}" -gt 0 ]; then
+            echo "Missing GitHub Actions secret(s): ${missing[*]}"
+            echo "Add them under Settings → Secrets and variables → Actions."
+            echo "ASC_API_KEY_P8 must be the full .p8 text, including the BEGIN and END lines."
+            echo "Create the App Store Connect app record for com.littleridgeestate.valleyestates before uploading."
+            exit 1
+          fi
+          echo "App Store Connect secrets are present. The API key will not be printed."
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Bundle the game and sync iOS
+        run: npm run www && npx cap sync ios
+
+      - name: Write the App Store Connect API key
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
+        run: |
+          set -euo pipefail
+          umask 077
+          mkdir -p "${HOME}/.private_keys"
+          key_file="${HOME}/.private_keys/AuthKey_${ASC_KEY_ID}.p8"
+          printf '%s' "${ASC_API_KEY_P8}" > "${key_file}"
+          if [ -n "$(tail -c 1 "${key_file}")" ]; then
+            printf '\n' >> "${key_file}"
+          fi
+          chmod 600 "${key_file}"
+          if ! grep -q "PRIVATE KEY" "${key_file}"; then
+            echo "ASC_API_KEY_P8 does not look like a .p8 private key. Paste the full file, including the BEGIN and END lines."
+            exit 1
+          fi
+          echo "KEY_FILE=${key_file}" >> "${GITHUB_ENV}"
+          echo "Stored the API key in a private temp file. It is not printed."
+
+      - name: Archive the iOS app
+        env:
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          set -euo pipefail
+          echo "Build number ${GITHUB_RUN_NUMBER} (marketing version stays 1.0 unless the Xcode project changes)."
+          xcodebuild \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "${RUNNER_TEMP}/ValleyEstates.xcarchive" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "${KEY_FILE}" \
+            -authenticationKeyID "${ASC_KEY_ID}" \
+            -authenticationKeyIssuerID "${ASC_ISSUER_ID}" \
+            DEVELOPMENT_TEAM="${APPLE_TEAM_ID}" \
+            CODE_SIGN_STYLE=Automatic \
+            CURRENT_PROJECT_VERSION="${GITHUB_RUN_NUMBER}" \
+            archive
+
+      - name: Export the App Store IPA
+        env:
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          set -euo pipefail
+          python3 -c 'import os, pathlib; team=os.environ["APPLE_TEAM_ID"]; pathlib.Path(os.environ["RUNNER_TEMP"], "ExportOptions.plist").write_text("""<?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>app-store</string>
+            <key>signingStyle</key>
+            <string>automatic</string>
+            <key>teamID</key>
+            <string>%s</string>
+            <key>destination</key>
+            <string>export</string>
+            <key>uploadSymbols</key>
+            <true/>
+            <key>manageAppVersionAndBuildNumber</key>
+            <false/>
+          </dict>
+          </plist>
+          """ % team)'
+          xcodebuild \
+            -exportArchive \
+            -archivePath "${RUNNER_TEMP}/ValleyEstates.xcarchive" \
+            -exportPath "${RUNNER_TEMP}/ipa" \
+            -exportOptionsPlist "${RUNNER_TEMP}/ExportOptions.plist" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "${KEY_FILE}" \
+            -authenticationKeyID "${ASC_KEY_ID}" \
+            -authenticationKeyIssuerID "${ASC_ISSUER_ID}"
+          ipa="$(find "${RUNNER_TEMP}/ipa" -name '*.ipa' -print -quit)"
+          if [ -z "${ipa}" ]; then
+            echo "Export did not produce an IPA."
+            exit 1
+          fi
+          echo "IPA_PATH=${ipa}" >> "${GITHUB_ENV}"
+          echo "Exported $(basename "${ipa}")."
+
+      - name: Upload the IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: valley-estates-ios-ipa
+          path: ${{ env.IPA_PATH }}
+          if-no-files-found: error
+
+      - name: Upload to TestFlight
+        env:
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+        run: |
+          set -euo pipefail
+          # Delivers the build to TestFlight only. This does not submit the app for App Store review.
+          xcrun altool --upload-app \
+            --type ios \
+            --file "${IPA_PATH}" \
+            --apiKey "${ASC_KEY_ID}" \
+            --apiIssuer "${ASC_ISSUER_ID}"
+          echo "Upload finished. The build still has to finish processing in App Store Connect before it can be installed from TestFlight."
+
+      - name: Remove the API key
+        if: always()
+        run: |
+          set -euo pipefail
+          rm -f "${KEY_FILE:-}"
+          rm -f "${HOME}/.private_keys"/AuthKey_*.p8
+          echo "Removed the API key file."
