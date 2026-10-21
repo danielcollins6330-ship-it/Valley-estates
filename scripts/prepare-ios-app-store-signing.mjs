@@ -31,10 +31,23 @@ function publicError(body) {
     .join("; ");
 }
 
+// Private keys for these CI certificates were deleted with the runner.
+// F87GD5XVS2 never signed an upload. 4G8BZ8MGKN signed an IPA that Apple
+// rejected before an app record existed, so it is not in use either.
+export const UNUSED_CI_DISTRIBUTION_CERTIFICATES = ["F87GD5XVS2", "4G8BZ8MGKN"];
+
 export function isCertificateLimit(status, body) {
   if (status !== 409) return false;
   const errors = Array.isArray(body?.errors) ? body.errors : [];
-  return errors.some((error) => /maximum number of certificates|already have the maximum/i.test(`${error.title || ""} ${error.detail || ""}`));
+  const text = errors.map((error) => `${error.title || ""} ${error.detail || ""}`).join(" ");
+  return /maximum number of certificates|already have the maximum|already have a current iOS Distribution certificate|pending certificate request/i.test(text);
+}
+
+export function chooseCertificateToRevoke(certificates) {
+  const known = UNUSED_CI_DISTRIBUTION_CERTIFICATES
+    .map((id) => (certificates || []).find((certificate) => certificate && certificate.id === id))
+    .find(Boolean);
+  return known ? known.id : null;
 }
 
 async function readJson(response) {
@@ -121,33 +134,76 @@ async function main() {
   chmodSync(keyPath, 0o600);
 
   const csr = readFileSync(csrPath, "utf8");
-  const certResponse = await fetch(CERT_API, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      data: {
-        type: "certificates",
-        attributes: {
-          certificateType: "IOS_DISTRIBUTION",
-          csrContent: csr,
-        },
+  const requestDistributionCertificate = async () => {
+    const certResponse = await fetch(CERT_API, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
       },
-    }),
-  });
-  const certBody = await readJson(certResponse);
-  if (certResponse.status !== 201) {
-    console.error(`App Store Connect rejected the distribution certificate with HTTP ${certResponse.status}.`);
-    console.error(publicError(certBody));
-    if (isCertificateLimit(certResponse.status, certBody)) {
+      body: JSON.stringify({
+        data: {
+          type: "certificates",
+          attributes: {
+            certificateType: "IOS_DISTRIBUTION",
+            csrContent: csr,
+          },
+        },
+      }),
+    });
+    return { status: certResponse.status, body: await readJson(certResponse) };
+  };
+  let created = await requestDistributionCertificate();
+  if (created.status !== 201 && isCertificateLimit(created.status, created.body)) {
+    console.error(`App Store Connect rejected the distribution certificate with HTTP ${created.status}.`);
+    console.error(publicError(created.body));
+    const listUrl = new URL(CERT_API);
+    listUrl.searchParams.set("filter[certificateType]", "IOS_DISTRIBUTION");
+    listUrl.searchParams.set("limit", "20");
+    const listResponse = await fetch(listUrl, { headers: { Authorization: `Bearer ${token}` } });
+    const listBody = await readJson(listResponse);
+    const existing = listResponse.ok && Array.isArray(listBody.data) ? listBody.data : [];
+    if (!listResponse.ok) {
+      console.error(`Could not list distribution certificates (HTTP ${listResponse.status}).`);
+      console.error(publicError(listBody));
+    }
+    for (const certificate of existing) {
+      const name = certificate.attributes?.displayName || certificate.attributes?.name || "unnamed";
+      const expires = certificate.attributes?.expirationDate || "unknown expiry";
+      console.error(`Listed iOS Distribution certificate ${certificate.id} (${name}, ${expires}).`);
+    }
+    const revokeId = chooseCertificateToRevoke(existing);
+    if (!revokeId) {
+      console.error("No known unused CI distribution certificate was listed.");
+      console.error("Revoke an unused Apple Distribution certificate at developer.apple.com → Certificates, Identifiers & Profiles, then rerun.");
+      console.error("Do not revoke a certificate whose private key you still use for an app you ship.");
+      process.exit(1);
+    }
+    console.error(`Revoking unused CI distribution certificate ${revokeId}. Its private key was not kept.`);
+    const revokeResponse = await fetch(`${CERT_API}/${revokeId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (revokeResponse.status !== 204 && revokeResponse.status !== 200) {
+      const revokeBody = await readJson(revokeResponse);
+      console.error(`Could not revoke certificate ${revokeId} (HTTP ${revokeResponse.status}).`);
+      console.error(publicError(revokeBody));
+      process.exit(1);
+    }
+    console.log(`Revoked unused CI distribution certificate ${revokeId}.`);
+    created = await requestDistributionCertificate();
+  }
+  if (created.status !== 201) {
+    console.error(`App Store Connect rejected the distribution certificate with HTTP ${created.status}.`);
+    console.error(publicError(created.body));
+    if (isCertificateLimit(created.status, created.body)) {
       console.error("Apple limits how many Apple Distribution certificates a team can hold.");
       console.error("Revoke an unused Apple Distribution certificate at developer.apple.com → Certificates, Identifiers & Profiles, then rerun.");
       console.error("Do not revoke a certificate whose private key you still use for an app you ship.");
     }
     process.exit(1);
   }
+  const certBody = created.body;
   const certificateId = certBody.data?.id;
   const certificateContent = certBody.data?.attributes?.certificateContent;
   if (!certificateId || !certificateContent) {
