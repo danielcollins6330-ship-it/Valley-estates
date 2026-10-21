@@ -8,7 +8,9 @@ The Android and iOS apps use Capacitor (`com.littleridgeestate.valleyestates`). 
 
 ## Web files
 
-`index.html`, `game3d.js`, and `assets/textures.js` stay at the repository root so GitHub Pages can keep serving them. `npm run sync` copies those files, plus `privacy.html`, into `www/` and then into the native projects.
+`index.html`, `game3d.js`, and `assets/textures.js` stay at the repository root so GitHub Pages can keep serving them. `npm run sync` copies those files, plus `privacy.html` and `assets/audio/`, into `www/` and then into the native projects.
+
+Sound is ambience that follows the time of day and the rain, animal calls, action effects, and short Australian farmer lines. The menu has separate ambience, effects and voice sliders plus mute. Those settings are stored in `valleyEstatesAudio`, separate from the estate save. The first tap unlocks playback. Audio uses the page's media elements with the ambient session so the iOS silent switch can mute it, and it pauses when the app is in the background. Sources and licences are in [AUDIO_CREDITS.md](AUDIO_CREDITS.md).
 
 ## Mobile commands
 
