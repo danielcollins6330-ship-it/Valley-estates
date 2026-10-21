@@ -91,10 +91,12 @@ Likely outcomes if the forms are answered as above: Apple 9+ (alcohol reference)
 | Feature graphic 1024×500 | `store/graphics/feature-graphic-1024x500.png` | Play feature graphic (required) |
 | Adaptive / iOS icon sources | `resources/brand/` | Speckle Park cow and Babydoll sheep painting, generated into `android/` and `ios/` |
 | Phone screenshots | `store/screenshots/` | See sizes below |
+| iPhone 6.9-inch screenshots | `store/screenshots/iphone-6.9/` | App Store 6.9-inch portrait |
+| iPad 13-inch screenshots | `store/screenshots/ipad-13/` | App Store 13-inch iPad portrait |
 
 ## Screenshots
 
-Generated from the running game, portrait, with the on-device UI:
+Generated from the running game, portrait, with the on-device UI. `npm run screenshots` writes every file below.
 
 | File | Pixels | Store slot |
 |---|---|---|
@@ -104,14 +106,27 @@ Generated from the running game, portrait, with the on-device UI:
 | `store/screenshots/ios-1242x2688-estate.png` | 1242×2688 | App Store 6.5-inch |
 | `store/screenshots/ios-1242x2688-build.png` | 1242×2688 | App Store 6.5-inch |
 | `store/screenshots/ios-1242x2688-homestead.png` | 1242×2688 | App Store 6.5-inch |
+| `store/screenshots/iphone-6.9/homestead.png` | 1320×2868 | App Store 6.9-inch |
+| `store/screenshots/iphone-6.9/vineyard.png` | 1320×2868 | App Store 6.9-inch |
+| `store/screenshots/iphone-6.9/livestock.png` | 1320×2868 | App Store 6.9-inch |
+| `store/screenshots/iphone-6.9/frost.png` | 1320×2868 | App Store 6.9-inch |
+| `store/screenshots/iphone-6.9/empire.png` | 1320×2868 | App Store 6.9-inch |
+| `store/screenshots/ipad-13/homestead.png` | 2064×2752 | App Store 13-inch iPad |
+| `store/screenshots/ipad-13/vineyard.png` | 2064×2752 | App Store 13-inch iPad |
+| `store/screenshots/ipad-13/livestock.png` | 2064×2752 | App Store 13-inch iPad |
+| `store/screenshots/ipad-13/frost.png` | 2064×2752 | App Store 13-inch iPad |
+| `store/screenshots/ipad-13/empire.png` | 2064×2752 | App Store 13-inch iPad |
 
 Play requires at least two phone screenshots. JPEG or 24-bit PNG, sides between 320 and 3840 px, 16:9 or 9:16. 1080×1920 satisfies that.
 
-Still required before submission, not generated here:
+The 6.9-inch set is iPhone 16 Pro Max portrait (440×956 pt at 3x). The 13-inch set is iPad Pro 13-inch portrait (1032×1376 pt at 2x). Gameplay in those ten shots is the early homestead, a vineyard and winery, Speckle Park cattle with Babydoll sheep, a winter frost, and a Valley Empire age estate.
 
-- Apple 6.7-inch iPhone screenshots, 1290×2796 (required by current App Store Connect). The 1242×2688 set can be rescaled only as a temporary stand-in; capture native 6.7-inch shots before review.
-- Apple 13-inch iPad screenshots, 2064×2752, if the app is offered on iPad. iPad supports all four orientations so Split View and Slide Over work.
-- Play 7-inch tablet (optional) and 10-inch tablet (optional).
-- A short preview video is optional on both stores.
+iPad uses `TARGETED_DEVICE_FAMILY` 1,2. Portrait, upside-down, landscape left, and landscape right stay enabled, and `UIRequiresFullScreen` stays false so Split View and Slide Over work. On a 13-inch iPad the touch buttons grow to 56px and the portrait panel is taller; landscape still docks that panel on the side.
 
-Capture notes: dismiss the welcome sheet, show the estate with the goal card, open the build menu, and select the homestead so the bottom panel is visible. Keep the status bar hidden. Do not show a debug console.
+Still optional before submission, not generated here:
+
+- Apple 6.7-inch iPhone screenshots, 1290×2796, if App Store Connect asks for that display as well as 6.9-inch.
+- Play 7-inch tablet and 10-inch tablet.
+- A short preview video on either store.
+
+Capture notes: dismiss the welcome sheet, keep the status bar hidden, and do not show a debug console. The store scenes place real buildings through the game, then let the frost event and the animal meshes run.
