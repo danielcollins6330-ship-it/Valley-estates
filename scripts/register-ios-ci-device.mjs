@@ -98,16 +98,20 @@ async function main() {
       logConfirmed(existing.found);
       return;
     }
+    if (isDuplicateDevice(response.status, body)) {
+      console.log(`Device ${DEVICE_UDID} is already registered. Treating that as success.`);
+      return;
+    }
     console.error(`App Store Connect rejected device registration with HTTP ${response.status}.`);
     console.error(publicError(body));
-    if (isDuplicateDevice(response.status, body)) {
-      console.error("Apple reports this UDID is already taken, and this API key cannot see it.");
-    }
     process.exit(1);
   }
 
   if (response.status === 201) {
-    console.log(`Registered device ${DEVICE_NAME} (${body.data?.id || "created"}).`);
+    const created = body.data;
+    console.log(`Registered device ${DEVICE_NAME} (${created?.id || "created"}).`);
+    if (created?.attributes?.udid) logConfirmed(created);
+    return;
   } else {
     console.error(`App Store Connect rejected device registration with HTTP ${response.status}.`);
     console.error(publicError(body));
@@ -116,14 +120,6 @@ async function main() {
     }
     process.exit(1);
   }
-
-  const check = await lookupDevice(token);
-  if (!check.ok || !check.found) {
-    console.error(`The device was not readable after registration (HTTP ${check.status}).`);
-    console.error(publicError(check.body));
-    process.exit(1);
-  }
-  logConfirmed(check.found);
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
