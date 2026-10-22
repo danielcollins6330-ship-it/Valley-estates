@@ -289,7 +289,15 @@ def add_bits(mesh, bits):
     bpy.ops.object.shade_smooth()
     return mesh
 
+# Cattle, sheep, dog, and the hen are Quaternius / CC0 imports.
+# tools/import-cc0-animals.py writes those GLBs. Rebuilding them here
+# would put the old metaball meshes back.
+REPLACED = {"cattle", "sheep", "sheep_shorn", "dog", "chicken"}
+
 def build(name, balls, bones, color, resolution, rough, extra=None, bits=None, clips=None):
+    if name in REPLACED:
+        print("skip", name, "(CC0 import)")
+        return
     only = os.environ.get("VE_ANIMAL")
     if only and name != only:
         return

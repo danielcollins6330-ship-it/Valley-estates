@@ -3,13 +3,13 @@
 (function () {
   const BASE = new URL("./", document.currentScript.src);
   // World units match the farmhand: about 0.55 units for a 1.7 m person.
-  // Scales below put the mesh height on a real body size (cattle 1.4 m).
+  // Scales put the imported mesh height on a real body (cattle about 1.4 m).
   const KINDS = {
-    cattle: { file: "cattle.glb", scale: 0.385, rough: 0.92, fur: "coat", repeat: 7.2, amt: 0.22 },
-    sheep: { file: "sheep.glb", scale: 0.297, rough: 0.96, fur: "wool", repeat: 11, amt: 0.45 },
-    sheep_shorn: { file: "sheep_shorn.glb", scale: 0.284, rough: 0.74, fur: "coat", repeat: 8, amt: 0.22 },
-    dog: { file: "dog.glb", scale: 0.353, rough: 0.68, fur: "coat", repeat: 9, amt: 0.38 },
-    chicken: { file: "chicken.glb", scale: 0.402, rough: 0.6, fur: "coat", repeat: 6, amt: 0.18 },
+    cattle: { file: "cattle.glb", scale: 0.1, rough: 0.9, fur: "coat", repeat: 5.5, amt: 0.08 },
+    sheep: { file: "sheep.glb", scale: 0.0416, rough: 0.96, fur: "wool", repeat: 8, amt: 0.4 },
+    sheep_shorn: { file: "sheep_shorn.glb", scale: 0.0371, rough: 0.72, fur: "coat", repeat: 7, amt: 0.12 },
+    dog: { file: "dog.glb", scale: 0.0543, rough: 0.72, fur: "coat", repeat: 7, amt: 0.16 },
+    chicken: { file: "chicken.glb", scale: 0.0102, rough: 0.62, fur: "coat", repeat: 5, amt: 0.1 },
     kangaroo: { file: "kangaroo.glb", scale: 0.469, rough: 0.76, fur: "coat", repeat: 6.5, amt: 0.36 },
     cockatoo: { file: "cockatoo.glb", scale: 0.674, rough: 0.82, fur: "coat", repeat: 3.5, amt: 0.04 },
   };
@@ -213,42 +213,26 @@
     return out;
   }
 
-  function darkenCattle(col, pos) {
-    const out = new Float32Array(col);
-    for (let i = 0; i < out.length; i += 3) {
-      const lum = out[i] * 0.3 + out[i + 1] * 0.59 + out[i + 2] * 0.11;
-      const x = pos[i];
-      const y = pos[i + 1];
-      const eye = lum < 0.22 && x > 0.7 && y > 0.85;
-      if (eye) {
-        out[i] = 0.04;
-        out[i + 1] = 0.03;
-        out[i + 2] = 0.025;
-      } else if (lum > 0.55) {
-        out[i] = Math.min(0.96, out[i]);
-        out[i + 1] = Math.min(0.94, out[i + 1]);
-        out[i + 2] = Math.min(0.9, out[i + 2]);
-      } else {
-        out[i] = 0.045;
-        out[i + 1] = 0.036;
-        out[i + 2] = 0.03;
-      }
-    }
-    return out;
-  }
-
   function variantsFor(kind, parsed) {
-    const coat = kind === "cattle" ? darkenCattle(parsed.col, parsed.pos) : parsed.col;
-    const base = { main: geoFrom(parsed.pos, parsed.nrm, coat, parsed.jointsAttr, parsed.weights, parsed.indices) };
+    const base = { main: geoFrom(parsed.pos, parsed.nrm, parsed.col, parsed.jointsAttr, parsed.weights, parsed.indices) };
     if (kind === "cattle") {
+      let minY = Infinity;
+      let maxY = -Infinity;
+      const pos = parsed.pos;
+      for (let i = 1; i < pos.length; i += 3) {
+        minY = Math.min(minY, pos[i]);
+        maxY = Math.max(maxY, pos[i]);
+      }
+      const spanY = maxY - minY || 1;
       for (let s = 0; s < 4; s++) {
-        const col = paint(coat, parsed.pos, (out, x, y, z, i) => {
-          const h = Math.abs(Math.sin(x * 13.1 + z * 8.4 + s * 2.7) * Math.sin(y * 5.2 + s * 1.3));
-          const spot = Math.abs(z) > 0.04 && y > 0.3 && y < 1.15 && x > -0.2 && x < 0.9 && h > 0.8;
-          if (spot) {
-            out[i] = 0.93;
-            out[i + 1] = 0.91;
-            out[i + 2] = 0.86;
+        const col = paint(parsed.col, pos, (out, x, y, z, i) => {
+          const lum = out[i] * 0.3 + out[i + 1] * 0.59 + out[i + 2] * 0.11;
+          const ny = (y - minY) / spanY;
+          const h = Math.abs(Math.sin(x * 3.1 + z * 6.4 + s * 2.7) * Math.sin(y * 2.2 + s * 1.3));
+          if (lum < 0.2 && ny > 0.16 && ny < 0.46 && h > 0.86) {
+            out[i] = 0.95;
+            out[i + 1] = 0.94;
+            out[i + 2] = 0.9;
           }
         });
         base["s" + s] = geoFrom(parsed.pos, parsed.nrm, col, parsed.jointsAttr, parsed.weights, parsed.indices);
@@ -278,27 +262,17 @@
         }
       }), parsed.jointsAttr, parsed.weights, parsed.indices);
     }
-    if (kind === "chicken") {
-      base.main = geoFrom(parsed.pos, parsed.nrm, paint(parsed.col, parsed.pos, (out, x, y, _z, i) => {
-        if (y > 0.33 && x > 0.02 && Math.abs(_z) < 0.08) {
-          out[i] = 0.78;
-          out[i + 1] = 0.08;
-          out[i + 2] = 0.05;
-        } else if (x > 0.14 && y > 0.2 && y < 0.32 && Math.abs(_z) < 0.05) {
-          out[i] = 0.95;
-          out[i + 1] = 0.68;
-          out[i + 2] = 0.1;
-        } else if (y > 0.12 && x < 0.08) {
-          out[i] *= 0.92;
-          out[i + 1] *= 0.9;
-          out[i + 2] *= 0.85;
-        }
-      }), parsed.jointsAttr, parsed.weights, parsed.indices);
-    }
     if (kind === "sheep" || kind === "sheep_shorn") {
-      const col = paint(parsed.col, parsed.pos, (out, x, y, z, i) => {
-        const face = x > 0.38;
-        const m = face ? 0.42 : 0.16;
+      let minX = Infinity;
+      let maxX = -Infinity;
+      const pos = parsed.pos;
+      for (let i = 0; i < pos.length; i += 3) {
+        minX = Math.min(minX, pos[i]);
+        maxX = Math.max(maxX, pos[i]);
+      }
+      const faceAt = minX + (maxX - minX) * 0.72;
+      const col = paint(parsed.col, pos, (out, x, _y, _z, i) => {
+        const m = x > faceAt ? 0.62 : 0.2;
         out[i] *= m;
         out[i + 1] *= m;
         out[i + 2] *= m;
