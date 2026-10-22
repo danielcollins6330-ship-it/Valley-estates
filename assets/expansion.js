@@ -76,7 +76,215 @@
       if (game.achievements.valleyvilla == null) game.achievements.valleyvilla = game.achievements.villa;
       delete game.achievements.villa;
     }
+    game.order = game.order && typeof game.order === "object" && game.order.good ? game.order : null;
+    if (game.nextOrder == null) game.nextOrder = 40;
+    (game.units || []).forEach((unit, index) => decorateHand(unit, index));
     return game;
+  }
+
+  const NAMES = ["Ned", "Mae", "Tom", "Ada", "Jo", "Kit", "Sam", "Evie", "Gus", "Pat", "Lou", "Tess", "Hugh", "Ida", "Cal", "Bess", "Otto", "Nia", "Wes", "Rio"];
+  const SKILLS = ["vines", "stock", "build"];
+  const RESEARCH = [
+    { id: "crush", name: "Foot Treading", branch: "Presses", age: 0, at: "homestead", requires: [], cost: { food: 30 }, time: 12, benefit: "The first press. Unlocks a basket press." },
+    { id: "basket", name: "Basket Press", branch: "Presses", age: 1, at: "winery", requires: ["crush"], cost: { wood: 50, food: 40 }, time: 16, benefit: "Bottling is a little faster." },
+    { id: "press", name: "Better Presses", branch: "Presses", age: 2, at: "winery", requires: ["basket"], cost: { wood: 120, coins: 40 }, time: 22, benefit: "Bottles score one step higher." },
+    { id: "reserve", name: "Reserve Press", branch: "Presses", age: 3, at: "winery", requires: ["press"], cost: { stone: 80, coins: 140 }, time: 28, benefit: "Another quality step, and bottling is quicker." },
+    { id: "channels", name: "Water Channels", branch: "Water", age: 0, at: "barn", requires: [], cost: { wood: 40 }, time: 12, benefit: "Fields yield a little more. Unlocks irrigation." },
+    { id: "irrig", name: "Irrigation", branch: "Water", age: 1, at: "dam", requires: ["channels"], cost: { wood: 80, stone: 60 }, time: 22, benefit: "Fields and vines ignore drought." },
+    { id: "drip", name: "Drip Lines", branch: "Water", age: 2, at: "dam", requires: ["irrig"], cost: { wood: 60, stone: 70 }, time: 20, benefit: "Watered crops yield a little more." },
+    { id: "trough", name: "Night Watering", branch: "Water", age: 3, at: "dam", requires: ["drip"], cost: { stone: 50, coins: 80 }, time: 24, benefit: "Frost takes fewer grapes." },
+    { id: "pasture", name: "Pasture Improvement", branch: "Pasture", age: 1, at: "paddock", requires: [], cost: { food: 80, wood: 30 }, time: 16, benefit: "Stock hold their condition." },
+    { id: "graze", name: "Rotational Grazing", branch: "Pasture", age: 2, at: "paddock", requires: ["pasture"], cost: { food: 120, coins: 30 }, time: 20, benefit: "Paddocks produce a little more." },
+    { id: "shade", name: "Shade and Troughs", branch: "Pasture", age: 3, at: "paddock", requires: ["graze"], cost: { wood: 70, stone: 40 }, time: 22, benefit: "Drought is kinder to the stock." },
+    { id: "breed", name: "Selective Breeding", branch: "Genetics", age: 2, at: "paddock", requires: ["pasture"], cost: { food: 200, coins: 80 }, time: 25, benefit: "Paddocks produce more, and breeding can improve." },
+    { id: "genes", name: "Breeding Genetics", branch: "Genetics", age: 3, at: "paddock", requires: ["breed"], cost: { food: 180, coins: 120 }, time: 28, benefit: "Healthy stock breed a little faster." },
+  ];
+  const ORDERS = [
+    { good: "silver", qty: 2, reward: 110, limit: 150, label: "Silver wine" },
+    { good: "wool", qty: 8, reward: 42, limit: 120, label: "Wool" },
+    { good: "olives", qty: 8, reward: 24, limit: 130, label: "Olives" },
+  ];
+
+  function researchById(id) {
+    return RESEARCH.find((node) => node.id === id) || null;
+  }
+
+  function researchAt(type) {
+    return RESEARCH.filter((node) => node.at === type);
+  }
+
+  function researchState(game, id) {
+    const node = researchById(id);
+    if (!node) return { ok: false, reason: "Unknown study" };
+    const known = game && game.techs ? game.techs : {};
+    if (known[id]) return { ok: false, reason: "Already known" };
+    for (const req of node.requires) {
+      if (!known[req]) {
+        const prior = researchById(req);
+        return { ok: false, reason: "Needs " + (prior ? prior.name : req) };
+      }
+    }
+    if (((game && game.age) || 0) < node.age) return { ok: false, reason: "Later age" };
+    return { ok: true, reason: node.benefit };
+  }
+
+  function researchRows(game) {
+    return RESEARCH.map((node) => {
+      const state = researchState(game, node.id);
+      return {
+        id: node.id,
+        name: node.name,
+        branch: node.branch,
+        age: node.age,
+        at: node.at,
+        cost: node.cost,
+        time: node.time,
+        benefit: node.benefit,
+        known: !!(game && game.techs && game.techs[node.id]),
+        ok: state.ok,
+        reason: state.reason,
+      };
+    });
+  }
+
+  function pressTimeMul(techs) {
+    const known = techs || {};
+    let mul = 1;
+    if (known.basket) mul *= 0.9;
+    if (known.reserve) mul *= 0.88;
+    return mul;
+  }
+
+  function qualityBonus(techs) {
+    const known = techs || {};
+    return (known.press ? 1 : 0) + (known.reserve ? 1 : 0);
+  }
+
+  function grazeMul(techs) {
+    return techs && techs.graze ? 1.15 : 1;
+  }
+
+  function geneMul(techs) {
+    return techs && techs.genes ? 1.2 : 1;
+  }
+
+  function channelMul(techs) {
+    return techs && techs.channels ? 1.05 : 1;
+  }
+
+  function dripMul(techs) {
+    return techs && techs.drip && techs.irrig ? 1.08 : 1;
+  }
+
+  function frostKeep(techs) {
+    return techs && techs.trough ? 0.72 : 0.5;
+  }
+
+  function decorateHand(unit, index, skill) {
+    if (!unit || typeof unit !== "object") return unit;
+    if (!unit.name) unit.name = NAMES[(index | 0) % NAMES.length];
+    if (SKILLS.includes(skill)) unit.skill = skill;
+    if (!SKILLS.includes(unit.skill)) unit.skill = SKILLS[(index | 0) % SKILLS.length];
+    return unit;
+  }
+
+  function nextHand(units, skill) {
+    const list = units || [];
+    const used = new Set(list.map((unit) => unit && unit.name));
+    const spare = NAMES.find((name) => !used.has(name));
+    const name = spare || NAMES[list.length % NAMES.length] + " " + (list.length + 1);
+    const picked = SKILLS.includes(skill) ? skill : SKILLS[list.length % SKILLS.length];
+    return { name: name, skill: picked };
+  }
+
+  function setSkill(unit, skill) {
+    if (!unit || !SKILLS.includes(skill)) return false;
+    unit.skill = skill;
+    return true;
+  }
+
+  function workSkill(unit, source) {
+    if (!unit) return 1;
+    if (unit.skill === "vines" && (source === "vineyard" || source === "olive")) return 1.22;
+    if (unit.skill === "stock" && source === "paddock") return 1.22;
+    if (unit.skill === "build" && source === "build") return 1.22;
+    return 1;
+  }
+
+  function skillLabel(skill) {
+    if (skill === "vines") return "Vines";
+    if (skill === "stock") return "Stock";
+    if (skill === "build") return "Building";
+    return "Hand";
+  }
+
+  function birdBite(building, dt, scared) {
+    if (scared || !building || building.type !== "vineyard") return 0;
+    if ((building.grapes || 0) < 12) return 0;
+    return Math.min(0.4, Math.max(0, dt) * 0.12);
+  }
+
+  function isDusk(phase) {
+    return phase > 0.55 && phase < 0.78;
+  }
+
+  function rollOrder(game, rand, now) {
+    const pick = ORDERS[Math.floor(rand() * ORDERS.length) % ORDERS.length];
+    const age = (game && game.age) || 0;
+    const extra = age >= 2 ? 1 : 0;
+    const unit = Math.round(pick.reward / pick.qty);
+    return {
+      good: pick.good,
+      qty: pick.qty + extra,
+      reward: pick.reward + extra * unit + (age >= 3 ? 12 : 0),
+      until: now + pick.limit,
+      label: pick.label,
+    };
+  }
+
+  function orderHave(game, order) {
+    if (!order) return 0;
+    if (order.good === "silver") return (game.wineTiers && game.wineTiers.silver) || 0;
+    if (order.good === "wool") return (game.res && game.res.wool) || 0;
+    if (order.good === "olives") return (game.res && game.res.olives) || 0;
+    return 0;
+  }
+
+  function orderReady(game, order) {
+    return !!(order && orderHave(game, order) >= order.qty && game.time <= order.until);
+  }
+
+  function deliverOrder(game) {
+    const order = game && game.order;
+    if (!order) return { ok: false, coins: 0, text: "No open order." };
+    if (game.time > order.until) return { ok: false, coins: 0, text: "That buyer has left." };
+    if (!orderReady(game, order)) return { ok: false, coins: 0, text: "Not enough " + order.label.toLowerCase() + " yet." };
+    if (order.good === "silver") spendTier(game, "silver", order.qty);
+    else game.res[order.good] = (game.res[order.good] || 0) - order.qty;
+    game.res.coins = (game.res.coins || 0) + order.reward;
+    const coins = order.reward;
+    const text = order.label + " delivered. +" + coins + " coins.";
+    game.order = null;
+    game.nextOrder = game.time + 45;
+    return { ok: true, coins: coins, text: text };
+  }
+
+  function tickOrder(game, now) {
+    if (!game || !game.order) return null;
+    if (now <= game.order.until) return null;
+    game.order = null;
+    game.nextOrder = now + 30;
+    return "missed";
+  }
+
+  function a11yClasses(opts) {
+    const list = [];
+    if (!opts) return list;
+    if (opts.text === "large") list.push("text-lg");
+    else if (opts.text === "small") list.push("text-sm");
+    if (opts.cb) list.push("cb");
+    if (opts.lefty) list.push("lefty");
+    return list;
   }
 
   function vineRate(season, pruned, drought) {
@@ -153,11 +361,11 @@
     let condition = Number(building.condition);
     if (!Number.isFinite(condition)) condition = 72;
     let drift = tended ? 1.5 : -0.65;
-    if (ctx.drought && !ctx.irrig) drift -= 2.1;
+    if (ctx.drought && !ctx.irrig) drift -= 2.1 * (ctx.shade ? 0.55 : 1);
     if (ctx.season === 3) drift -= 0.3;
     if (ctx.season === 1) drift -= 0.22;
     health = clamp(health + drift * dt, 0, 100);
-    condition = clamp(condition + ((tended ? 1.1 : -0.45) + (health > 70 ? 0.25 : -0.15)) * dt, 0, 100);
+    condition = clamp(condition + ((tended ? 1.1 : -0.45) + (health > 70 ? 0.25 : -0.15) + (ctx.pasture ? 0.35 : 0)) * dt, 0, 100);
     if (health < 32 && !building.vetWarned) {
       building.vetWarned = 1;
       notes.push({
@@ -172,7 +380,8 @@
       building.fleece = clamp((building.fleece || 0) + grow, 0, 100);
     }
     if (building.count >= 2 && building.count < 8 && health > 55 && condition > 45) {
-      const pace = (ctx.breedTech ? 1.4 : 1) * (ctx.season === 0 ? 1.35 : ctx.season === 3 ? 0.3 : 1);
+      const genePace = typeof ctx.genes === "number" ? ctx.genes : ctx.genes ? geneMul({ genes: 1 }) : 1;
+      const pace = (ctx.breedTech ? 1.4 : 1) * (ctx.season === 0 ? 1.35 : ctx.season === 3 ? 0.3 : 1) * genePace;
       building.breedT = (building.breedT || 0) + dt * pace;
       if (building.breedT >= 55 && ctx.food >= 12) {
         building.breedT = 0;
@@ -349,10 +558,10 @@
     return "bronze";
   }
 
-  function bottleTier(vines, season, drought, tended) {
+  function bottleTier(vines, season, drought, tended, bonus) {
     const list = vines && vines.length ? vines : [{}];
     const score = list.reduce((sum, vine) => sum + vineScore(vine, season, drought, tended), 0) / list.length;
-    return tierFromScore(score);
+    return tierFromScore(score + (Number(bonus) || 0));
   }
 
   function addBottle(game, tier) {
@@ -634,6 +843,31 @@
     applyOffline: applyOffline,
     offlineText: offlineText,
     dailyReward: dailyReward,
+    RESEARCH: RESEARCH,
+    researchById: researchById,
+    researchAt: researchAt,
+    researchState: researchState,
+    researchRows: researchRows,
+    pressTimeMul: pressTimeMul,
+    qualityBonus: qualityBonus,
+    grazeMul: grazeMul,
+    geneMul: geneMul,
+    channelMul: channelMul,
+    dripMul: dripMul,
+    frostKeep: frostKeep,
+    decorateHand: decorateHand,
+    nextHand: nextHand,
+    setSkill: setSkill,
+    workSkill: workSkill,
+    skillLabel: skillLabel,
+    birdBite: birdBite,
+    isDusk: isDusk,
+    rollOrder: rollOrder,
+    orderHave: orderHave,
+    orderReady: orderReady,
+    deliverOrder: deliverOrder,
+    tickOrder: tickOrder,
+    a11yClasses: a11yClasses,
     CHOICES: CHOICES,
     MARKET_BASE: MARKET_BASE,
   };

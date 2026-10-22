@@ -231,9 +231,122 @@ const livestockPerMin = expansion.stockQuote("cattle", 80, 70, 46) * (60 / 70);
 assert.ok(livestockPerMin < activeWine);
 assert.ok(expansion.oliveRate(2, false) * 60 / 8 * expansion.quote(expansion.freshMarket(), "wine") < activeWine * 8);
 
+const ages = new Set(expansion.RESEARCH.map((node) => node.age));
+assert.equal(JSON.stringify([...ages].sort()), JSON.stringify([0, 1, 2, 3]));
+for (const branch of ["Presses", "Water", "Pasture", "Genetics"]) {
+  assert.ok(expansion.RESEARCH.some((node) => node.branch === branch), branch);
+}
+assert.equal(expansion.researchState({ age: 0, techs: {} }, "crush").ok, true);
+assert.equal(expansion.researchState({ age: 0, techs: {} }, "basket").reason, "Needs Foot Treading");
+assert.equal(expansion.researchState({ age: 0, techs: { crush: 1 } }, "basket").reason, "Later age");
+assert.equal(expansion.researchState({ age: 1, techs: {} }, "irrig").ok, false);
+assert.equal(expansion.researchState({ age: 1, techs: { channels: 1 } }, "irrig").ok, true);
+assert.equal(expansion.researchState({ age: 2, techs: {} }, "genes").ok, false);
+assert.equal(expansion.researchState({ age: 3, techs: { pasture: 1, breed: 1 } }, "genes").ok, true);
+assert.equal(expansion.researchState({ age: 3, techs: { irrig: 1 } }, "irrig").reason, "Already known");
+assert.equal(expansion.qualityBonus({ press: 1, reserve: 1 }), 2);
+const press = expansion.pressTimeMul({ basket: 1, reserve: 1 });
+assert.ok(press > 0.7 && press < 1);
+assert.ok(expansion.geneMul({ genes: 1 }) <= 1.25);
+assert.ok(expansion.grazeMul({ graze: 1 }) <= 1.2);
+assert.equal(expansion.frostKeep({}), 0.5);
+assert.equal(expansion.frostKeep({ trough: 1 }), 0.72);
+assert.equal(expansion.dripMul({ drip: 1 }), 1);
+assert.equal(expansion.dripMul({ drip: 1, irrig: 1 }), 1.08);
+assert.equal(expansion.channelMul({ channels: 1 }), 1.05);
+const lowVines = [{ pruned: 0, care: 0 }];
+assert.equal(expansion.bottleTier(lowVines, 1, true, false, 0), "bronze");
+assert.equal(expansion.bottleTier(lowVines, 1, true, false, 4), "silver");
+
+const hands = expansion.nextHand([], "vines");
+const second = expansion.nextHand([{ name: hands.name }], "stock");
+assert.notEqual(hands.name, second.name);
+assert.equal(hands.skill, "vines");
+assert.equal(expansion.setSkill({ skill: "vines" }, "pilot"), false);
+assert.equal(expansion.workSkill({ skill: "vines" }, "vineyard"), 1.22);
+assert.equal(expansion.workSkill({ skill: "vines" }, "olive"), 1.22);
+assert.equal(expansion.workSkill({ skill: "vines" }, "paddock"), 1);
+assert.equal(expansion.workSkill({ skill: "stock" }, "paddock"), 1.22);
+assert.equal(expansion.workSkill({ skill: "build" }, "build"), 1.22);
+assert.equal(expansion.birdBite({ type: "vineyard", grapes: 20 }, 1, true), 0);
+assert.equal(expansion.birdBite({ type: "vineyard", grapes: 10 }, 1, false), 0);
+const bite = expansion.birdBite({ type: "vineyard", grapes: 20 }, 1, false);
+assert.ok(bite > 0 && bite <= 0.4);
+assert.equal(expansion.isDusk(0.6), true);
+assert.equal(expansion.isDusk(0.4), false);
+assert.equal(expansion.isDusk(0.9), false);
+
+const earlyOrder = expansion.rollOrder({ age: 0 }, () => 0, 20);
+assert.equal(earlyOrder.good, "silver");
+assert.equal(earlyOrder.qty, 2);
+assert.equal(earlyOrder.reward, 110);
+const lateOrder = expansion.rollOrder({ age: 3 }, () => 0, 20);
+assert.equal(lateOrder.qty, 3);
+const silverPrice = expansion.wineSellPrice(32, "silver", false);
+assert.ok(lateOrder.reward > silverPrice * lateOrder.qty);
+assert.ok(lateOrder.reward < silverPrice * lateOrder.qty * 1.6);
+const woolOrder = expansion.rollOrder({ age: 3 }, () => 0.4, 0);
+assert.equal(woolOrder.good, "wool");
+assert.ok(woolOrder.reward < 6 * woolOrder.qty * 2);
+const cellarOrder = {
+  time: 10,
+  res: { coins: 0, wine: 2, wool: 0, olives: 0 },
+  wineTiers: { bronze: 0, silver: 2, gold: 0 },
+  order: { good: "silver", qty: 2, reward: 110, until: 50, label: "Silver wine" },
+};
+assert.equal(expansion.deliverOrder(cellarOrder).ok, true);
+assert.equal(cellarOrder.res.coins, 110);
+assert.equal(cellarOrder.wineTiers.silver, 0);
+assert.equal(cellarOrder.order, null);
+assert.equal(cellarOrder.nextOrder, 55);
+const shortOrder = {
+  time: 10,
+  res: { coins: 5, wine: 0 },
+  wineTiers: { bronze: 0, silver: 0, gold: 0 },
+  order: { good: "silver", qty: 2, reward: 110, until: 50, label: "Silver wine" },
+};
+assert.equal(expansion.deliverOrder(shortOrder).ok, false);
+assert.equal(shortOrder.res.coins, 5);
+const missed = {
+  time: 80,
+  res: { wine: 2 },
+  wineTiers: { bronze: 0, silver: 2, gold: 0 },
+  order: { good: "silver", qty: 2, reward: 110, until: 40, label: "Silver wine" },
+};
+assert.equal(expansion.tickOrder(missed, 80), "missed");
+assert.equal(missed.order, null);
+assert.equal(missed.wineTiers.silver, 2);
+assert.equal(JSON.stringify(expansion.a11yClasses({ text: "large", cb: true, lefty: true })), JSON.stringify(["text-lg", "cb", "lefty"]));
+
+const namedSave = {
+  tutorialSeen: true,
+  res: { wine: 1 },
+  stats: {},
+  buildings: [{ type: "villa", built: true }],
+  units: [{ id: 1 }, { id: 2, skill: "nope" }],
+  order: { qty: 1 },
+};
+expansion.migrateSave(namedSave);
+assert.equal(namedSave.units[0].name, "Ned");
+assert.equal(namedSave.units[0].skill, "vines");
+assert.equal(namedSave.units[1].name, "Mae");
+assert.equal(namedSave.units[1].skill, "stock");
+assert.equal(namedSave.order, null);
+assert.equal(namedSave.nextOrder, 40);
+assert.equal(namedSave.buildings[0].type, "valleyvilla");
+const keptOrder = { tutorialSeen: true, res: { wine: 0 }, stats: {}, buildings: [], units: [], order: { good: "wool", qty: 8, reward: 42, until: 10, label: "Wool" }, nextOrder: 12 };
+expansion.migrateSave(keptOrder);
+assert.equal(keptOrder.order.good, "wool");
+assert.equal(keptOrder.nextOrder, 12);
+
 const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
-for (const needle of ["assets/expansion.js", "assets/haptics.js", "cellardoor", "Valley Villa", "yard", "olive", "sellwine", "migrateSave", "coachAdvance", "claimAchievements"]) {
+for (const needle of ["assets/expansion.js", "assets/haptics.js", "cellardoor", "Valley Villa", "yard", "olive", "sellwine", "migrateSave", "coachAdvance", "claimAchievements", "Erase this estate", "Colour-blind icons", "Farmhands", "bCrew", "Four ages"]) {
   assert.ok(html.includes(needle), "index missing " + needle);
+}
+const bannedNames = ["bru" + "ma", "little " + "ridge"];
+for (const file of ["../index.html", "../assets/expansion.js", "../game3d.js", "../README.md", "../scripts/play-round3.mjs"]) {
+  const text = readFileSync(new URL(file, import.meta.url), "utf8").toLowerCase();
+  for (const word of bannedNames) assert.equal(text.includes(word), false, file + " contains a real property name");
 }
 const policy = readFileSync(new URL("../assets/audio-policy.js", import.meta.url), "utf8");
 for (const season of ["spring", "summer", "autumn", "winter"]) {
