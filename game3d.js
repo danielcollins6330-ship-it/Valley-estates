@@ -4171,15 +4171,16 @@ function anHerd(kind,parent){
 }
 function __(i,t,e){
   const prev=t.userData.herd;
-  if(!i.kind||!(i.count>0)){if(prev)for(const m of prev.list)m.visible=!1,m.count=0;return}
+  if(!i.kind||!(i.count>0)){if(prev)for(const m of prev.list)m.visible=!1,m.count=0;if(window.VERig)for(let k=0;k<8;k++)VERig.hide(t.uuid+":"+k);return}
   let h=prev;
   if(!h||h.kind!==i.kind){if(h)h.list.forEach(m=>t.remove(m));h=t.userData.herd=anHerd(i.kind,t)}
   const n=Math.min(8,i.count|0),dt=Gt.dt||.016,cattle=i.kind==="cattle";
   const dist=Math.hypot(t.position.x-vn.position.x,t.position.z-vn.position.z);
   const lod=xi<=0||dist>22?0:dist>12?1:2;
+  const rigOn=!!(window.VERig&&VERig.ready&&lod>1&&xi>0);
   const time=e||0;
   for(const m of h.list){m.visible=!1;m.count=0;m.castShadow=!1}
-  const show=cattle
+  const show=rigOn?[]:cattle
     ?(lod===0?[h.lowB,h.lowH]:h.bodies.concat(h.heads,h.legs,lod>0?[h.tail]:[],lod>1?[h.earL,h.earR]:[]))
     :(lod===0?[h.lowB,h.lowH]:[h.wool,h.shorn,h.head,h.ruff,h.tail].concat(lod>0?h.legs:[],lod>1?[h.earL,h.earR]:[]));
   for(const m of show){m.visible=!0;m.count=n;m.castShadow=xi>0&&lod>0&&(m===h.lowB||m===h.wool||m===h.shorn||(h.bodies&&h.bodies.indexOf(m)>=0))}
@@ -4201,6 +4202,11 @@ function __(i,t,e){
     const bob=moving?Math.abs(Math.sin(phase))*.03:0;
     const gy=Ie(i.x+i.w/2+r.x,i.y+i.h/2+r.z)-t.position.y-(lie?(cattle?.18:.11):0)+bob;
     const yaw=r.ang,fx=Math.cos(yaw),fz=-Math.sin(yaw),sx=Math.sin(yaw),sz=Math.cos(yaw);
+    if(rigOn){
+      const ground=Ie(i.x+i.w/2+r.x,i.y+i.h/2+r.z)-t.position.y;
+      VERig.place(t,t.uuid+":"+a,cattle?"cattle":woolly?"sheep":"sheep_shorn",r.x,ground,r.z,yaw,pose,{seed:a,black:!cattle&&a%5===4});
+      continue;
+    }
     if(cattle){
       const by=gy+.38-(lie?.02:0);
       const pitch=lie?.4:moving?Math.sin(phase)*.06:0;
@@ -4248,6 +4254,7 @@ function __(i,t,e){
       }
     }
   }
+  if(window.VERig){if(rigOn){for(let k=n;k<8;k++)VERig.hide(t.uuid+":"+k)}else{for(let k=0;k<8;k++)VERig.hide(t.uuid+":"+k)}}
   if(h.wool&&h.wool.instanceColor)h.wool.instanceColor.needsUpdate=!0;
   if(h.shorn&&h.shorn.instanceColor)h.shorn.instanceColor.needsUpdate=!0;
   if(h.lowB&&!cattle&&h.lowB.instanceColor)h.lowB.instanceColor.needsUpdate=!0;
@@ -4266,6 +4273,7 @@ function x_(){let i=Dc(),t=new Fe,e=new Fe;t.add(e);let n=st(i.limb,F.jeans,0,.2
     for(const m of Object.values(zoo.m))ie.add(m);
   }
   const G=zoo.m,t=performance.now()/1e3,show=l.dusk>.25,n=show?(q<=0?2:4):0,low=q<=0;
+  const rigZoo=!!(window.VERig&&VERig.ready&&q>0);
   const hi=[G.body,G.haunch,G.head,G.tail,G.hindL,G.hindR].concat(low?[]:[G.earL,G.earR,G.fore]);
   for(const m of Object.values(G))m.visible=!1,m.count=0,m.castShadow=!1;
   for(const m of (low?[G.lowB,G.lowH]:hi))m.visible=n>0,m.count=n,m.castShadow=!low&&q>0&&(m===G.body||m===G.lowB);
@@ -4273,6 +4281,7 @@ function x_(){let i=Dc(),t=new Fe,e=new Fe;t.add(e);let n=st(i.limb,F.jeans,0,.2
     const along=(l.p*5+k*.22)%1,x=cx-6+along*12,z=cz+(k-1.5)*2.2;
     const hop=(t*2.2+k)%1,ground=hop<.38,air=ground?0:Math.sin((hop-.38)/.62*Math.PI);
     const y=Ie(x,z)+air*.55,face=along>.5?-.7:.7,pitch=-.25-air*.35;
+    if(rigZoo){VERig.place(ie,"zoo-roo"+k,"kangaroo",x,Ie(x,z),z,face,"hop",{seed:k+3,rate:1.15});continue}
     if(low){anPut(G.lowB,k,x,y+.35,z,pitch,face,0,1);anPut(G.lowH,k,x+Math.cos(face)*.28,y+.55,z+Math.sin(face)*.1,pitch,face,0,1)}
     else{
       anPut(G.body,k,x,y+.42,z,pitch,face,0,1.05);
@@ -4297,6 +4306,7 @@ function x_(){let i=Dc(),t=new Fe,e=new Fe;t.add(e);let n=st(i.limb,F.jeans,0,.2
   for(const m of birds)m.visible=nb>0,m.count=nb;
   for(let k=0;k<nb;k++){
     const flap=Math.sin(t*11+k),x=vine.x+vine.w/2+Math.cos(t*.8+k)*1.1,z=vine.y+vine.h/2+Math.sin(t*.8+k)*.8,y=Ie(x,z)+1.7+Math.abs(flap)*.15,yaw=t+k;
+    if(rigZoo){VERig.place(ie,"zoo-bird"+k,"cockatoo",x,y,z,yaw,"walk",{seed:k+8,rate:2.4});continue}
     anPut(G.bBody,k,x,y,z,0,yaw,0,1);
     anPut(G.crest,k,x,y+.12,z,flap>.6?-.3:0,yaw,0,1,flap>.2?1.15:.8,1);
     anPut(G.wingL,k,x,y+.02,z+.02,0,yaw,.9+flap*1.1,1);
@@ -4306,6 +4316,14 @@ function x_(){let i=Dc(),t=new Fe,e=new Fe;t.add(e);let n=st(i.limb,F.jeans,0,.2
       anPut(G.beak,k,x+Math.cos(yaw)*.16,y+.02,z+Math.sin(yaw)*.16,0,yaw,0,1);
       anPut(G.bTail,k,x-Math.cos(yaw)*.12,y-.02,z-Math.sin(yaw)*.12,0,yaw,0,1);
     }
+  }
+  if(rigZoo){
+    for(const m of [G.body,G.haunch,G.head,G.tail,G.hindL,G.hindR,G.earL,G.earR,G.fore,G.lowB,G.lowH]){m.visible=!1;m.count=0}
+    if(nb>0)for(const m of [G.bBody,G.bHead,G.wingL,G.wingR,G.crest,G.beak,G.bTail]){m.visible=!1;m.count=0}
+  }
+  if(window.VERig){
+    for(let k=rigZoo?n:0;k<4;k++)VERig.hide("zoo-roo"+k);
+    for(let k=rigZoo?nb:0;k<4;k++)VERig.hide("zoo-bird"+k);
   }
   for(const m of Object.values(G))if(m.visible)m.instanceMatrix.needsUpdate=!0;
 }
@@ -4345,13 +4363,18 @@ function yard(i,q){
   const dt=Gt.dt||.016,t=performance.now()/1e3;
   let tx=home.x+1.6,tz=home.y+4.1,run=!1;
   const vine=(i.buildings||[]).find(b=>b.type==="vineyard"&&i.events&&i.events.dogScare>i.time);
-  if(vine){tx=vine.x+vine.w/2;tz=vine.y+vine.h/2;run=!0;lie=!1}
+  if(vine){tx=vine.x+vine.w/2;tz=vine.y+vine.h/2;run=!0}
   const dx=tx-d.x,dz=tz-d.z,dist=Math.hypot(dx,dz),step=Math.min(dist,(run?1.8:.55)*dt);
   let moving=!1;
   if(dist>.08){d.x+=dx/dist*step;d.z+=dz/dist*step;d.ang=Math.atan2(dz,dx);moving=!0;d.idle=0}else d.idle=(d.idle||0)+dt;
   const lie=!run&&!moving&&d.idle>8;
   const far=Math.hypot(d.x-vn.position.x,d.z-vn.position.z)>24||q<=0;
-  d.g.visible=!0;
+  const useRig=!!(window.VERig&&VERig.ready&&!far&&q>0);
+  d.g.visible=!useRig;
+  if(useRig){
+    const pose=run?"run":moving?"walk":lie?"lie":"idle";
+    VERig.place(ie,"yard-dog","dog",d.x,Ie(d.x,d.z),d.z,d.ang,pose,{seed:2,rate:run?1.5:1});
+  }else if(window.VERig)VERig.hide("yard-dog");
   d.g.position.set(d.x,Ie(d.x,d.z)+(lie?.08:0),d.z);
   d.g.rotation.y=d.ang;
   d.g.scale.setScalar(far?.8:1.25);
@@ -4366,6 +4389,14 @@ function yard(i,q){
   d.g.traverse(o=>{if(o.isMesh)o.castShadow=q>0&&!far});
   d.hens.forEach((hen,k)=>{
     const show=q<=0?k<2:1;
+    if(useRig){
+      const a=t*.35+k*1.4,x=home.x+2.4+Math.cos(a)*.7,z=home.y+2.2+Math.sin(a)*.5;
+      const peck=Math.sin(t*3+k)>.55;
+      VERig.place(ie,"yard-hen"+k,"chicken",x,Ie(x,z),z,a+Math.PI/2,peck?"graze":"walk",{seed:10+k,rate:peck?.7:.65});
+      hen.visible=!1;
+      return;
+    }
+    if(window.VERig)VERig.hide("yard-hen"+k);
     hen.visible=!!show;
     if(!show)return;
     const a=t*.35+k*1.4,x=home.x+2.4+Math.cos(a)*.7,z=home.y+2.2+Math.sin(a)*.5;
@@ -4379,7 +4410,7 @@ function yard(i,q){
     else hen.scale.setScalar(1);
   });
 }
-function F_(i){return Lc(i).night>.5}window.VE3D={_dbg:()=>({scene:ie,renderer:We,IM:Rt,terrain:Rn,composer:In,sun:Ae}),init:w_,resize:T_,buildWorld:A_,updateFog:Yu,tileChanged:C_,render:N_,pick:P_,pickObj:D_,project:L_,setQuality:Wa,isNight:F_,heightAt:Ie,get fps(){return Gt.fps},get quality(){return xi},dayInfo:Lc,raining:Ic}});O_();})();
+function F_(i){return Lc(i).night>.5}if(window.VERig)VERig.boot({Mesh:Me,Geo:ce,Mat:Yt,Mat4:ne,Quat:oi,Vec3:R,Attr:ae,DataTex:ps,FloatType:Sn,RGBA:mn,Nearest:je,Clamp:Ii,Repeat:Di,Group:Fe,Color:bt,Tex:Ve,noCS:ni});window.VE3D={_dbg:()=>({scene:ie,renderer:We,IM:Rt,terrain:Rn,composer:In,sun:Ae}),init:w_,resize:T_,buildWorld:A_,updateFog:Yu,tileChanged:C_,render:N_,pick:P_,pickObj:D_,project:L_,setQuality:Wa,isNight:F_,heightAt:Ie,get fps(){return Gt.fps},get quality(){return xi},dayInfo:Lc,raining:Ic}});O_();})();
 /*! Bundled license information:
 
 three/build/three.module.js:
