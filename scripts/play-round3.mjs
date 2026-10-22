@@ -253,6 +253,52 @@ assert(soak.studying === "crush", "research did not start");
 assert(soak.paid === true, "wool order failed");
 assert(soak.missed === "missed", "expired order stayed open");
 assert(soak.named === true, "a farmhand has no name");
+const hands = await play.page.evaluate(() => {
+  const G = window.VE.G;
+  const X = window.VEExpansion;
+  G.coach = 4;
+  const vines = G.buildings.find((building) => building.type === "vineyard" && building.built);
+  if (vines) vines.grapes = 40;
+  const vineHand = G.units.find((unit) => unit.skill === "vines") || G.units[0];
+  vineHand.task = null;
+  vineHand.hold = false;
+  vineHand.carry = 0;
+  vineHand.priority = "auto";
+  const picked = X.pickJob(G, vineHand);
+  vineHand.task = picked;
+  vineHand.phase = "work";
+  const label = X.activityLabel(vineHand);
+  G.time = 320;
+  G.season = 2;
+  G.festivalYear = -1;
+  G.showYear = -1;
+  G.wineTiers.gold = 1;
+  G.wineTiers.silver = 0;
+  G.wineTiers.bronze = 0;
+  const festival = X.tickFestival(G, 1, 120);
+  G.time = 372;
+  const show = X.tickFestival(G, 1, 120);
+  const season = document.getElementById("seasonL").textContent;
+  window.VE.tick(0.01);
+  window.VE.updateBar();
+  return {
+    picked: picked && picked.res,
+    label,
+    festival: festival.notes.map((note) => note.text),
+    show: show.notes[0] && show.notes[0].place,
+    coins: show.notes[0] && show.notes[0].coins,
+    season: document.getElementById("seasonL").textContent,
+    before: season,
+    priority: vineHand.priority,
+  };
+});
+console.log("hands", JSON.stringify(hands));
+assert(hands.picked === "grapes" || hands.picked === "olives" || hands.picked === "wool" || hands.picked === "food", "idle hand found no job");
+assert(hands.label.length > 3, "activity label missing");
+assert(hands.festival.some((text) => text.includes("Harvest festival")), "harvest festival did not open");
+assert(hands.show === "Gold medal", "wine show place was " + hands.show);
+assert(hands.coins === 48, "wine show bonus was " + hands.coins);
+assert(hands.season.includes("Wine show"), "season line missed the wine show");
 assert(soak.orderShape && soak.orderShape.good === "olives", "save did not keep one order");
 assert(soak.saveBytes < 400000, "save grew past 400kb: " + soak.saveBytes);
 assert(play.errors.length === 0, "play errors: " + play.errors.join(" | "));

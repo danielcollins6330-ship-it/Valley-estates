@@ -264,8 +264,10 @@ async function setupScene(page, name) {
       zoom = zoomFor(1.4);
     } else if (scene === "vineyard") {
       G.age = 1;
-      G.time = 256;
+      G.time = 320;
       G.season = 2;
+      G.festivalYear = -1;
+      G.showYear = -1;
       G.mission = 11;
       G.stats.wine = 3;
       const vine = place("vineyard", hx + 4, hy - 1);
@@ -274,6 +276,16 @@ async function setupScene(page, name) {
       G.res.grapes = 28;
       G.res.wine = 4;
       select(winery || vine || home);
+      const hand = G.units[0];
+      if (hand && vine) {
+        hand.x = vine.x + 0.3;
+        hand.y = vine.y + vine.h + 0.35;
+        hand.task = { type: "farm", bid: vine.id, res: "grapes" };
+        hand.phase = "work";
+        hand.hold = false;
+        G.sel = [hand.id];
+        G.selB = null;
+      }
       const pts = [vine, winery].filter(Boolean);
       focus = {
         x: pts.reduce((s, b) => s + b.x + b.w / 2, 0) / pts.length,
@@ -562,7 +574,8 @@ try {
 
     for (const shot of storeShots) {
       mkdirSync(shot.dir, { recursive: true });
-      for (const scene of storeScenes) {
+      const sceneList = process.env.SCENE ? storeScenes.filter((name) => name === process.env.SCENE) : storeScenes;
+    for (const scene of sceneList) {
         const page = await openGame();
         await boot(page, shot);
         await setupScene(page, scene);

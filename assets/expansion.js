@@ -68,6 +68,8 @@
     ensureTiers(game);
     if (game.dailyStreak == null) game.dailyStreak = 0;
     if (game.choice) game.choice = null;
+    if (game.festivalYear == null) game.festivalYear = -1;
+    if (game.showYear == null) game.showYear = -1;
     for (const building of game.buildings || []) {
       if (building && building.type === "villa") building.type = "valleyvilla";
       decorateBuilding(building);
@@ -180,11 +182,15 @@
     return techs && techs.trough ? 0.72 : 0.5;
   }
 
+  const PRIORITIES = ["auto", "vines", "stock", "build"];
+
   function decorateHand(unit, index, skill) {
     if (!unit || typeof unit !== "object") return unit;
     if (!unit.name) unit.name = NAMES[(index | 0) % NAMES.length];
     if (SKILLS.includes(skill)) unit.skill = skill;
     if (!SKILLS.includes(unit.skill)) unit.skill = SKILLS[(index | 0) % SKILLS.length];
+    if (!PRIORITIES.includes(unit.priority)) unit.priority = "auto";
+    if (unit.hold == null) unit.hold = false;
     return unit;
   }
 
@@ -216,6 +222,151 @@
     if (skill === "stock") return "Stock";
     if (skill === "build") return "Building";
     return "Hand";
+  }
+
+  function setPriority(unit, priority) {
+    if (!unit || !PRIORITIES.includes(priority)) return false;
+    unit.priority = priority;
+    unit.hold = false;
+    return true;
+  }
+
+  function priorityLabel(priority) {
+    if (priority === "auto") return "Auto";
+    return skillLabel(priority);
+  }
+
+  function jobFocus(unit) {
+    if (!unit) return "vines";
+    if (PRIORITIES.includes(unit.priority) && unit.priority !== "auto") return unit.priority;
+    return SKILLS.includes(unit.skill) ? unit.skill : "vines";
+  }
+
+  function activityLabel(unit) {
+    if (!unit) return "Idle";
+    if (unit.phase === "return" || (unit.task && unit.task.type === "deposit")) return "Carrying home";
+    if (!unit.task) return unit.hold ? "Standing by" : "Looking for work";
+    const task = unit.task;
+    if (task.type === "build") return "Building";
+    if (task.type === "move") return "Walking";
+    if (task.type === "gather") {
+      if (task.res === "wood") return "Chopping wood";
+      if (task.res === "stone") return "Mining stone";
+      return "Foraging";
+    }
+    if (task.type === "farm") {
+      if (task.res === "grapes") return "Tending vines";
+      if (task.res === "olives") return "Picking olives";
+      if (task.res === "wool") return "Tending sheep";
+      return "Tending stock";
+    }
+    return "Working";
+  }
+
+  function buildingDist(unit, building) {
+    const x = (building.x || 0) + (building.w || 1) / 2;
+    const y = (building.y || 0) + (building.h || 1) / 2;
+    return Math.hypot(x - (unit.x || 0), y - (unit.y || 0));
+  }
+
+  function nearestOpen(unit, list, busy) {
+    const open = list.filter((building) => !busy.has(building.id));
+    const pool = open.length ? open : list;
+    pool.sort((a, b) => buildingDist(unit, a) - buildingDist(unit, b));
+    return pool[0] || null;
+  }
+
+  function pickJob(game, unit) {
+    if (!unit || unit.task || unit.hold || (unit.carry || 0) > 0) return null;
+    const focus = jobFocus(unit);
+    const buildings = game && game.buildings ? game.buildings : [];
+    const busy = new Set();
+    for (const other of game && game.units ? game.units : []) {
+      if (other && other.task && other.task.bid != null) busy.add(other.task.bid);
+    }
+    if (focus === "vines") {
+      const vines = buildings.filter((building) => building && building.built && building.type === "vineyard" && (building.grapes || 0) >= 1);
+      const olives = buildings.filter((building) => building && building.built && building.type === "olive" && (building.olives || 0) >= 1);
+      const target = nearestOpen(unit, vines, busy) || nearestOpen(unit, olives, busy);
+      if (!target) return null;
+      return { type: "farm", bid: target.id, res: target.type === "olive" ? "olives" : "grapes" };
+    }
+    if (focus === "stock") {
+      const pads = buildings.filter((building) => building && building.built && building.type === "paddock" && building.kind && (building.count || 0) > 0);
+      const target = nearestOpen(unit, pads, busy);
+      if (!target) return null;
+      return { type: "farm", bid: target.id, res: target.kind === "sheep" ? "wool" : "food" };
+    }
+    if (focus === "build") {
+      const sites = buildings.filter((building) => building && !building.built);
+      const target = nearestOpen(unit, sites, busy);
+      if (!target) return null;
+      return { type: "build", bid: target.id };
+    }
+    return null;
+  }
+
+  function yearLength(seasonLen) {
+    return (seasonLen || 120) * 4;
+  }
+
+  function yearIndex(time, seasonLen) {
+    return Math.floor(Math.max(0, Number(time) || 0) / yearLength(seasonLen));
+  }
+
+  function festivalPhase(time, seasonLen) {
+    const len = seasonLen || 120;
+    const into = ((Number(time) || 0) % yearLength(len) + yearLength(len)) % yearLength(len);
+    const season = Math.floor(into / len);
+    const through = into % len;
+    // The last hours of autumn fall at night on the 60s day cycle, so the festival
+    // sits in the ripe part of vintage while the light is still up, and the
+    // wine show is the morning after.
+    if (season === 2 && through >= 70 && through < 90) return "festival";
+    if (season === 3 && through >= 8 && through < 26) return "show";
+    return null;
+  }
+
+  function showBonus(game) {
+    const tiers = game && game.wineTiers ? game.wineTiers : {};
+    const gold = tiers.gold | 0;
+    const silver = tiers.silver | 0;
+    const bronze = tiers.bronze | 0;
+    const raw = gold * 48 + silver * 22 + bronze * 8;
+    let place = "Crowd favourite";
+    if (gold >= 1) place = "Gold medal";
+    else if (silver >= 1) place = "Silver medal";
+    else if (bronze >= 1) place = "Bronze mention";
+    return {
+      coins: raw > 0 ? Math.min(180, raw) : 20,
+      tourists: Math.min(8, 2 + gold + Math.ceil(silver / 2)),
+      place: place,
+    };
+  }
+
+  function tickFestival(game, dt, seasonLen) {
+    const phase = festivalPhase(game.time, seasonLen);
+    const year = yearIndex(game.time, seasonLen);
+    const notes = [];
+    if (game.festivalYear == null) game.festivalYear = -1;
+    if (game.showYear == null) game.showYear = -1;
+    if (phase === "festival" && game.festivalYear !== year) {
+      game.festivalYear = year;
+      notes.push({ kind: "festival", text: "🎉 Harvest festival. Tourists are walking the vines." });
+    }
+    if (phase === "show" && game.showYear !== year) {
+      game.showYear = year;
+      const bonus = showBonus(game);
+      notes.push({
+        kind: "show",
+        text: "🏆 Wine show: " + bonus.place + ". +" + bonus.coins + "🪙",
+        coins: bonus.coins,
+        place: bonus.place,
+      });
+    }
+    const open = (game.buildings || []).some((building) => building && building.built && (building.type === "vineyard" || building.type === "cellardoor" || building.type === "valleyvilla"));
+    const drip = open && phase === "festival" ? (Number(dt) || 0) * 1.6 : 0;
+    return { phase: phase, drip: drip, notes: notes };
   }
 
   function birdBite(building, dt, scared) {
@@ -860,6 +1011,15 @@
     setSkill: setSkill,
     workSkill: workSkill,
     skillLabel: skillLabel,
+    setPriority: setPriority,
+    priorityLabel: priorityLabel,
+    jobFocus: jobFocus,
+    activityLabel: activityLabel,
+    pickJob: pickJob,
+    yearIndex: yearIndex,
+    festivalPhase: festivalPhase,
+    showBonus: showBonus,
+    tickFestival: tickFestival,
     birdBite: birdBite,
     isDusk: isDusk,
     rollOrder: rollOrder,

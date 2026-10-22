@@ -329,8 +329,12 @@ const namedSave = {
 expansion.migrateSave(namedSave);
 assert.equal(namedSave.units[0].name, "Ned");
 assert.equal(namedSave.units[0].skill, "vines");
+assert.equal(namedSave.units[0].priority, "auto");
+assert.equal(namedSave.units[0].hold, false);
 assert.equal(namedSave.units[1].name, "Mae");
 assert.equal(namedSave.units[1].skill, "stock");
+assert.equal(namedSave.festivalYear, -1);
+assert.equal(namedSave.showYear, -1);
 assert.equal(namedSave.order, null);
 assert.equal(namedSave.nextOrder, 40);
 assert.equal(namedSave.buildings[0].type, "valleyvilla");
@@ -339,8 +343,76 @@ expansion.migrateSave(keptOrder);
 assert.equal(keptOrder.order.good, "wool");
 assert.equal(keptOrder.nextOrder, 12);
 
+const idleHand = { skill: "vines", priority: "auto", hold: false, x: 0, y: 0, carry: 0 };
+assert.equal(expansion.activityLabel(idleHand), "Looking for work");
+assert.equal(expansion.activityLabel({ hold: true }), "Standing by");
+assert.equal(expansion.activityLabel({ task: { type: "farm", res: "grapes" }, phase: "work" }), "Tending vines");
+assert.equal(expansion.activityLabel({ task: { type: "farm", res: "wool" }, phase: "return" }), "Carrying home");
+assert.equal(expansion.setPriority(idleHand, "pilot"), false);
+assert.equal(expansion.setPriority(idleHand, "stock"), true);
+assert.equal(idleHand.priority, "stock");
+assert.equal(expansion.jobFocus(idleHand), "stock");
+idleHand.priority = "auto";
+assert.equal(expansion.jobFocus(idleHand), "vines");
+const yard = {
+  units: [idleHand, { task: { bid: 2 } }],
+  buildings: [
+    { id: 1, type: "vineyard", built: true, grapes: 20, x: 4, y: 1, w: 2, h: 2 },
+    { id: 2, type: "vineyard", built: true, grapes: 40, x: 1, y: 1, w: 2, h: 2 },
+    { id: 3, type: "paddock", built: true, kind: "sheep", count: 3, x: 8, y: 2, w: 3, h: 3 },
+    { id: 4, type: "paddock", built: true, kind: "cattle", count: 2, x: 2, y: 8, w: 3, h: 3 },
+    { id: 5, type: "house", built: false, x: 6, y: 6, w: 2, h: 2 },
+    { id: 6, type: "olive", built: true, olives: 0, x: 0, y: 9, w: 2, h: 2 },
+  ],
+};
+assert.equal(expansion.pickJob(yard, idleHand).bid, 1);
+assert.equal(expansion.pickJob(yard, idleHand).res, "grapes");
+idleHand.priority = "stock";
+assert.equal(expansion.pickJob(yard, idleHand).res, "wool");
+assert.equal(expansion.pickJob(yard, idleHand).bid, 3);
+idleHand.priority = "build";
+assert.equal(expansion.pickJob(yard, idleHand).type, "build");
+assert.equal(expansion.pickJob(yard, idleHand).bid, 5);
+idleHand.hold = true;
+assert.equal(expansion.pickJob(yard, idleHand), null);
+idleHand.hold = false;
+idleHand.task = { type: "move" };
+assert.equal(expansion.pickJob(yard, idleHand), null);
+assert.equal(expansion.festivalPhase(100, 120), null);
+assert.equal(expansion.festivalPhase(300, 120), null);
+assert.equal(expansion.festivalPhase(320, 120), "festival");
+assert.equal(expansion.festivalPhase(372, 120), "show");
+assert.equal(expansion.festivalPhase(800, 120), "festival");
+assert.equal(expansion.yearIndex(800, 120), 1);
+const emptyShow = expansion.showBonus({ wineTiers: { bronze: 0, silver: 0, gold: 0 } });
+assert.equal(emptyShow.coins, 20);
+assert.equal(emptyShow.place, "Crowd favourite");
+const goldShow = expansion.showBonus({ wineTiers: { bronze: 0, silver: 0, gold: 1 } });
+assert.equal(goldShow.place, "Gold medal");
+assert.equal(goldShow.coins, 48);
+const cappedShow = expansion.showBonus({ wineTiers: { bronze: 0, silver: 0, gold: 10 } });
+assert.equal(cappedShow.coins, 180);
+const festGame = {
+  time: 320,
+  festivalYear: -1,
+  showYear: -1,
+  wineTiers: { bronze: 1, silver: 1, gold: 0 },
+  buildings: [{ type: "vineyard", built: true }],
+};
+const opened = expansion.tickFestival(festGame, 2, 120);
+assert.equal(opened.phase, "festival");
+assert.equal(opened.notes.length, 1);
+assert.ok(opened.drip > 0);
+assert.equal(expansion.tickFestival(festGame, 2, 120).notes.length, 0);
+festGame.time = 372;
+const judged = expansion.tickFestival(festGame, 1, 120);
+assert.equal(judged.phase, "show");
+assert.equal(judged.notes[0].place, "Silver medal");
+assert.equal(judged.notes[0].coins, 30);
+assert.equal(expansion.tickFestival(festGame, 1, 120).notes.length, 0);
+
 const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
-for (const needle of ["assets/expansion.js", "assets/haptics.js", "cellardoor", "Valley Villa", "yard", "olive", "sellwine", "migrateSave", "coachAdvance", "claimAchievements", "Erase this estate", "Colour-blind icons", "Farmhands", "bCrew", "Four ages"]) {
+for (const needle of ["assets/expansion.js", "assets/haptics.js", "cellardoor", "Valley Villa", "yard", "olive", "sellwine", "migrateSave", "coachAdvance", "claimAchievements", "Erase this estate", "Colour-blind icons", "Farmhands", "bCrew", "Four ages", "Harvest festival", "Wine show"]) {
   assert.ok(html.includes(needle), "index missing " + needle);
 }
 const bannedNames = ["bru" + "ma", "little " + "ridge"];

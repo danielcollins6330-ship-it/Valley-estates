@@ -237,7 +237,7 @@ function newGame(seed){
 }
 function addBuilding(type,x,y,built){const d=B[type];const b={id:uid++,type,x,y,w:d.w,h:d.h,built:!!built,prog:built?1:0,queue:[],research:null,stock:0,food:type==='field'?150:0,grapes:type==='vineyard'?60:0,count:0,kind:null,pt:0,wt:0};
  VEExpansion.decorateBuilding(b);G.buildings.push(b);markOcc();return b}
-function spawnUnit(x,y,skill){const hand=VEExpansion.nextHand(G.units,skill||null);const u={id:uid++,x,y,path:null,task:null,phase:null,carry:0,ct:null,wt:0,dir:1,anim:Math.random()*6,name:hand.name,skill:hand.skill};G.units.push(u);return u}
+function spawnUnit(x,y,skill){const hand=VEExpansion.nextHand(G.units,skill||null);const u={id:uid++,x,y,path:null,task:null,phase:null,carry:0,ct:null,wt:0,dir:1,anim:Math.random()*6,name:hand.name,skill:hand.skill,priority:'auto',hold:false};G.units.push(u);return u}
 
 // ===================== GRID / PATHFINDING =====================
 let occ=new Int32Array(N*N);
@@ -273,6 +273,7 @@ function cap(){return 10+(G.techs.wheel?6:0)}
 function command(units,tx,ty){if(!units.length)return;const b=bAt(tx,ty);const t=inb(tx,ty)?G.ter[ty*N+tx]:-1;
  let label='';
  units.forEach((u,k)=>{
+  u.hold=false;
   if(b){if(!b.built)setTask(u,{type:'build',bid:b.id}),label='Build';
    else if(b.type==='field')setTask(u,{type:'farm',bid:b.id,res:'food'}),label='Farm';
    else if(b.type==='vineyard')setTask(u,{type:'farm',bid:b.id,res:'grapes'}),label='Tend vines';
@@ -337,14 +338,14 @@ function pay(c){if(!canAfford(c))return false;for(const k in c)G.res[k]-=c[k];re
 function costStr(c){return Object.entries(c||{}).map(([k,v])=>RICON[k]+v).join(' ')}
 function marketPrice(n){return G.events.market&&G.time<G.events.market?Math.round(n*1.25):n}
 function workerOn(b){return G.units.some(u=>u.task&&u.task.bid===b.id)}
-let wasRain=false,cueT=0;const harvestTold=new Set();
+let wasRain=false,cueT=0,autoT=0;const harvestTold=new Set();
 function scanCues(){if(!window.VEAudio)return;let said=false;
  for(const b of G.buildings){if(!b.built)continue;
   if(b.type==='field'||b.type==='vineyard'){const amount=b.type==='field'?b.food:b.grapes,need=b.type==='field'?140:70,drop=b.type==='field'?100:40;
    const ready=amount>=need&&!workerOn(b);if(!ready||amount<drop)harvestTold.delete(b.id);
    if(ready&&!harvestTold.has(b.id)&&!said){harvestTold.add(b.id);said=true;VEAudio.say('harvest')}}
   if(b.type==='paddock'&&b.kind==='cattle'&&b.count>0){if(workerOn(b))b.hungry=0;else{b.hungry=(b.hungry||0)+2;if(b.hungry>=140){b.hungry=0;toast('🐄 Cattle are getting hungry.','warn');VEAudio.say('cattle')}}}}}
-function tick(dt){G.time+=dt;
+function tick(dt){G.time+=dt;const festPhase=VEExpansion.festivalPhase(G.time,SEASON_LEN);const festRush=festPhase==='festival'?2:festPhase==='show'?1.4:1;
  for(const u of G.units)stepUnit(u,dt);
  let cellarOpen=false;
  for(const b of G.buildings){if(!b.built)continue;
@@ -359,9 +360,9 @@ function tick(dt){G.time+=dt;
     if(note.breed){if(G.res.food<note.food)continue;G.res.food-=note.food;b.count++}
     toast(note.t,note.c);if(note.say&&window.VEAudio)VEAudio.say(note.say)}}
   if(b.type==='cellardoor'&&!cellarOpen){cellarOpen=true;const hit=VEExpansion.tickCellar(b,dt,{season:G.season,wine:G.wineTiers.bronze|0,winePrice:VEExpansion.quote(G.market,'wine'),villa:has(G,'valleyvilla'),roll:Math.random()});
-   if(hit){VEExpansion.spendTier(G,'bronze',hit.wine);G.res.coins+=hit.coins;G.stats.coins+=hit.coins;G.stats.tastings++;b.guests++;floatText(b.x+1,b.y,'+'+hit.coins+'🪙');toast('🚪 Visitors paid '+hit.coins+'🪙 for a tasting.','good');if(window.VEAudio)VEAudio.sfx('coins')}}
+   if(hit){const paid=Math.round(hit.coins*festRush);VEExpansion.spendTier(G,'bronze',hit.wine);G.res.coins+=paid;G.stats.coins+=paid;G.stats.tastings++;b.guests++;floatText(b.x+1,b.y,'+'+paid+'🪙');toast('🚪 Visitors paid '+paid+'🪙 for a tasting.','good');if(window.VEAudio)VEAudio.sfx('coins')}}
   if(b.type==='valleyvilla'){const stay=VEExpansion.tickVilla(b,dt,{season:G.season,open:G.stats.wine>=1||has(G,'cellardoor'),cellar:has(G,'cellardoor')});
-   if(stay.coins){G.res.coins+=stay.coins;G.stats.coins+=stay.coins;b._show=(b._show||0)+stay.coins;if(b._show>=1){const n=b._show|0;b._show-=n;floatText(b.x+1.5,b.y,'+'+n+'🪙')}}if(stay.arrived)toast('🏛️ Guests arrived at Valley Villa.','good')}
+   if(stay.coins){const paid=stay.coins*festRush;G.res.coins+=paid;G.stats.coins+=paid;b._show=(b._show||0)+paid;if(b._show>=1){const n=b._show|0;b._show-=n;floatText(b.x+1.5,b.y,'+'+n+'🪙')}}if(stay.arrived)toast('🏛️ Guests arrived at Valley Villa.','good')}
   if(b.type==='winery'){b.wt+=dt;const need=(G.techs.barrels?3.5:6)*VEExpansion.pressTimeMul(G.techs);if(b.wt>=need){b.wt=0;if(G.res.grapes>=4){G.res.grapes-=4;const vines=G.buildings.filter(v=>v.type==='vineyard'&&v.built);const tended=vines.some(workerOn);const tier=VEExpansion.bottleTier(vines,G.season,dry,tended,VEExpansion.qualityBonus(G.techs));VEExpansion.addBottle(G,tier);G.stats.wine++;floatText(b.x+1.5,b.y,'+1 '+({bronze:'🥉',silver:'🥈',gold:'🥇'}[tier])+'🍷')}}
    if(G.techs.cellar){G.res.coins+=dt*0.35;G.stats.coins+=dt*0.35}}}
  // seasons & events
@@ -374,6 +375,10 @@ function tick(dt){G.time+=dt;
  if(VEExpansion.tickOrder(G,G.time)==='missed'){toast('📋 The buyer left without the goods.','warn');panelDirty=true}
  if(G.fire){G.fire.t-=dt;G.fire.spread-=dt;if(G.fire.spread<=0){G.fire.spread=G.techs.firebreak?3:1.4;spreadFire()}if(G.fire.t<=0||!G.fire.tiles.length){G.stats.survivedFire=(G.stats.survivedFire||0)+1;G.fire=null;toast('🔥 The bushfire has burnt out. You made it through.','good')}}
  for(const k of ['drought','frost','storm','market','borrow','dogScare'])if(G.events[k]&&G.time>G.events[k]){delete G.events[k];if(k==='market'||k==='dogScare')panelDirty=true}
+ const fest=VEExpansion.tickFestival(G,dt,SEASON_LEN);
+ if(fest.drip){G.res.coins+=fest.drip;G.stats.coins+=fest.drip}
+ for(const note of fest.notes){toast(note.text,'good');if(note.coins){G.res.coins+=note.coins;G.stats.coins+=note.coins;floatText(20,20,'+'+note.coins+'🪙');if(window.VEAudio)VEAudio.sfx('coins')}}
+ if((G.coach|0)>=4){autoT+=dt;if(autoT>=1.1){autoT=0;let sent=0;for(const u of G.units){if(sent>=2||u.task||u.hold||u.carry>0)continue;const job=VEExpansion.pickJob(G,u);if(!job)continue;setTask(u,job);if(u.task)sent++}}}
  const wet=!!(VE3D.raining&&VE3D.raining(G));if(wet&&!wasRain){toast('🌧️ Rain\'s on the way.');if(window.VEAudio)VEAudio.say('rain')}wasRain=wet;
  cueT+=dt;if(cueT>=2){cueT=0;scanCues()}
  // missions
@@ -461,7 +466,9 @@ function draw(){VE3D.render(G,{cam,placing,validPlace});const t=performance.now(
  for(const b of G.buildings){if(!G.explored[b.y*N+b.x])continue;const[sx,sy]=w2s(b.x+b.w/2,b.y,1.2);if(sx<-60||sx>W+60||sy<-60||sy>H+60)continue;const bw=Math.max(30,b.w*TS*cam.zoom*0.7);
   if(!b.built)hbar(sx-bw/2,sy,bw,b.prog,'#ffd45a');if(b.research)hbar(sx-bw/2,sy-7,bw,b.research.t/b.research.total,'#7fd3ff');if(b.queue.length)hbar(sx-bw/2,sy+7,bw,(b.qt||0)/12,'#9cff6b');
   if(G.selB===b.id){const c=[[b.x,b.y],[b.x+b.w,b.y],[b.x+b.w,b.y+b.h],[b.x,b.y+b.h]].map(p=>w2s(p[0],p[1],0.05));hctx.strokeStyle=`rgba(255,224,102,${0.7+Math.sin(t*5)*0.3})`;hctx.lineWidth=2;hctx.setLineDash([6,4]);hctx.lineDashOffset=-t*20;hctx.beginPath();c.forEach((p,i)=>i?hctx.lineTo(p[0],p[1]):hctx.moveTo(p[0],p[1]));hctx.closePath();hctx.stroke();hctx.setLineDash([])}}
- for(const u of G.units){if(!u.task&&!u.moving){const[sx,sy]=w2s(u.x,u.y,0.75);hctx.fillStyle='rgba(255,255,255,0.9)';hctx.font='bold 10px sans-serif';hctx.fillText('z',sx+6,sy-Math.sin(t*3)*2)}}
+ {const labels=[];for(const u of G.units){const[sx,sy]=w2s(u.x,u.y,1.05);if(sx<-30||sx>W+30||sy<-20||sy>H+20)continue;labels.push({u,sx,sy,d:(sx-W/2)**2+(sy-H/2)**2,sel:G.sel.includes(u.id)})}
+ labels.sort((a,b)=>a.sel===b.sel?a.d-b.d:a.sel?-1:1);hctx.font='bold 11px sans-serif';
+ for(const item of labels){if(!item.sel&&labels.indexOf(item)>=8)continue;const text=VEExpansion.activityLabel(item.u);const tw=Math.min(148,hctx.measureText(text).width+12);hctx.fillStyle='rgba(28,18,8,0.82)';hctx.fillRect(item.sx-tw/2,item.sy-18,tw,16);hctx.fillStyle=item.sel?'#ffe08a':'#fff6e4';hctx.fillText(text,item.sx,item.sy-6)}}
  if(G.ping){const p=G.ping;const[sx,sy]=w2s(p.x,p.y,0.02);const r=(1.3-p.t)*22*cam.zoom+5;hctx.strokeStyle=`rgba(255,240,120,${p.t})`;hctx.lineWidth=2.5;hctx.beginPath();hctx.ellipse(sx,sy,r,r*0.6,0,0,7);hctx.stroke();if(p.l){hctx.font='bold 11px sans-serif';hctx.strokeStyle=`rgba(0,0,0,${p.t*0.6})`;hctx.lineWidth=3;hctx.strokeText(p.l,sx,sy-16);hctx.fillStyle=`rgba(255,255,255,${p.t})`;hctx.fillText(p.l,sx,sy-16)}}
  for(const f of floats){const[sx,sy]=w2s(f.x,f.y,f.h+(1.4-f.a)*0.6);hctx.globalAlpha=Math.min(1,f.a);hctx.font='bold 12px sans-serif';hctx.strokeStyle='#000a';hctx.lineWidth=3;hctx.strokeText(f.t,sx,sy);hctx.fillStyle='#fff';hctx.fillText(f.t,sx,sy);hctx.globalAlpha=1}
  if(box){hctx.strokeStyle='#ffe066';hctx.lineWidth=2;hctx.fillStyle='#ffe06622';const bx=Math.min(box.x0,box.x1),by=Math.min(box.y0,box.y1);hctx.fillRect(bx,by,Math.abs(box.x1-box.x0),Math.abs(box.y1-box.y0));hctx.strokeRect(bx,by,Math.abs(box.x1-box.x0),Math.abs(box.y1-box.y0))}}
@@ -525,7 +532,9 @@ function updateBar(){const r=G.res;$('rF').textContent=resMark('🌾','Fd',r.foo
  $('ageL').textContent=AGES[G.age].e+' '+AGES[G.age].n;
  const phase=VEExpansion.seasonInfo(G.season);$('sub').className='s'+G.season;
  const weather=(G.events.drought?' ☀️':'')+(G.events.frost?' ❄️':'')+(G.events.storm?' ⛈️':'')+(G.events.market?' 📈':'')+(G.fire?' 🔥':'')+(speed===0?' ⏸':'');
- $('seasonL').textContent=phase.e+' '+phase.name+' · '+phase.phase+weather;
+ const festNow=VEExpansion.festivalPhase(G.time,SEASON_LEN);
+ const festTag=festNow==='festival'?' · 🎉 Harvest festival':festNow==='show'?' · 🏆 Wine show':'';
+ $('seasonL').textContent=phase.e+' '+phase.name+' · '+phase.phase+festTag+weather;
  $('seasonL').title=phase.name+' '+phase.phase+(isNight()?' night':' day');
  const idle=G.units.filter(u=>!u.task&&!u.moving).length;$('idleN').textContent=idle;$('idleN').style.display=idle?'':'none';
  const m=MISSIONS[Math.min(G.mission,MISSIONS.length-1)];const tour=VEExpansion.coachHint(G.coach|0);
@@ -535,9 +544,10 @@ function panelHTML(){
  if(placing){const d=B[placing.type],ok=placing.x!=null&&validPlace(placing.type,placing.x,placing.y);
   return `<h4>${d.e} Place ${d.n}</h4><div class="d">${placing.x==null?'Tap the map where you want it.':ok?'Looks good! Confirm to lay the foundation.':'❌ Invalid spot: needs explored, clear grass'+(placing.type==='dam'?' next to water':'')+'.'} Cost ${costStr(d.cost)}</div><div class="btns">${btn('confirm','✔ Confirm','',ok?'':'dis')}${btn('cancel','✖ Cancel','','red')}</div>`}
  const us=selUnits();
- if(us.length){const u=us[0];const st=us.length>1?us.length+' farmhands selected':(u.task?({gather:'Gathering '+u.task.res,build:'Building',farm:'Working '+(u.task.res==='grapes'?'vines':u.task.res==='wool'?'sheep':'farm'),move:'Walking',deposit:'Dropping off'}[u.task.type]+(u.phase==='return'?' (carrying '+u.carry+RICON[u.ct]+' home)':'')):'Idle 💤');
+ if(us.length){const u=us[0];const st=us.length>1?us.length+' farmhands selected':VEExpansion.activityLabel(u);
   const who=us.length>1?'Farmhands ×'+us.length:(u.name||'Farmhand')+' · '+VEExpansion.skillLabel(u.skill);
-  return `<h4>🧑‍🌾 ${who}</h4><div class="d">${st}. Tap trees, rocks, berries or a building. Carry cap ${cap()}.</div><div class="btns">${us.length===1?btn('skillset:vines','🍇 Vines','',u.skill==='vines'?'':'alt')+btn('skillset:stock','🐄 Stock','',u.skill==='stock'?'':'alt')+btn('skillset:build','🔨 Building','',u.skill==='build'?'':'alt'):''}${btn('build','🔨 Build','')}${btn('deselect','✖ Deselect','','alt')}${btn('stop','⏹ Stop','','red')}</div>`}
+  const prios=us.length===1?['auto','vines','stock','build'].map(p=>btn('prio:'+p,VEExpansion.priorityLabel(p),'',(u.priority||'auto')===p?'':'alt')).join(''):'';
+  return `<h4>🧑‍🌾 ${who}</h4><div class="d">${st}. Priority sends idle hands to that work. Auto follows their skill. Carry cap ${cap()}.</div><div class="btns">${us.length===1?btn('skillset:vines','🍇 Vines','',u.skill==='vines'?'':'alt')+btn('skillset:stock','🐄 Stock','',u.skill==='stock'?'':'alt')+btn('skillset:build','🔨 Building','',u.skill==='build'?'':'alt'):''}${prios}${btn('build','🔨 Build','')}${btn('deselect','✖ Deselect','','alt')}${btn('stop','⏹ Stop','','red')}</div>`}
  const b=G.buildings.find(b=>b.id===G.selB);
  if(b){const d=B[b.type];let h=`<h4>${d.e} ${d.n}${b.built?'':' (under construction '+Math.round(b.prog*100)+'%)'}</h4><div class="d">${d.desc}`;
   if(b.type==='field')h+=` 🌾 ${b.food|0}/150 food left.`;if(b.type==='vineyard')h+=` 🍇 ${b.grapes|0}/80 grapes. Care ${b.care|0}. Next bottle ${VEExpansion.tierFromScore(VEExpansion.vineScore(b,G.season,!!(G.events.drought&&!G.techs.irrig),workerOn(b))+VEExpansion.qualityBonus(G.techs))}.`+(b.pruned?' Pruned for budburst.':'')+(G.events.dogScare>G.time?' The dog is on watch.':'');
@@ -575,7 +585,7 @@ $('panel').addEventListener('pointerdown',e=>{const el=e.target.closest('[data-a
 function act(a){if(window.VEHaptics)VEHaptics.tap('light');const b=G.buildings.find(b=>b.id===G.selB);const p=a.split(':');
  switch(p[0]){
  case'build':openBuild();break;case'deselect':G.sel=[];G.selB=null;break;
- case'stop':selUnits().forEach(u=>{u.task=null;u.path=null});break;
+ case'stop':selUnits().forEach(u=>{u.task=null;u.path=null;u.phase=null;u.hold=true});break;
  case'confirm':confirmPlace();break;case'cancel':placing=null;break;
  case'selidle':selectIdle();break;case'tc':{const t=G.buildings.find(b=>b.type==='homestead');if(t){G.selB=t.id;centerOn(t.x+1.5,t.y+1.5)}break}
  case'train':if(b&&b.queue.length<5&&pay({food:50}))b.queue.push(1);break;
@@ -583,6 +593,7 @@ function act(a){if(window.VEHaptics)VEHaptics.tap('light');const b=G.buildings.f
  case'age':{const a2=AGES[G.age+1];if(b&&!b.research&&pay(a2.cost)){b.research={id:'age'+(G.age+1),t:0,total:a2.time};toast('⬆️ Researching '+a2.n)}break}
  case'tech':{const node=VEExpansion.researchById(p[1]);const tc=node||TECH[p[1]];const state=node?VEExpansion.researchState(G,p[1]):{ok:!!tc&&G.age>=tc.age};if(b&&tc&&!b.research&&state.ok&&pay(node?node.cost:tc.cost)){b.research={id:p[1],t:0,total:node?node.time:tc.time}}break}
  case'skillset':{const hand=selUnits()[0];if(hand&&VEExpansion.setSkill(hand,p[1]))toast(hand.name+' now specialises in '+VEExpansion.skillLabel(p[1]));break}
+ case'prio':{const hand=selUnits()[0];if(hand&&VEExpansion.setPriority(hand,p[1]))toast(hand.name+' will take '+VEExpansion.priorityLabel(p[1]).toLowerCase()+' work');break}
  case'dog':if(b&&b.type==='vineyard'){G.events.dogScare=G.time+50;delete G.events.birds;toast('🐕 The dog is in the vines. The cockatoos lift off.','good')}break;
  case'deliver':{const paid=VEExpansion.deliverOrder(G);toast(paid.text,paid.ok?'good':'warn');if(paid.ok){G.stats.coins+=paid.coins;floatText(b?b.x+1:20,b?b.y:20,'+'+paid.coins+'🪙');if(window.VEAudio)VEAudio.sfx('coins')}break}
  case'replant':if(b&&pay({wood:30})){b.food=150;b.burnt=0;if(window.VEAudio)VEAudio.sfx('plant')}break;
@@ -615,6 +626,7 @@ $('sheet').addEventListener('click',e=>{const c=e.target.closest('[data-b]');if(
  if(k.startsWith('study:')){startStudy(k.slice(6));return}
  if(k.startsWith('hire:')){hireSkill(k.slice(5));return}
  if(k.startsWith('skill:')){const parts=k.split(':');const hand=G.units.find(u=>String(u.id)===parts[1]);if(hand&&VEExpansion.setSkill(hand,parts[2]))toast(hand.name+' · '+VEExpansion.skillLabel(parts[2]));showHands();return}
+ if(k.startsWith('prio:')){const parts=k.split(':');const hand=G.units.find(u=>String(u.id)===parts[1]);if(hand&&VEExpansion.setPriority(hand,parts[2]))toast(hand.name+' · '+VEExpansion.priorityLabel(parts[2]));showHands();return}
  if(k==='deliver-order'){const paid=VEExpansion.deliverOrder(G);toast(paid.text,paid.ok?'good':'warn');if(paid.ok){G.stats.coins+=paid.coins;if(window.VEAudio)VEAudio.sfx('coins')}showOrders();return}
  if(k.startsWith('a11y:')){const parts=k.split(':');const patch={};if(parts[1]==='text')patch.text=parts[2];if(parts[1]==='cb')patch.cb=parts[2]==='1';if(parts[1]==='lefty')patch.lefty=parts[2]==='1';saveA11y(patch);toast('Settings saved');showMenu();return}
  if(!B[k])return;const d=B[k];if(G.age<d.age){toast('Requires '+AGES[d.age].n,'warn');return}if(!canAfford(d.cost)){toast('Need '+costStr(d.cost),'warn');return}
@@ -626,11 +638,12 @@ function openCrew(){let h='<h3>📋 Farm desk</h3><p>Hire hands, study the ages,
  h+='<button class="btn" data-b="research" style="width:100%;margin-bottom:8px">🔬 Research<small style="display:block">Presses, water, pasture, genetics</small></button>';
  h+='<button class="btn" data-b="orders" style="width:100%;margin-bottom:8px">📋 Orders<small style="display:block">Short jobs for bonus coins</small></button>';
  h+='<button class="close" data-b="x">Close</button>';$('sheet').innerHTML=h;$('modal').style.display='flex'}
-function showHands(){let h='<h3>🧢 Farmhands</h3><p>Tap a skill to assign that hand. Hiring costs 50 food and a free cottage space.</p>';
- for(const u of G.units){const job=u.task?u.task.type:'idle';h+=`<p><b>${u.name}</b> · ${VEExpansion.skillLabel(u.skill)} · ${job}</p><div class="btns" style="margin-bottom:8px">${btnSkill(u,'vines')}${btnSkill(u,'stock')}${btnSkill(u,'build')}</div>`}
+function showHands(){let h='<h3>🧢 Farmhands</h3><p>Idle hands pick up work that matches their priority. Auto follows their skill. Stop a hand and they wait. Hiring costs 50 food and a free cottage space.</p>';
+ for(const u of G.units){h+=`<p><b>${u.name}</b> · ${VEExpansion.skillLabel(u.skill)} · ${VEExpansion.activityLabel(u)}</p><div class="btns">${btnSkill(u,'vines')}${btnSkill(u,'stock')}${btnSkill(u,'build')}</div><div class="btns" style="margin-bottom:8px">${btnPrio(u,'auto')}${btnPrio(u,'vines')}${btnPrio(u,'stock')}${btnPrio(u,'build')}</div>`}
  h+='<div class="btns">'+hireBtn('vines','🍇 Hire vines')+hireBtn('stock','🐄 Hire stock')+hireBtn('build','🔨 Hire building')+'</div><button class="close" data-b="x">Close</button>';
  $('sheet').innerHTML=h;$('modal').style.display='flex'}
 function btnSkill(u,skill){return `<button class="btn ${u.skill===skill?'':'alt'}" data-b="skill:${u.id}:${skill}">${VEExpansion.skillLabel(skill)}</button>`}
+function btnPrio(u,priority){return `<button class="btn ${(u.priority||'auto')===priority?'':'alt'}" data-b="prio:${u.id}:${priority}">${VEExpansion.priorityLabel(priority)}</button>`}
 function hireBtn(skill,label){return `<button class="btn" data-b="hire:${skill}">${label}<small>🌾50</small></button>`}
 function hireSkill(skill){if(G.units.length>=popCap()){toast('Need another Cottage before hiring.','warn');return}if(!pay({food:50})){toast('Need 50 food to hire.','warn');return}
  const home=G.buildings.find(b=>b.type==='homestead');const hand=VEExpansion.nextHand(G.units,skill);const u=spawnUnit(home?home.x+1.5:20,home?home.y+home.h+.4:24,skill);u.name=hand.name;u.skill=hand.skill;G.stats.trained++;toast(u.name+' joined to work '+VEExpansion.skillLabel(skill),'good');showHands()}
@@ -700,5 +713,5 @@ if(!G.tutorialSeen)showIntro();else if(G.offlineNote){showOffline(G.offlineNote)
 if(G.dailyNote){toast(G.dailyNote,'good');G.dailyNote=''}
 requestAnimationFrame(frame);
 // test hooks
-window.VE={camCenter,unitScreen:u=>w2s(u.x,u.y,0.3),get G(){return G},tick,command,w2s,s2w,centerOn,cam,act,confirmPlace,setPlacing:(t,x,y)=>{placing={type:t,x,y};panelDirty=true},validPlace,B,save,findNear,T,N,popCap,setSpeed:v=>speed=v,resize,scanCues,marketPrice,get frames(){return frames},setViewportSegments:rects=>{window.__veSegments=rects&&rects.length?rects:null;resize()},metrics(){const r=VE3D._dbg().renderer,el=r.domElement,panel=$('panel').getBoundingClientRect(),bar=$('bar').getBoundingClientRect(),miniR=$('mini').getBoundingClientRect();return {W,H,DPR,bufW:el.width,bufH:el.height,pr:r.getPixelRatio(),clientW:el.clientWidth,clientH:el.clientHeight,cls:document.documentElement.className,panel:{left:panel.left,top:panel.top,right:panel.right,bottom:panel.bottom,width:panel.width,height:panel.height},bar:{left:bar.left,right:bar.right,top:bar.top,width:bar.width},mini:{left:miniR.left,right:miniR.right,top:miniR.top,width:miniR.width,height:miniR.height},seed:G.seed,coins:G.res.coins,frames}}}
+window.VE={camCenter,unitScreen:u=>w2s(u.x,u.y,0.3),get G(){return G},tick,updateBar,command,w2s,s2w,centerOn,cam,act,confirmPlace,setPlacing:(t,x,y)=>{placing={type:t,x,y};panelDirty=true},validPlace,B,save,findNear,T,N,popCap,setSpeed:v=>speed=v,resize,scanCues,marketPrice,get frames(){return frames},setViewportSegments:rects=>{window.__veSegments=rects&&rects.length?rects:null;resize()},metrics(){const r=VE3D._dbg().renderer,el=r.domElement,panel=$('panel').getBoundingClientRect(),bar=$('bar').getBoundingClientRect(),miniR=$('mini').getBoundingClientRect();return {W,H,DPR,bufW:el.width,bufH:el.height,pr:r.getPixelRatio(),clientW:el.clientWidth,clientH:el.clientHeight,cls:document.documentElement.className,panel:{left:panel.left,top:panel.top,right:panel.right,bottom:panel.bottom,width:panel.width,height:panel.height},bar:{left:bar.left,right:bar.right,top:bar.top,width:bar.width},mini:{left:miniR.left,right:miniR.right,top:miniR.top,width:miniR.width,height:miniR.height},seed:G.seed,coins:G.res.coins,frames}}}
 </script></body></html>
