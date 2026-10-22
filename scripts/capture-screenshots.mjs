@@ -631,6 +631,7 @@ try {
       G.res.stone = 2000;
       G.res.coins = 2000;
       G.res.wine = 40;
+      if (G.wineTiers) G.wineTiers.bronze = 40;
       G.res.wool = 0;
       G.stats.wine = 4;
       G.achievements = {};

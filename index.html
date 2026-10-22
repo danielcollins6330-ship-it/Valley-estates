@@ -17,8 +17,11 @@ html,body{margin:0;height:100%;overflow:hidden;background:#1d140b;font-family:sy
 #bar{position:fixed;top:var(--hud-top);left:var(--hud-left);width:var(--hud-width);right:auto;display:flex;gap:2px;justify-content:space-between;padding:calc(6px + var(--safe-t)) calc(6px + var(--safe-r)) 6px calc(6px + var(--safe-l));background:linear-gradient(#3d2a17ee,#2a1c0edd);font-size:12.5px;font-weight:700;z-index:5;overflow-x:auto;scrollbar-width:none}
 #bar::-webkit-scrollbar{display:none}
 #bar span{background:#0003;border-radius:8px;padding:3px 5px;white-space:nowrap;flex:0 0 auto}
-#sub{position:fixed;top:calc(var(--hud-top) + 36px + var(--safe-t));left:var(--hud-left);width:var(--hud-width);right:auto;display:flex;justify-content:space-between;align-items:center;padding:3px calc(8px + var(--safe-r)) 3px calc(8px + var(--safe-l));font-size:11.5px;background:#2a1c0ecc;z-index:5}
-#seasonL{border-radius:999px;padding:2px 8px}
+#sub{position:fixed;top:calc(var(--hud-top) + 36px + var(--safe-t));left:var(--hud-left);width:var(--hud-width);right:auto;display:flex;justify-content:space-between;align-items:center;gap:6px;padding:3px calc(8px + var(--safe-r)) 3px calc(8px + var(--safe-l));font-size:11.5px;background:#2a1c0ecc;z-index:5}
+#ageL{flex:0 0 auto}
+#seasonL{border-radius:999px;padding:2px 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.chart{display:flex;align-items:flex-end;gap:3px;height:28px;margin:2px 0 6px}
+.chart i{display:block;flex:1;background:#e8a33d;border-radius:2px 2px 0 0;min-width:4px}
 #sub.s0 #seasonL{background:#d9efc2;color:#245014}
 #sub.s1 #seasonL{background:#ffe0a8;color:#6a3b00}
 #sub.s2 #seasonL{background:#f3c98a;color:#6a2e12}
@@ -61,6 +64,7 @@ html.layout-tall{--panel-h:min(180px,30vh)}
 html.layout-tall #bar{font-size:11px}
 html.layout-square{--panel-h:min(168px,24vh)}
 html.layout-wide{--panel-h:0px;--panel-w:min(340px,38vw)}
+html.layout-wide #sub{width:calc(var(--hud-width) - var(--panel-w))}
 html.layout-wide #panel{top:calc(var(--hud-top) + 58px + var(--safe-t));bottom:var(--chrome-bottom);height:auto;width:var(--panel-w);left:calc(var(--hud-left) + var(--hud-width) - var(--panel-w));border-top:none;border-left:3px solid #c98b3c}
 html.layout-wide #mini{left:calc(var(--hud-left) + var(--hud-width) - var(--panel-w) - var(--mini) - 10px - var(--safe-r))}
 html.layout-wide #rside{left:calc(var(--hud-left) + var(--hud-width) - var(--panel-w) - var(--btn) - 12px - var(--safe-r))}
@@ -76,7 +80,8 @@ html.layout-wide #sheet{width:min(480px,100%);margin-bottom:12px;border-radius:2
  :root{--btn:56px;--mini:132px;--mini-gap:12px}
  #bar{font-size:16px}
  #bar span{padding:5px 8px}
- #sub{font-size:14px}
+ #sub{top:calc(var(--hud-top) + 58px + var(--safe-t));font-size:14px}
+ #goal,#mini{top:calc(var(--hud-top) + 96px + var(--safe-t))}
  #goal{font-size:15px;padding:10px 12px}
  .btn{font-size:15px;min-height:48px;padding:10px 12px}
  .rb{font-size:24px;border-radius:16px}
@@ -85,7 +90,7 @@ html.layout-wide #sheet{width:min(480px,100%);margin-bottom:12px;border-radius:2
 @media (min-width:900px) and (max-aspect-ratio:4/5){
  :root{--panel-h:min(280px,24vh)}
  #goal{max-width:min(480px,calc(var(--hud-width) - var(--mini) - 40px))}
- #toasts{top:calc(var(--hud-top) + 210px + var(--safe-t));width:min(420px,calc(var(--hud-width) - var(--mini) - 40px))}
+ #toasts{top:calc(var(--hud-top) + 250px + var(--safe-t));width:min(420px,calc(var(--hud-width) - var(--mini) - 40px))}
 }
 @media (horizontal-viewport-segments: 2){
  :root{--hud-left:env(viewport-segment-left 0 0,0px);--hud-top:env(viewport-segment-top 0 0,0px);--hud-width:env(viewport-segment-width 0 0,50vw);--hud-height:env(viewport-segment-height 0 0,100vh)}
@@ -95,7 +100,7 @@ html.layout-wide #sheet{width:min(480px,100%);margin-bottom:12px;border-radius:2
 }
 </style></head><body>
 <canvas id="cv"></canvas><canvas id="hud"></canvas>
-<div id="bar"><span id="rF">🌾0</span><span id="rW">🪵0</span><span id="rS">🪨0</span><span id="rC">🪙0</span><span id="rG">🍇0</span><span id="rV">🍷0</span><span id="rL">🧶0</span><span id="rP">👤0/0</span></div>
+<div id="bar"><span id="rF">🌾0</span><span id="rW">🪵0</span><span id="rS">🪨0</span><span id="rC">🪙0</span><span id="rG">🍇0</span><span id="rV">🍷0</span><span id="rL">🧶0</span><span id="rO">🫒0</span><span id="rP">👤0/0</span></div>
 <div id="sub"><span id="ageL"></span><span id="seasonL"></span></div>
 <div id="goal"></div>
 <canvas id="mini" width="104" height="104"></canvas>
@@ -118,6 +123,7 @@ html.layout-wide #sheet{width:min(480px,100%);margin-bottom:12px;border-radius:2
 <script src="assets/audio-policy.js"></script>
 <script src="assets/audio.js"></script>
 <script src="assets/expansion.js"></script>
+<script src="assets/haptics.js"></script>
 <script>
 "use strict";
 // ===================== CONFIG =====================
@@ -130,16 +136,20 @@ const AGES=[
  {n:'Estate Age',e:'🍷',cost:{food:450,wood:300,stone:150,wine:8},time:35},
  {n:'Valley Empire Age',e:'👑',cost:{food:700,stone:350,coins:500,wine:20},time:45}];
 const B={
- homestead:{n:'Homestead',e:'🏠',w:3,h:3,cost:{wood:200,stone:100},age:9,drop:['food','wood','stone','grapes','wool'],pop:5,bt:60,col:'#b5562f',desc:'Town centre. Trains farmhands, researches Ages.'},
+ homestead:{n:'Homestead',e:'🏠',w:3,h:3,cost:{wood:200,stone:100},age:9,drop:['food','wood','stone','grapes','wool','olives'],pop:5,bt:60,col:'#b5562f',desc:'Town centre. Trains farmhands, researches Ages.'},
  house:{n:'Cottage',e:'🛖',w:2,h:2,cost:{wood:30},age:0,pop:5,bt:12,col:'#c2733e',desc:'+5 population.'},
- barn:{n:'Barn',e:'🏚️',w:2,h:2,cost:{wood:60},age:0,drop:['food','grapes','wool'],bt:18,col:'#a52d2d',desc:'Drop-off for food, grapes & wool. Farm techs.'},
+ barn:{n:'Barn',e:'🏚️',w:2,h:2,cost:{wood:60},age:0,drop:['food','grapes','wool','olives'],bt:18,col:'#a52d2d',desc:'Drop-off for food, grapes, olives and wool. Farm techs.'},
  field:{n:'Wheat Field',e:'🌾',w:2,h:2,cost:{wood:40},age:0,pass:1,bt:10,col:'#8a5a2b',desc:'Farmhands harvest 150 food. Replant when empty.'},
  lumber:{n:'Lumber Camp',e:'🪓',w:2,h:2,cost:{wood:60},age:0,drop:['wood'],bt:15,col:'#7b5532',desc:'Wood drop-off. Axe techs.'},
  quarry:{n:'Quarry & Mill',e:'⛏️',w:2,h:2,cost:{wood:80},age:1,drop:['stone'],bt:18,col:'#777',desc:'Stone drop-off. Pick techs.'},
  vineyard:{n:'Vineyard',e:'🍇',w:2,h:2,cost:{wood:60,stone:20},age:1,pass:1,bt:14,col:'#5a7a2f',desc:'Grapevines regrow. Grapes → Winery.'},
  winery:{n:'Winery',e:'🍷',w:3,h:3,cost:{wood:120,stone:60},age:1,drop:['grapes'],bt:30,col:'#6b2142',desc:'Turns 4 grapes into 1 bottle of wine.'},
  paddock:{n:'Paddock',e:'🐄',w:3,h:3,cost:{wood:80},age:1,pass:1,bt:15,col:'#6d8b3a',desc:'Speckle Park cattle (beef) or Babydoll sheep (wool).'},
- dam:{n:'Farm Dam',e:'💧',w:2,h:2,cost:{stone:80},age:1,bt:20,col:'#3a7bbf',desc:'Halves drought losses. Must be near water.'},
+ dam:{n:'Farm Dam',e:'💧',w:2,h:2,cost:{stone:80},age:1,bt:20,col:'#3a7bbf',desc:'Softens drought. Must sit beside water. Add a Water Tank to soften it more.'},
+ tank:{n:'Water Tank',e:'🛢️',w:2,h:2,cost:{stone:70,wood:30},age:1,bt:16,col:'#6a7d86',desc:'Stores water anywhere and softens drought. Best paired with a Farm Dam.'},
+ shed:{n:'Shearing Shed',e:'🧶',w:2,h:2,cost:{wood:110,stone:20},age:1,bt:18,col:'#8d6a45',desc:'Babydoll sheep grow fleece faster.'},
+ olive:{n:'Olive Grove',e:'🫒',w:2,h:2,cost:{wood:70,stone:15},age:1,pass:1,bt:16,col:'#6b7a32',desc:'A new crop. Harvest olives and sell them at the market.'},
+ machine:{n:'Machinery Shed',e:'🚜',w:2,h:2,cost:{wood:160,stone:50},age:2,bt:24,col:'#7a5a3a',desc:'Farmhands gather and harvest faster.'},
  market:{n:'Market',e:'⚖️',w:3,h:3,cost:{wood:150,stone:50},age:2,bt:30,col:'#c99a2e',desc:'Trade resources for coins. Sell wine & wool.'},
  cellardoor:{n:'Cellar Door',e:'🚪',w:3,h:2,cost:{wood:180,stone:90,wine:6},age:2,bt:26,col:'#8a3d55',desc:'Visitors arrive for tastings and pay coins.'},
  villa:{n:'Bruma Villa',e:'🏛️',w:4,h:3,cost:{wood:320,stone:240,coins:450,wine:10},age:3,bt:48,col:'#c4a574',desc:'Guests stay at the villa, and your wine sells for more.'},
@@ -178,7 +188,7 @@ const MISSIONS=[
 const SEASONS=[{n:'Spring',e:'🌸'},{n:'Summer',e:'☀️'},{n:'Autumn',e:'🍂'},{n:'Winter',e:'❄️'}];
 const SEASON_LEN=120;
 function has(g,t){return g.buildings.some(b=>b.type===t&&b.built)}
-const RICON={food:'🌾',wood:'🪵',stone:'🪨',coins:'🪙',grapes:'🍇',wine:'🍷',wool:'🧶'};
+const RICON={food:'🌾',wood:'🪵',stone:'🪨',coins:'🪙',grapes:'🍇',wine:'🍷',wool:'🧶',olives:'🫒'};
 
 // ===================== STATE =====================
 let G; let uid=1;
@@ -203,9 +213,10 @@ function newGame(seed){
  patch(cx-7,cy-9,7,4,T.FOREST,.85);patch(cx+6,cy+3,3,6,T.FOREST,.8);
  patch(cx+5,cy-5,3,2,T.BERRY,.9);patch(cx-5,cy+6,3,2,T.ROCK,1);
  for(let i=0;i<N*N;i++)amt[i]=ter[i]===T.FOREST?100:ter[i]===T.ROCK?200:ter[i]===T.BERRY?100:0;
- G={seed,ter,amt,var:var_,explored:new Uint8Array(N*N),res:{food:200,wood:200,stone:60,coins:0,grapes:0,wine:0,wool:0},
+ G={seed,ter,amt,var:var_,explored:new Uint8Array(N*N),res:{food:200,wood:200,stone:60,coins:0,grapes:0,wine:0,wool:0,olives:0},
   units:[],buildings:[],time:0,age:0,techs:{},research:null,mission:0,stats:{wood:0,stone:0,food:0,trained:0,wine:0,coins:0,tastings:0,soldStock:0,survivedFire:0},
-  season:0,events:{},sel:[],selB:null,won:false,tutorialSeen:false,nextEvt:40,achievements:{},coach:0,coachTime:0};
+  season:0,events:{},sel:[],selB:null,won:false,tutorialSeen:false,nextEvt:40,achievements:{},coach:0,coachTime:0,
+  market:VEExpansion.freshMarket(),wineTiers:{bronze:0,silver:0,gold:0},nextChoice:90,lastSeen:Date.now(),dailyDay:null,dailyStreak:0};
  uid=1;
  const tc=addBuilding('homestead',cx,cy,true);
  for(let i=0;i<3;i++)spawnUnit(cx+1+i*0.9-0.4,cy+3.4);
@@ -254,6 +265,7 @@ function command(units,tx,ty){if(!units.length)return;const b=bAt(tx,ty);const t
   if(b){if(!b.built)setTask(u,{type:'build',bid:b.id}),label='Build';
    else if(b.type==='field')setTask(u,{type:'farm',bid:b.id,res:'food'}),label='Farm';
    else if(b.type==='vineyard')setTask(u,{type:'farm',bid:b.id,res:'grapes'}),label='Tend vines';
+   else if(b.type==='olive')setTask(u,{type:'farm',bid:b.id,res:'olives'}),label='Pick olives';
    else if(b.type==='paddock')setTask(u,{type:'farm',bid:b.id,res:b.kind==='sheep'?'wool':'food'}),label='Tend stock';
    else if(B[b.type].drop&&u.carry>0){u.task={type:'deposit'};u.phase='return';pathTo(u,rectB(b));label='Drop off'}
    else moveTo(u,tx,ty,k),label='Move';}
@@ -270,9 +282,10 @@ function dropFor(u,res){let best=null,bd=1e9;for(const b of G.buildings){if(!b.b
  const dist=Math.hypot(b.x+b.w/2-u.x,b.y+b.h/2-u.y);if(dist<bd){bd=dist;best=b}}return best}
 function findNear(x,y,tt,r){let best=null,bd=1e9;for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){const nx=x+dx,ny=y+dy;if(!inb(nx,ny)||G.ter[ny*N+nx]!==tt||!G.explored[ny*N+nx])continue;const d=dx*dx+dy*dy;if(d<bd){bd=d;best=[nx,ny]}}return best}
 function rate(res,src){let r=0.9;if(res==='wood'&&G.techs.axes)r*=1.4;if(res==='stone'&&G.techs.picks)r*=1.4;
- if(src==='field'){r=0.75;if(G.techs.plough)r*=1.5;if(G.events.drought&&!G.techs.irrig)r*=has(G,'dam')?0.75:0.5;if(G.techs.irrig)r*=1.2}
- if(src==='vineyard'){r=0.7;if(G.events.drought&&!G.techs.irrig)r*=has(G,'dam')?0.75:0.5}
- if(src==='paddock')r=1.2;return VEExpansion.gatherRate(r,src,G.season)}
+ const dry=G.events.drought&&!G.techs.irrig;
+ if(src==='field'){r=0.75;if(G.techs.plough)r*=1.5;if(dry)r*=VEExpansion.droughtMul(G);if(G.techs.irrig)r*=1.2}
+ if(src==='vineyard'||src==='olive'){r=0.7;if(dry)r*=VEExpansion.droughtMul(G)}
+ if(src==='paddock')r=1.2;return VEExpansion.gatherRate(r,src,G.season)*VEExpansion.workMul(G)}
 function adjacent(u,rect){const x=u.x,y=u.y;return x>=rect.x-1.2&&x<=rect.x+rect.w+1.2&&y>=rect.y-1.2&&y<=rect.y+rect.h+1.2}
 function stepUnit(u,dt){u.anim+=dt*8;
  const spd=(G.techs.wheel?2.6:2.25)*(G.ter[Math.floor(u.y)*N+Math.floor(u.x)]===T.HILL?0.7:1);
@@ -294,7 +307,7 @@ function stepUnit(u,dt){u.anim+=dt*8;
    if(u.carry>=cap()||G.ter[i]===T.GRASS){if(!goDrop(u)&&G.ter[i]===T.GRASS)u.phase='work'}return}
   if(t.type==='farm'){const b=G.buildings.find(b=>b.id===t.bid);if(!b||!b.built){u.task=null;return}
    if(u.ct!==t.res){u.carry=0;u.ct=t.res}
-   const key=b.type==='field'?'food':b.type==='vineyard'?'grapes':'stock';
+   const key=b.type==='field'?'food':b.type==='vineyard'?'grapes':b.type==='olive'?'olives':'stock';
    if(b[key]<1){if(u.carry)goDrop(u);else{if(b.type==='field'&&G.techs.drill&&G.res.wood>=20){G.res.wood-=20;b.food=150}}return}
    u.wt+=rate(t.res,b.type)*dt;while(u.wt>=1&&b[key]>=1){u.wt-=1;u.carry++;b[key]--}
    if(u.carry>=cap())goDrop(u);return}
@@ -303,8 +316,8 @@ function stepUnit(u,dt){u.anim+=dt*8;
   if(adjacent(u,rectB(d))){deposit(u);if(t.type==='deposit'){u.task=null;return}u.phase='go'}else if(!pathTo(u,rectB(d))){u.task=null}}}
 function goDrop(u){const d=dropFor(u,u.ct);if(!d){toast('No drop-off for '+u.ct+'! Build one.','warn');u.phase='idleFull';u.task=null;return false}u.phase='return';pathTo(u,rectB(d));return true}
 function deposit(u){if(!u.carry)return;const kind=u.ct;G.res[kind]+=u.carry;if(G.stats[kind]!==undefined)G.stats[kind]+=u.carry;floatText(u.x,u.y-.6,'+'+u.carry+RICON[kind]);if((kind==='food'||kind==='grapes')&&window.VEAudio)VEAudio.sfx('harvest');u.carry=0}
-function afterBuild(u,b){if(b.type==='field')setTask(u,{type:'farm',bid:b.id,res:'food'});else if(b.type==='vineyard')setTask(u,{type:'farm',bid:b.id,res:'grapes'});else u.task=null}
-function onBuilt(b){toast(B[b.type].e+' '+B[b.type].n+' complete!','good');if(window.VEAudio)VEAudio.sfx('build');revealAround(b.x+b.w/2,b.y+b.h/2,6)}
+function afterBuild(u,b){if(b.type==='field')setTask(u,{type:'farm',bid:b.id,res:'food'});else if(b.type==='vineyard')setTask(u,{type:'farm',bid:b.id,res:'grapes'});else if(b.type==='olive')setTask(u,{type:'farm',bid:b.id,res:'olives'});else u.task=null}
+function onBuilt(b){toast(B[b.type].e+' '+B[b.type].n+' complete!','good');if(window.VEAudio)VEAudio.sfx('build');if(window.VEHaptics)VEHaptics.tap('heavy');revealAround(b.x+b.w/2,b.y+b.h/2,6)}
 
 // ===================== ECONOMY / TIME =====================
 function popCap(){return Math.min(80,G.buildings.reduce((s,b)=>s+(b.built&&B[b.type].pop||0),0))}
@@ -322,26 +335,32 @@ function scanCues(){if(!window.VEAudio)return;let said=false;
   if(b.type==='paddock'&&b.kind==='cattle'&&b.count>0){if(workerOn(b))b.hungry=0;else{b.hungry=(b.hungry||0)+2;if(b.hungry>=140){b.hungry=0;toast('🐄 Cattle are getting hungry.','warn');VEAudio.say('cattle')}}}}}
 function tick(dt){G.time+=dt;
  for(const u of G.units)stepUnit(u,dt);
+ let cellarOpen=false;
  for(const b of G.buildings){if(!b.built)continue;
   if(b.queue.length){b.qt=(b.qt||0)+dt;if(G.units.length>=popCap()){b.blocked=true}else{b.blocked=false;if(b.qt>=12){b.qt=0;b.queue.shift();const u=spawnUnit(b.x+b.w/2,b.y+b.h+.4);G.stats.trained++;toast('🧑‍🌾 New farmhand ready','good');
     if(b.rally)command([u],b.rally[0],b.rally[1])}}}
   if(b.research){b.research.t+=dt;if(b.research.t>=b.research.total){finishResearch(b.research.id);b.research=null}}
-  if(b.type==='vineyard')b.grapes=Math.min(80,b.grapes+dt*VEExpansion.vineRate(G.season,!!b.pruned,!!(G.events.drought&&!G.techs.irrig)));
+  const dry=!!(G.events.drought&&!G.techs.irrig);
+  if(b.type==='vineyard'){VEExpansion.tickCare(b,dt,workerOn(b),dry);b.grapes=Math.min(80,b.grapes+dt*VEExpansion.vineRate(G.season,!!b.pruned,dry&&VEExpansion.droughtMul(G)<0.85))}
+  if(b.type==='olive')b.olives=Math.min(80,(b.olives||0)+dt*VEExpansion.oliveRate(G.season,dry&&VEExpansion.droughtMul(G)<0.85));
   if(b.type==='paddock'&&b.count>0){b.pt+=dt;if(b.pt>=10){b.pt=0;const cond=b.condition>60?1.15:b.condition<35?0.6:1;b.stock=Math.min(200,b.stock+(b.kind==='cattle'?4:3)*b.count*(G.techs.breed?1.6:1)*cond)}
-   for(const note of VEExpansion.tickPaddock(b,dt,{tended:workerOn(b),drought:!!(G.events.drought&&!G.techs.irrig),irrig:!!G.techs.irrig,season:G.season,food:G.res.food,breedTech:!!G.techs.breed})){
+   for(const note of VEExpansion.tickPaddock(b,dt,{tended:workerOn(b),drought:dry,irrig:!!G.techs.irrig,season:G.season,food:G.res.food,breedTech:!!G.techs.breed,shed:has(G,'shed')})){
     if(note.breed){if(G.res.food<note.food)continue;G.res.food-=note.food;b.count++}
     toast(note.t,note.c);if(note.say&&window.VEAudio)VEAudio.say(note.say)}}
-  if(b.type==='cellardoor'){const hit=VEExpansion.tickCellar(b,dt,{season:G.season,wine:G.res.wine,winePrice:marketPrice(35),villa:has(G,'villa'),roll:Math.random()});
-   if(hit){G.res.wine-=hit.wine;G.res.coins+=hit.coins;G.stats.coins+=hit.coins;G.stats.tastings++;b.guests++;floatText(b.x+1,b.y,'+'+hit.coins+'🪙');toast('🚪 Visitors paid '+hit.coins+'🪙 for a tasting.','good');if(window.VEAudio)VEAudio.sfx('coins')}}
+  if(b.type==='cellardoor'&&!cellarOpen){cellarOpen=true;const hit=VEExpansion.tickCellar(b,dt,{season:G.season,wine:G.wineTiers.bronze|0,winePrice:VEExpansion.quote(G.market,'wine'),villa:has(G,'villa'),roll:Math.random()});
+   if(hit){VEExpansion.spendTier(G,'bronze',hit.wine);G.res.coins+=hit.coins;G.stats.coins+=hit.coins;G.stats.tastings++;b.guests++;floatText(b.x+1,b.y,'+'+hit.coins+'🪙');toast('🚪 Visitors paid '+hit.coins+'🪙 for a tasting.','good');if(window.VEAudio)VEAudio.sfx('coins')}}
   if(b.type==='villa'){const stay=VEExpansion.tickVilla(b,dt,{season:G.season,open:G.stats.wine>=1||has(G,'cellardoor'),cellar:has(G,'cellardoor')});
-   if(stay.coins){G.res.coins+=stay.coins;G.stats.coins+=stay.coins}if(stay.arrived)toast('🏛️ Guests arrived at Bruma Villa.','good')}
-  if(b.type==='winery'){b.wt+=dt;const need=G.techs.barrels?3.5:6;if(b.wt>=need){b.wt=0;if(G.res.grapes>=4){G.res.grapes-=4;G.res.wine++;G.stats.wine++;floatText(b.x+1.5,b.y,'+1🍷')}}
-   if(G.techs.cellar){G.res.coins+=dt;G.stats.coins+=dt}}}
+   if(stay.coins){G.res.coins+=stay.coins;G.stats.coins+=stay.coins;b._show=(b._show||0)+stay.coins;if(b._show>=1){const n=b._show|0;b._show-=n;floatText(b.x+1.5,b.y,'+'+n+'🪙')}}if(stay.arrived)toast('🏛️ Guests arrived at Bruma Villa.','good')}
+  if(b.type==='winery'){b.wt+=dt;const need=G.techs.barrels?3.5:6;if(b.wt>=need){b.wt=0;if(G.res.grapes>=4){G.res.grapes-=4;const vines=G.buildings.filter(v=>v.type==='vineyard'&&v.built);const tended=vines.some(workerOn);const tier=VEExpansion.bottleTier(vines,G.season,dry,tended);VEExpansion.addBottle(G,tier);G.stats.wine++;floatText(b.x+1.5,b.y,'+1 '+({bronze:'🥉',silver:'🥈',gold:'🥇'}[tier])+'🍷')}}
+   if(G.techs.cellar){G.res.coins+=dt*0.35;G.stats.coins+=dt*0.35}}}
  // seasons & events
  const s=Math.floor(G.time/SEASON_LEN)%4;if(s!==G.season){G.season=s;seasonStart(s)}
  G.nextEvt-=dt;if(G.nextEvt<=0){G.nextEvt=50+Math.random()*40;randomEvent()}
+ if(VEExpansion.tickMarket(G.market,dt,Math.random))panelDirty=true;
+ G.nextChoice=(G.nextChoice==null?90:G.nextChoice)-dt;
+ if(G.nextChoice<=0){G.nextChoice=75+Math.random()*35;if((G.coach|0)>=4&&!$('modal').style.display.match('flex')){const event=VEExpansion.rollChoice(Math.random);showChoice(event)}}
  if(G.fire){G.fire.t-=dt;G.fire.spread-=dt;if(G.fire.spread<=0){G.fire.spread=G.techs.firebreak?3:1.4;spreadFire()}if(G.fire.t<=0||!G.fire.tiles.length){G.stats.survivedFire=(G.stats.survivedFire||0)+1;G.fire=null;toast('🔥 The bushfire has burnt out. You made it through.','good')}}
- for(const k of ['drought','frost','storm','market'])if(G.events[k]&&G.time>G.events[k]){delete G.events[k];if(k==='market')panelDirty=true}
+ for(const k of ['drought','frost','storm','market','borrow'])if(G.events[k]&&G.time>G.events[k]){delete G.events[k];if(k==='market')panelDirty=true}
  const wet=!!(VE3D.raining&&VE3D.raining(G));if(wet&&!wasRain){toast('🌧️ Rain\'s on the way.');if(window.VEAudio)VEAudio.say('rain')}wasRain=wet;
  cueT+=dt;if(cueT>=2){cueT=0;scanCues()}
  // missions
@@ -406,7 +425,7 @@ function applyChrome(fullW,fullH){
  root.classList.toggle('layout-square',aspect>=0.8&&aspect<1.15);
  root.classList.toggle('layout-tall',aspect<0.5)}
 function viewSize(){const el=document.documentElement,vv=window.visualViewport;const w=el.clientWidth||(vv&&vv.width)||innerWidth;const h=el.clientHeight||(vv&&vv.height)||innerHeight;return {w:Math.max(1,Math.round(w)),h:Math.max(1,Math.round(h))}}
-function cappedDpr(w,h){let dpr=Math.min(2,devicePixelRatio||1);if(w*dpr>MAX_BUFFER_EDGE)dpr=MAX_BUFFER_EDGE/w;if(h*dpr>MAX_BUFFER_EDGE)dpr=Math.min(dpr,MAX_BUFFER_EDGE/h);return Math.max(0.5,Math.min(2,dpr))}
+function cappedDpr(w,h){let dpr=Math.min(1.5,devicePixelRatio||1);if(w*dpr>MAX_BUFFER_EDGE)dpr=MAX_BUFFER_EDGE/w;if(h*dpr>MAX_BUFFER_EDGE)dpr=Math.min(dpr,MAX_BUFFER_EDGE/h);return Math.max(0.5,Math.min(1.5,dpr))}
 function resize(){const prevW=W,prevH=H,sz=viewSize();W=sz.w;H=sz.h;DPR=cappedDpr(W,H);hud.width=Math.max(1,Math.round(W*DPR));hud.height=Math.max(1,Math.round(H*DPR));applyChrome(W,H);if(window.VE3D)VE3D.resize(W,H);
  if(G&&prevW>0&&prevH>0&&(prevW!==W||prevH!==H)){const cx=(cam.x+prevW/2/cam.zoom)/TS,cy=(cam.y+prevH/2/cam.zoom)/TS;centerOn(cx,cy)}
  else if(G)clampCam();
@@ -453,7 +472,7 @@ cv.addEventListener('pointermove',e=>{if(!ptrs.has(e.pointerId)||!gest)return;pt
  const dx=e.clientX-gest.sx,dy=e.clientY-gest.sy;if(!gest.moved&&Math.hypot(dx,dy)>9)gest.moved=true;
  if(gest.moved){if(boxMode){box={x0:gest.sx,y0:gest.sy,x1:e.clientX,y1:e.clientY}}else{cam.x=gest.cx-dx*0.6/cam.zoom;cam.y=gest.cy-dy*0.6/cam.zoom/PANY;clampCam()}}});
 const endPtr=e=>{if(!ptrs.has(e.pointerId))return;ptrs.delete(e.pointerId);if(!gest)return;
- if(ptrs.size===0){if(box){boxSelect(box);box=null}else if(!gest.moved)tapAt(e.clientX,e.clientY);gest=null}else if(gest.pinch){const[a]=[...ptrs.values()];gest={sx:a.x,sy:a.y,cx:cam.x,cy:cam.y,moved:true}}};
+ if(ptrs.size===0){if(box){boxSelect(box);box=null}else if(!gest.moved){tapAt(e.clientX,e.clientY);if(window.VEHaptics)VEHaptics.tap('light')}gest=null}else if(gest.pinch){const[a]=[...ptrs.values()];gest={sx:a.x,sy:a.y,cx:cam.x,cy:cam.y,moved:true}}};
 cv.addEventListener('pointerup',endPtr);cv.addEventListener('pointercancel',endPtr);
 cv.addEventListener('wheel',e=>{e.preventDefault();const cc=camCenter();cam.zoom*=e.deltaY<0?1.1:0.9;cam.zoom=Math.max(0.45,Math.min(2.6,cam.zoom));centerOn(cc[0],cc[1])},{passive:false});
 mini.addEventListener('pointerdown',e=>{const r=mini.getBoundingClientRect();centerOn((e.clientX-r.left)/104*N,(e.clientY-r.top)/104*N);miniDirty=true});
@@ -480,17 +499,20 @@ function confirmPlace(){const p=placing;if(!p||p.x==null)return;if(!validPlace(p
  builders.forEach(u=>setTask(u,{type:'build',bid:b.id}));
  // move units standing in non-passable footprint
  if(!B[p.type].pass)for(const u of G.units)if(u.x>=b.x&&u.x<b.x+b.w&&u.y>=b.y&&u.y<b.y+b.h){u.y=b.y+b.h+.5;if(u.task)setTask(u,u.task)}
- toast(B[p.type].e+' Foundation placed — '+builders.length+' builder(s) on the way');if(window.VEAudio){VEAudio.sfx('build');if(p.type==='field'||p.type==='vineyard')VEAudio.sfx('plant')}placing=null;panelDirty=true;return b}
+ toast(B[p.type].e+' Foundation placed — '+builders.length+' builder(s) on the way');if(window.VEAudio){VEAudio.sfx('build');if(p.type==='field'||p.type==='vineyard'||p.type==='olive')VEAudio.sfx('plant')}if(window.VEHaptics)VEHaptics.tap('heavy');placing=null;panelDirty=true;return b}
 
 // ===================== UI =====================
 const $=id=>document.getElementById(id);
 let panelDirty=true,lastPanel='';
 function toast(t,c){const d=document.createElement('div');d.className='toast '+(c||'');d.textContent=t;const box=$('toasts');box.prepend(d);while(box.children.length>4)box.lastChild.remove();setTimeout(()=>d.remove(),4000);if(c==='warn'&&window.VEAudio)VEAudio.sfx('alert')}
 function btn(act,label,sub,cls,dis){return `<button class="btn ${cls||''} ${dis?'dis':''}" data-act="${act}">${label}${sub?`<small>${sub}</small>`:''}</button>`}
-function updateBar(){const r=G.res;$('rF').textContent='🌾'+(r.food|0);$('rW').textContent='🪵'+(r.wood|0);$('rS').textContent='🪨'+(r.stone|0);$('rC').textContent='🪙'+(r.coins|0);$('rG').textContent='🍇'+(r.grapes|0);$('rV').textContent='🍷'+(r.wine|0);$('rL').textContent='🧶'+(r.wool|0);$('rP').textContent='👤'+G.units.length+'/'+popCap();
- $('ageL').textContent=AGES[G.age].e+' '+AGES[G.age].n;const yr=Math.floor(G.time/SEASON_LEN/4)+1,sp=(G.time%SEASON_LEN)/SEASON_LEN;
+function listed(good){const n=VEExpansion.quote(G.market,good);return G.events.market&&G.time<G.events.market?Math.round(n*1.15):n}
+function updateBar(){const r=G.res;$('rF').textContent='🌾'+(r.food|0);$('rW').textContent='🪵'+(r.wood|0);$('rS').textContent='🪨'+(r.stone|0);$('rC').textContent='🪙'+(r.coins|0);$('rG').textContent='🍇'+(r.grapes|0);$('rV').textContent='🍷'+(r.wine|0);$('rL').textContent='🧶'+(r.wool|0);$('rO').textContent='🫒'+(r.olives|0);$('rP').textContent='👤'+G.units.length+'/'+popCap();
+ $('ageL').textContent=AGES[G.age].e+' '+AGES[G.age].n;
  const phase=VEExpansion.seasonInfo(G.season);$('sub').className='s'+G.season;
- $('seasonL').textContent=phase.e+' '+phase.name+' · '+phase.phase+' '+Math.round(sp*100)+'% · Yr '+yr+' '+(isNight()?'🌙':'☀️')+(G.events.drought?' · ☀️Drought':'')+(G.events.frost?' · ❄️Frost':'')+(G.events.storm?' · ⛈️Storm':'')+(G.events.market?' · 📈Market':'')+(G.fire?' · 🔥Fire':'')+(speed===0?' · ⏸ PAUSED':'');
+ const weather=(G.events.drought?' ☀️':'')+(G.events.frost?' ❄️':'')+(G.events.storm?' ⛈️':'')+(G.events.market?' 📈':'')+(G.fire?' 🔥':'')+(speed===0?' ⏸':'');
+ $('seasonL').textContent=phase.e+' '+phase.name+' · '+phase.phase+weather;
+ $('seasonL').title=phase.name+' '+phase.phase+(isNight()?' night':' day');
  const idle=G.units.filter(u=>!u.task&&!u.moving).length;$('idleN').textContent=idle;$('idleN').style.display=idle?'':'none';
  const m=MISSIONS[Math.min(G.mission,MISSIONS.length-1)];const tour=VEExpansion.coachHint(G.coach|0);
  $('goal').innerHTML=`<b>🎯 Goal ${Math.min(G.mission+1,MISSIONS.length)}/${MISSIONS.length}:</b> ${G.won?'🏆 You won!':m.t}${tour?`<div class="hint"><b>${tour}</b></div>`:''}<div class="hint">${G.won?'':m.h}</div>`;$('goal').classList.toggle('min',G.mission>=7&&!goalOpen&&!tour)}
@@ -503,9 +525,10 @@ function panelHTML(){
   return `<h4>🧑‍🌾 ${us.length>1?'Farmhands ×'+us.length:'Farmhand'}</h4><div class="d">${st}. Tap trees 🌳, rocks 🪨, berries 🫐 or a building to give orders. Carry cap ${cap()}.</div><div class="btns">${btn('build','🔨 Build','')}${btn('deselect','✖ Deselect','','alt')}${btn('stop','⏹ Stop','','red')}</div>`}
  const b=G.buildings.find(b=>b.id===G.selB);
  if(b){const d=B[b.type];let h=`<h4>${d.e} ${d.n}${b.built?'':' (under construction '+Math.round(b.prog*100)+'%)'}</h4><div class="d">${d.desc}`;
-  if(b.type==='field')h+=` 🌾 ${b.food|0}/150 food left.`;if(b.type==='vineyard')h+=` 🍇 ${b.grapes|0}/80 grapes.`+(b.pruned?' Pruned for budburst.':'');
+  if(b.type==='field')h+=` 🌾 ${b.food|0}/150 food left.`;if(b.type==='vineyard')h+=` 🍇 ${b.grapes|0}/80 grapes. Care ${b.care|0}. Next bottle ${VEExpansion.tierFromScore(VEExpansion.vineScore(b,G.season,!!(G.events.drought&&!G.techs.irrig),workerOn(b)))}.`+(b.pruned?' Pruned for budburst.':'');
+  if(b.type==='olive')h+=` 🫒 ${b.olives|0}/80 olives.`;
   if(b.type==='paddock')h+=b.kind?` ${b.count} ${b.kind==='cattle'?'Speckle Park 🐄':'Babydoll 🐑'} · health ${b.health|0} · condition ${b.condition|0}`+(b.kind==='sheep'?` · fleece ${b.fleece|0}% · ${G.res.wool|0} wool`:` · stock ${b.stock|0}🥩`):' Empty.';
-  if(b.type==='winery')h+=` 🍇 ${G.res.grapes|0} waiting · bottled ${G.stats.wine}.`;
+  if(b.type==='winery'){const vines=G.buildings.filter(v=>v.type==='vineyard'&&v.built);const tier=VEExpansion.bottleTier(vines,G.season,!!(G.events.drought&&!G.techs.irrig),vines.some(workerOn));h+=` 🍇 ${G.res.grapes|0} waiting · bottled ${G.stats.wine}. Next bottle is ${tier}. 🥉${G.wineTiers.bronze|0} 🥈${G.wineTiers.silver|0} 🥇${G.wineTiers.gold|0}.`;}
   if(b.type==='cellardoor')h+=` ${b.guests|0} tastings served.`;
   if(b.type==='villa')h+=` ${b.guests|0} guests staying.`;
   if(b.type==='yard')h+=` Sell from a stocked paddock.`;h+='</div>';
@@ -517,18 +540,20 @@ function panelHTML(){
    if(G.age<3&&!b.research){const a=AGES[G.age+1];h+=btn('age','⬆️ '+a.n,costStr(a.cost)+' · '+a.time+'s','alt',!canAfford(a.cost))}}
   if(b.type==='field'&&b.food<1)h+=btn('replant','🌱 Replant','🪵30','',!canAfford({wood:30}));
   if(b.type==='paddock'){if(!b.kind){h+=btn('cattle','🐄 Speckle Park ×2','🌾120','',!canAfford({food:120}))+btn('sheep','🐑 Babydoll ×2','🌾80','',!canAfford({food:80}))}
-   else{const price=VEExpansion.salePrice(b.kind,b.health,b.condition);h+=btn('breed','❤️ Breed +1',b.kind==='cattle'?'🌾60':'🌾40','',b.count>=8||!canAfford({food:b.kind==='cattle'?60:40}))+btn('vet','🩺 Vet check','🪙25','',!b.kind||!canAfford({coins:25}));
+   else{const price=VEExpansion.stockQuote(b.kind,b.health,b.condition,listed(b.kind==='cattle'?'cattle':'lamb'));h+=btn('breed','❤️ Breed +1',b.kind==='cattle'?'🌾60':'🌾40','',b.count>=8||!canAfford({food:b.kind==='cattle'?60:40}))+btn('vet','🩺 Vet check','🪙25','',!b.kind||!canAfford({coins:25}));
     if(b.kind==='sheep')h+=btn('shear','🧶 Shear wool',b.fleece>=50?'Ready':'Fleece '+((b.fleece|0))+'%','',b.fleece<50);
     h+=btn('sellstock','🏷️ Sell 1','+'+price+'🪙',has(G,'yard')?'':'dis',!has(G,'yard')||b.count<1)}}
   if(b.type==='vineyard'&&G.season===3)h+=btn('prune','✂️ Prune vines',b.pruned?'Done':'Winter cut','',!!b.pruned);
-  if(b.type==='market'){const wine=VEExpansion.boostedWinePrice(marketPrice(35),has(G,'villa'));h+=btn('sell:wine:1:'+wine,'🍷 Sell 1 wine','+'+wine+'🪙','',G.res.wine<1)+btn('sell:wool:10:'+marketPrice(30),'🧶 Sell 10 wool','+'+marketPrice(30)+'🪙','',G.res.wool<10)+btn('sell:food:100:'+marketPrice(30),'Sell 100🌾','+'+marketPrice(30)+'🪙','',G.res.food<100)+btn('sell:wood:100:'+marketPrice(30),'Sell 100🪵','+'+marketPrice(30)+'🪙','',G.res.wood<100)+btn('sell:stone:100:'+marketPrice(45),'Sell 100🪨','+'+marketPrice(45)+'🪙','',G.res.stone<100)+btn('buy:food:100:60','Buy 100🌾','-60🪙','alt',G.res.coins<60)+btn('buy:stone:100:80','Buy 100🪨','-80🪙','alt',G.res.coins<80)}
+  if(b.type==='market'){const wine=listed('wine'),wool=listed('wool')*10,olive=Math.max(10,Math.round(wine*0.4));h+=`<div class="d">Prices today — wine ${wine}🪙, wool ${listed('wool')}🪙 a bale, cattle ${listed('cattle')}🪙, lambs ${listed('lamb')}🪙. The bars are recent wine prices.</div><div class="chart">${VEExpansion.chartHtml(G.market,'wine')}</div>`;
+   for(const tier of ['gold','silver','bronze']){const price=VEExpansion.wineSellPrice(wine,tier,has(G,'villa'));const n=G.wineTiers[tier]|0;h+=btn('sellwine:'+tier,({gold:'🥇 Gold',silver:'🥈 Silver',bronze:'🥉 Bronze'}[tier])+' wine','+'+price+'🪙 · '+n,'',n<1)}
+   h+=btn('sell:wool:10:'+wool,'🧶 Sell 10 wool','+'+wool+'🪙','',G.res.wool<10)+btn('sell:olives:8:'+olive,'🫒 Sell 8 olives','+'+olive+'🪙','',G.res.olives<8)+btn('sell:food:100:'+marketPrice(30),'Sell 100🌾','+'+marketPrice(30)+'🪙','',G.res.food<100)+btn('sell:wood:100:'+marketPrice(30),'Sell 100🪵','+'+marketPrice(30)+'🪙','',G.res.wood<100)+btn('sell:stone:100:'+marketPrice(45),'Sell 100🪨','+'+marketPrice(45)+'🪙','',G.res.stone<100)+btn('buy:food:100:60','Buy 100🌾','-60🪙','alt',G.res.coins<60)+btn('buy:stone:100:80','Buy 100🪨','-80🪙','alt',G.res.coins<80)}
   if(!b.research)for(const[id,tc]of Object.entries(TECH)){if(tc.at!==b.type||G.techs[id])continue;const lock=G.age<tc.age;
    h+=btn('tech:'+id,'🔬 '+tc.n,lock?'🔒 '+AGES[tc.age].n:costStr(tc.cost)+' · '+tc.desc,'alt',lock||!canAfford(tc.cost))}
   h+=btn('deselect','✖ Close','','red')+'</div>';return h}
  return `<h4><img class="logo" src="assets/logo.png" alt=""> Valley Estates</h4><div class="d">Ferguson Valley, WA. Drag to pan, pinch to zoom. Tap a farmhand then tap where to work. Tap 🔨 to build. Seasons bring drought, frost, foxes and bushfires!</div><div class="btns">${btn('build','🔨 Build','')}${btn('selidle','👥 Select idle','')}${btn('tc','🏠 Homestead','','alt')}</div>`}
 function renderPanel(){const h=panelHTML();if(h!==lastPanel){$('panel').innerHTML=h;lastPanel=h}}
 $('panel').addEventListener('pointerdown',e=>{const el=e.target.closest('[data-act]');if(!el||el.classList.contains('dis'))return;e.preventDefault();act(el.dataset.act)});
-function act(a){const b=G.buildings.find(b=>b.id===G.selB);const p=a.split(':');
+function act(a){if(window.VEHaptics)VEHaptics.tap('light');const b=G.buildings.find(b=>b.id===G.selB);const p=a.split(':');
  switch(p[0]){
  case'build':openBuild();break;case'deselect':G.sel=[];G.selB=null;break;
  case'stop':selUnits().forEach(u=>{u.task=null;u.path=null});break;
@@ -542,11 +567,17 @@ function act(a){const b=G.buildings.find(b=>b.id===G.selB);const p=a.split(':');
  case'breed':if(b&&b.count<8&&pay({food:b.kind==='cattle'?60:40}))b.count++;break;
  case'vet':if(b&&b.kind&&pay({coins:25})){b.health=Math.min(100,(b.health||0)+40);b.condition=Math.min(100,(b.condition||0)+12);b.vetWarned=0;toast('🩺 Vet check done. The stock look better.','good')}break;
  case'shear':if(b&&b.kind==='sheep'){const bales=VEExpansion.shearBales(b.fleece,b.count);if(bales){b.fleece=0;G.res.wool+=bales;toast('🧶 Sheared '+bales+' wool.','good');if(window.VEAudio)VEAudio.sfx('harvest')}}break;
- case'sellstock':if(b&&b.count>0&&has(G,'yard')){const price=VEExpansion.salePrice(b.kind,b.health,b.condition);b.count--;G.res.coins+=price;G.stats.coins+=price;G.stats.soldStock=(G.stats.soldStock||0)+1;toast('🏷️ Sold at the yard for '+price+'🪙','good');if(window.VEAudio){VEAudio.sfx('coins');VEAudio.sfx(b.kind==='cattle'?'cow':'sheep')}}break;
+ case'sellstock':if(b&&b.count>0&&has(G,'yard')){const price=VEExpansion.stockQuote(b.kind,b.health,b.condition,listed(b.kind==='cattle'?'cattle':'lamb'));b.count--;G.res.coins+=price;G.stats.coins+=price;G.stats.soldStock=(G.stats.soldStock||0)+1;floatText(b.x+1,b.y,'+'+price+'🪙');toast('🏷️ Sold at the yard for '+price+'🪙','good');if(window.VEAudio){VEAudio.sfx('coins');VEAudio.sfx(b.kind==='cattle'?'cow':'sheep')}}break;
+ case'sellwine':{const tier=p[1];const price=VEExpansion.wineSellPrice(listed('wine'),tier,has(G,'villa'));if(VEExpansion.spendTier(G,tier,1)){G.res.coins+=price;G.stats.coins+=price;floatText((b?b.x:20)+1,b?b.y:20,'+'+price+'🪙');if(window.VEAudio)VEAudio.sfx('coins')}break}
  case'prune':if(b&&b.type==='vineyard'&&G.season===3&&!b.pruned){b.pruned=1;toast('✂️ Vines pruned. Spring budburst will be stronger.','good');if(window.VEAudio)VEAudio.sfx('plant')}break;
- case'sell':if(G.res[p[1]]>=+p[2]){G.res[p[1]]-=+p[2];G.res.coins+=+p[3];G.stats.coins+=+p[3];if(window.VEAudio)VEAudio.sfx('coins')}break;
+ case'sell':if(G.res[p[1]]>=+p[2]){G.res[p[1]]-=+p[2];G.res.coins+=+p[3];G.stats.coins+=+p[3];floatText(b?b.x+1:20,b?b.y:20,'+'+p[3]+'🪙');if(window.VEAudio)VEAudio.sfx('coins')}break;
  case'buy':if(G.res.coins>=+p[3]){G.res.coins-=+p[3];G.res[p[1]]+=+p[2]}break;
  }panelDirty=true;lastPanel='';renderPanel();updateBar()}
+function showChoice(event){G.choice={id:event.id};let h=`<h3>${event.title}</h3><p>${event.line}</p>`;
+ for(const choice of event.choices)h+=`<button class="btn" data-b="choice:${event.id}:${choice.id}" style="width:100%;margin-bottom:8px">${choice.label}</button>`;
+ h+='<button class="close" data-b="x">Decide later</button>';$('sheet').innerHTML=h;$('modal').style.display='flex';if(window.VEAudio)VEAudio.say(event.voice);if(window.VEHaptics)VEHaptics.tap('heavy')}
+function showOffline(text){$('sheet').innerHTML=`<h3>Welcome back</h3><p>${text}</p><button class="close" data-b="x">Back to the farm</button>`;$('modal').style.display='flex'}
+function dayKey(date){return date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0')}
 function openBuild(){let h='<h3>🔨 Build</h3><div class="grid">';
  for(const[k,d]of Object.entries(B)){if(d.age>3)continue;const lock=G.age<d.age,poor=!canAfford(d.cost);
   h+=`<div class="card ${lock?'lock':''} ${poor?'poor':''}" data-b="${k}"><b>${d.e}</b>${d.n}<br>${lock?'🔒 '+AGES[d.age].n:costStr(d.cost)}</div>`}
@@ -554,8 +585,9 @@ function openBuild(){let h='<h3>🔨 Build</h3><div class="grid">';
 $('sheet').addEventListener('input',e=>{const el=e.target.closest('[data-audio]');if(!el||el.type!=='range'||!window.VEAudio)return;VEAudio.setLevel(el.dataset.audio,Number(el.value))});
 $('sheet').addEventListener('click',e=>{const mute=e.target.closest('[data-audio="mute"]');if(mute&&window.VEAudio){VEAudio.toggleMute();const on=VEAudio.settings().mute;mute.textContent=on?'Unmute':'Mute';mute.classList.toggle('red',on)}});
 $('sheet').addEventListener('click',e=>{const c=e.target.closest('[data-b]');if(!c)return;const k=c.dataset.b;
- if(k==='x'||k==='newgame-no'){closeModal();return}if(k==='newgame-yes'){localStorage.removeItem(SAVE_KEY);newGame();closeModal();toast('🌱 New estate founded!');return}
- if(k==='resume'){closeModal();return}if(k.startsWith('q-')){VE3D.setQuality(k.slice(2));toast('Graphics: '+k.slice(2));closeModal();return}
+ if(k==='x'||k==='newgame-no'){closeModal();if(G.choice){G.choice=null;G.nextChoice=70}return}if(k==='newgame-yes'){localStorage.removeItem(SAVE_KEY);newGame();closeModal();toast('🌱 New estate founded!');return}
+ if(k.startsWith('choice:')){const parts=k.split(':');const result=VEExpansion.applyChoice(G,parts[1],parts[2]);G.choice=null;G.nextChoice=80;closeModal();toast(result?result.text:'Okay',result&&result.ok?'good':'warn');if(result&&result.ok&&window.VEHaptics)VEHaptics.tap('heavy');return}
+ if(k==='resume'){closeModal();return}if(k.startsWith('q-')){const q=k.slice(2);VE3D.setQuality(q);try{localStorage.setItem('valleyEstatesGraphics',q)}catch(err){}toast(q==='low'?'Low graphics on — easier on older phones':'Graphics: '+q);closeModal();return}
  if(!B[k])return;const d=B[k];if(G.age<d.age){toast('Requires '+AGES[d.age].n,'warn');return}if(!canAfford(d.cost)){toast('Need '+costStr(d.cost),'warn');return}
  const [cx,cy]=s2w(W/2,(H-140)/2);placing={type:k,x:Math.floor(cx-d.w/2),y:Math.floor(cy-d.h/2)};closeModal();panelDirty=true;toast('Tap the map to move the ghost, then ✔ Confirm')});
 $('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal()});
@@ -565,14 +597,19 @@ let idleIdx=0;$('bIdle').onclick=()=>{const idle=G.units.filter(u=>!u.task);if(!
 $('bAllIdle').onclick=selectIdle;$('bBox').onclick=()=>setBox(!boxMode);$('bBuild').onclick=openBuild;
 let speed=1,lastSpeed=1;$('bPause').onclick=()=>{if(speed){lastSpeed=speed;speed=0;$('bPause').textContent='▶️'}else{speed=lastSpeed;$('bPause').textContent='⏸'}updateBar()};
 $('bSpeed').onclick=()=>{const s=[1,2,3];const cur=speed||lastSpeed;const n=s[(s.indexOf(cur)+1)%3];if(speed)speed=n;lastSpeed=n;$('bSpeed').textContent=n+'×'};
-$('bMenu').onclick=()=>{$('sheet').innerHTML=`<h3><img class="logo" src="assets/logo.png" alt=""> Menu</h3><p>Estate seed ${G.seed}. Autosaves every 10 s on this device only.</p><p>No account and no data collected. <a href="privacy.html" style="color:#7a3d0c">Privacy policy</a> · <a href="support.html" style="color:#7a3d0c">Support</a></p><p><b>Achievements</b><br>${VEExpansion.achievementHtml(G)}</p><p><b>How to play:</b> Gather 🌾🪵🪨, build Cottages for population, Fields & Vineyards for food and grapes, bottle 🍷 at the Winery and sell it at the Market. Advance through 4 Ages. Survive drought, frost, foxes and bushfires. Win by reaching the Valley Empire Age with 60 bottles made.</p>${window.VEAudio?VEAudio.settingsHtml():''}<p><b>Graphics</b> (current: ${['Low','Medium','High'][VE3D.quality]})</p><div class="btns" style="margin-bottom:10px"><button class="btn" data-b="q-auto">Auto</button><button class="btn" data-b="q-high">High</button><button class="btn" data-b="q-med">Medium</button><button class="btn" data-b="q-low">Low</button></div><button class="btn" data-b="resume" style="width:100%;margin-bottom:8px">▶ Resume</button><button class="btn red" data-b="newgame-yes" style="width:100%">🔄 New Game (erase save)</button><button class="close" data-b="x">Close</button>`;$('modal').style.display='flex'};
+$('bMenu').onclick=()=>{$('sheet').innerHTML=`<h3><img class="logo" src="assets/logo.png" alt=""> Menu</h3><p>Estate seed ${G.seed}. Autosaves every 10 s on this device only.</p><p>No account and no data collected. <a href="privacy.html" style="color:#7a3d0c">Privacy policy</a> · <a href="support.html" style="color:#7a3d0c">Support</a></p><p><b>Achievements</b><br>${VEExpansion.achievementHtml(G)}</p><p><b>How to play:</b> Gather 🌾🪵🪨, build Cottages for population, Fields & Vineyards for food and grapes, bottle 🍷 at the Winery and sell it at the Market. Advance through 4 Ages. Survive drought, frost, foxes and bushfires. Win by reaching the Valley Empire Age with 60 bottles made.</p>${window.VEAudio?VEAudio.settingsHtml():''}<p><b>Graphics</b> (current: ${['Low','Medium','High'][VE3D.quality]}). Low uses a smaller picture and softer shadows for older phones.</p><div class="btns" style="margin-bottom:10px"><button class="btn" data-b="q-auto">Auto</button><button class="btn" data-b="q-high">High</button><button class="btn" data-b="q-med">Medium</button><button class="btn red" data-b="q-low">Low graphics</button></div><button class="btn" data-b="resume" style="width:100%;margin-bottom:8px">▶ Resume</button><button class="btn red" data-b="newgame-yes" style="width:100%">🔄 New Game (erase save)</button><button class="close" data-b="x">Close</button>`;$('modal').style.display='flex'};
 function showWin(){$('sheet').innerHTML=`<h3>🏆 Ferguson Valley's Top Estate!</h3><p>You reached the Valley Empire Age and bottled ${G.stats.wine} wines in ${Math.floor(G.time/60)} minutes. Keep playing or start a new estate.</p><button class="btn" data-b="resume" style="width:100%;margin-bottom:8px">Keep playing</button><button class="btn red" data-b="newgame-yes" style="width:100%">New Game</button>`;$('modal').style.display='flex'}
 function showIntro(){$('sheet').innerHTML=`<h3><img class="logo lg" src="assets/logo.png" alt="">Welcome to Valley Estates</h3><p>Your little homestead sits in the Ferguson Valley, WA. Grow it into the region's top wine estate!</p><p>👆 <b>Tap</b> a farmhand, then tap a tree, rock, berry bush or building to work.<br>✋ <b>Drag</b> to pan · 🤏 <b>pinch</b> to zoom.<br>🔨 Build · 🧑‍🌾 find idle workers · ⬚ drag-select.</p><p>Follow the 🎯 goals at top-left.</p><button class="close" data-b="x">Let's farm!</button>`;$('modal').style.display='flex';G.tutorialSeen=true}
 
 // ===================== SAVE =====================
-function save(){try{const s={...G,ter:Array.from(G.ter),amt:Array.from(G.amt),var:Array.from(G.var),explored:Array.from(G.explored),units:G.units.map(u=>({...u,path:null,phase:u.task?'go':null})),uid,cam:{x:cam.x,y:cam.y,zoom:cam.zoom},view:{w:W,h:H}};localStorage.setItem(SAVE_KEY,JSON.stringify(s))}catch(e){console.warn('save failed',e)}}
+function save(){try{G.lastSeen=Date.now();const s={...G,ter:Array.from(G.ter),amt:Array.from(G.amt),var:Array.from(G.var),explored:Array.from(G.explored),units:G.units.map(u=>({...u,path:null,phase:u.task?'go':null})),uid,cam:{x:cam.x,y:cam.y,zoom:cam.zoom},view:{w:W,h:H}};localStorage.setItem(SAVE_KEY,JSON.stringify(s))}catch(e){console.warn('save failed',e)}}
 function load(){try{const s=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');if(!s||!s.ter)return false;
  G={...s,ter:Uint8Array.from(s.ter),amt:Int16Array.from(s.amt),var:Uint8Array.from(s.var),explored:Uint8Array.from(s.explored)};VEExpansion.migrateSave(G);uid=s.uid;Object.assign(cam,s.cam);
+ const elapsed=G.lastSeen?(Date.now()-G.lastSeen)/1000:0;const grant=VEExpansion.offlineGrant(G,elapsed);
+ if(grant){VEExpansion.applyOffline(G,grant);G.offlineNote=VEExpansion.offlineText(grant)}
+ const today=new Date(),yest=new Date(today.getTime()-86400000);const bonus=VEExpansion.dailyReward(G,dayKey(today),dayKey(yest));
+ if(bonus)G.dailyNote='Day '+bonus.streak+' gift: +'+bonus.coins+'🪙 +'+bonus.food+'🌾';
+ G.lastSeen=Date.now();
  if(s.view&&s.view.w&&s.view.h&&(s.view.w!==W||s.view.h!==H)){const cx=(cam.x+s.view.w/2/cam.zoom)/TS,cy=(cam.y+s.view.h/2/cam.zoom)/TS;centerOn(cx,cy)}else clampCam();
  markOcc();renderMap();renderFog();
  G.units.forEach(u=>{if(u.task)setTask(u,u.task)});return true}catch(e){console.warn('load failed',e);return false}}
@@ -595,7 +632,9 @@ if(window.visualViewport){visualViewport.addEventListener('resize',scheduleResiz
 if(window.ResizeObserver)new ResizeObserver(scheduleResize).observe(document.documentElement);
 if(window.viewport&&window.viewport.addEventListener){window.viewport.addEventListener('segments',scheduleResize);window.viewport.addEventListener('change',scheduleResize)}
 addEventListener('visibilitychange',()=>{if(document.hidden)save();else scheduleResize()});
-resize();if(!load())newGame();else clampCam();if(!G.tutorialSeen)showIntro();
+resize();if(!load()){newGame();const today=new Date(),bonus=VEExpansion.dailyReward(G,dayKey(today),dayKey(new Date(today.getTime()-86400000)));if(bonus)G.dailyNote='Day '+bonus.streak+' gift: +'+bonus.coins+'🪙 +'+bonus.food+'🌾'}else clampCam();try{const q=localStorage.getItem('valleyEstatesGraphics');if(q)VE3D.setQuality(q)}catch(err){}
+if(!G.tutorialSeen)showIntro();else if(G.offlineNote){showOffline(G.offlineNote);G.offlineNote=''}
+if(G.dailyNote){toast(G.dailyNote,'good');G.dailyNote=''}
 requestAnimationFrame(frame);
 // test hooks
 window.VE={camCenter,unitScreen:u=>w2s(u.x,u.y,0.3),get G(){return G},tick,command,w2s,s2w,centerOn,cam,act,confirmPlace,setPlacing:(t,x,y)=>{placing={type:t,x,y};panelDirty=true},validPlace,B,save,findNear,T,N,popCap,setSpeed:v=>speed=v,resize,scanCues,marketPrice,get frames(){return frames},setViewportSegments:rects=>{window.__veSegments=rects&&rects.length?rects:null;resize()},metrics(){const r=VE3D._dbg().renderer,el=r.domElement,panel=$('panel').getBoundingClientRect(),bar=$('bar').getBoundingClientRect(),miniR=$('mini').getBoundingClientRect();return {W,H,DPR,bufW:el.width,bufH:el.height,pr:r.getPixelRatio(),clientW:el.clientWidth,clientH:el.clientHeight,cls:document.documentElement.className,panel:{left:panel.left,top:panel.top,right:panel.right,bottom:panel.bottom,width:panel.width,height:panel.height},bar:{left:bar.left,right:bar.right,top:bar.top,width:bar.width},mini:{left:miniR.left,right:miniR.right,top:miniR.top,width:miniR.width,height:miniR.height},seed:G.seed,coins:G.res.coins,frames}}}

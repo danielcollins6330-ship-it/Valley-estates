@@ -44,7 +44,7 @@ Kenney does not require credit. Credit is included anyway: Kenney (www.kenney.nl
 
 ## Farmer voice
 
-The twenty-six lines in `assets/audio/voice/` were generated offline with [Piper](https://github.com/OHF-Voice/piper1-gpl) and the [en_AU-librivox-medium](https://huggingface.co/DataCraftsmanAustralia/piper-en_AU-librivox-medium) model, speaker 5 (`timothy_ferguson`, voice name banjo). The model weights were not added to this repository.
+The thirty-one lines in `assets/audio/voice/` were generated offline with [Piper](https://github.com/OHF-Voice/piper1-gpl) and the [en_AU-librivox-medium](https://huggingface.co/DataCraftsmanAustralia/piper-en_AU-librivox-medium) model, speaker 5 (`timothy_ferguson`, voice name banjo). The model weights were not added to this repository.
 
 | | |
 |---|---|
@@ -65,3 +65,8 @@ Weather and stock events have three variants. Each season has two. Playback wait
 - Summer: “Summer's on us. Watch the stock for heat.” / “Hot days now. Keep an eye on the dams.”
 - Autumn: “Vintage is on. Get the grapes in.” / “Autumn harvest. The valley's ready to pick.”
 - Winter: “Winter pruning time. The vines need a cut.” / “Cold season. Prune the vines while they sleep.”
+- Wine show: “The Ferguson Valley show wants a bottle.”
+- Tourist bus: “A tourist bus is at the gate.”
+- Stray dog: “A stray dog is in the sheep paddock.”
+- Hail: “Hail is coming over the ridge.”
+- Neighbour: “The neighbour wants to borrow the tractor.”
