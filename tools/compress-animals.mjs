@@ -61,7 +61,9 @@ await MeshoptDecoder.ready;
 
 let before = 0;
 let after = 0;
+const only = process.env.VE_ANIMAL;
 for (const name of NAMES) {
+  if (only && name !== only) continue;
   const srcPath = `${SRC}/${name}.glb`;
   const { json, bin } = readGLB(srcPath);
   const original = json.bufferViews.map((view) => {

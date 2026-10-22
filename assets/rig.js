@@ -256,9 +256,9 @@
     }
     if (kind === "cockatoo") {
       base.main = geoFrom(parsed.pos, parsed.nrm, paint(parsed.col, parsed.pos, (out, x, y, z, i) => {
-        const crest = y > 0.34 && x > 0.05 && x < 0.26;
-        const eye = Math.hypot(x - 0.2, Math.abs(z) - 0.045, y - 0.32) < 0.016;
-        const ring = Math.hypot(x - 0.2, Math.abs(z) - 0.045, y - 0.32) < 0.028;
+        const crest = y > 0.36 && x > 0.02 && x < 0.24 && Math.abs(z) < 0.12;
+        const eye = Math.hypot(x - 0.22, Math.abs(z) - 0.045, y - 0.35) < 0.016;
+        const ring = Math.hypot(x - 0.22, Math.abs(z) - 0.045, y - 0.35) < 0.028;
         if (crest) {
           out[i] = 0.98;
           out[i + 1] = 0.74;
@@ -271,7 +271,7 @@
           out[i] = 0.9;
           out[i + 1] = 0.88;
           out[i + 2] = 0.8;
-        } else if (x > 0.26 && y > 0.2 && y < 0.36 && Math.abs(z) < 0.07) {
+        } else if (x > 0.22 && y > 0.22 && y < 0.38 && Math.abs(z) < 0.07) {
           out[i] = 0.32;
           out[i + 1] = 0.3;
           out[i + 2] = 0.28;

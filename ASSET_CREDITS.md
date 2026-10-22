@@ -39,7 +39,7 @@ Runtime files are the meshopt-compressed glTF binaries in `assets/animals/*.glb`
 | --- | --- |
 | `assets/animals/meshopt_decoder.js` | MIT. Vendored from meshoptimizer 1.3. Copyright 2016–2026 Arseny Kapoulkine. |
 
-The game loads the compressed models, the two WebP normals, the decoder, and `assets/rig.js`. That download is about 770 KB (787,976 bytes of glTF, plus the two normals and the decoder), under the 4 MB budget. The `src/` glTF files stay in the repository for rebuilds and are not fetched at runtime. The building files add about 260 KB.
+The game loads the compressed models, the two WebP normals, the decoder, and `assets/rig.js`. That download is about 800 KB (815,248 bytes of glTF, plus the two normals and the decoder), under the 4 MB budget. The `src/` glTF files stay in the repository for rebuilds and are not fetched at runtime. The building files add about 260 KB.
 
 ## Buildings
 

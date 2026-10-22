@@ -429,17 +429,17 @@ def roo_color(x, y, z):
     return C(n + 0.1, n + 0.02, n - 0.04)
 
 def bird_color(x, y, z):
-    # Sulphur fan sitting on the crown.
-    if z > 0.34 and 0.05 < x < 0.26:
+    # Sulphur fan sitting on the crown, overlapping the white head.
+    if z > 0.36 and 0.02 < x < 0.24 and abs(y) < 0.12:
         return C(0.98, 0.74, 0.04)
     # Dark eye, then a pale ring so the face has a focal point.
     for ey in (0.045, -0.045):
-        if near(x, y, z, 0.2, ey, 0.32, 0.016):
+        if near(x, y, z, 0.22, ey, 0.35, 0.016):
             return C(0.04, 0.035, 0.03)
-        if near(x, y, z, 0.2, ey, 0.32, 0.028):
+        if near(x, y, z, 0.22, ey, 0.35, 0.028):
             return C(0.9, 0.88, 0.8)
-    # Grey hooked beak, clearly in front of the white face.
-    if x > 0.26 and 0.2 < z < 0.36 and abs(y) < 0.07:
+    # Grey hooked beak, growing out of the white face.
+    if x > 0.22 and 0.22 < z < 0.38 and abs(y) < 0.07:
         return C(0.32, 0.3, 0.28)
     # Folded wing, a warm white so the wing separates from the body.
     if abs(y) > 0.07 and 0.08 < z < 0.24 and x < 0.12:
@@ -553,28 +553,28 @@ def roo_balls():
     return b
 
 def bird_balls():
-    # Sulphur-crested cockatoo. The body is the mass; the crest is a fan
-    # wide enough to read from the side, and the beak is a solid hook.
-    b = [ball(0.0, 0, 0.17, 0.12, (1.35, 1.05, 1.05))]
-    b.append(ball(0.1, 0, 0.26, 0.07))
-    b.append(ball(0.16, 0, 0.33, 0.072, (1.05, 1.0, 0.95)))
-    b.append(ball(0.32, 0, 0.3, 0.05, (1.65, 0.72, 0.78)))
-    b.append(ball(0.3, 0, 0.24, 0.032, (1.4, 0.6, 0.5)))
-    # Fat fan on the crown, forward enough to read from the front.
-    b.append(ball(0.16, 0.0, 0.46, 0.045))
-    b.append(ball(0.18, 0.055, 0.43, 0.04))
-    b.append(ball(0.18, -0.055, 0.43, 0.04))
-    b.append(ball(0.2, 0.1, 0.39, 0.034))
-    b.append(ball(0.2, -0.1, 0.39, 0.034))
-    b.append(ball(0.14, 0.0, 0.38, 0.04))
-    b.append(ball(0.2, 0.045, 0.33, 0.016))
-    b.append(ball(0.2, -0.045, 0.33, 0.016))
-    b.append(ball(-0.02, 0.1, 0.17, 0.04, (1.35, 0.28, 0.85)))
-    b.append(ball(-0.02, -0.1, 0.17, 0.04, (1.35, 0.28, 0.85)))
-    b.append(ball(-0.16, 0, 0.14, 0.028, (1.5, 0.7, 0.4)))
-    for side in (0.04, -0.04):
-        b.append(ball(0.02, side, 0.07, 0.022))
-        b.append(ball(0.04, side, 0.02, 0.02))
+    # One fused volume: body, thick neck, head, crest and beak overlap
+    # so a side view cannot show the yellow fan floating off the bird.
+    b = [ball(0.0, 0, 0.16, 0.13, (1.4, 1.08, 1.0))]
+    b.append(ball(0.07, 0, 0.24, 0.09))
+    b.append(ball(0.12, 0, 0.30, 0.085))
+    b.append(ball(0.16, 0, 0.35, 0.095, (1.15, 1.05, 0.95)))
+    b.append(ball(0.24, 0, 0.33, 0.05, (1.25, 0.75, 0.7)))
+    b.append(ball(0.33, 0, 0.31, 0.042, (1.7, 0.62, 0.58)))
+    b.append(ball(0.31, 0, 0.26, 0.03, (1.15, 0.55, 0.45)))
+    b.append(ball(0.14, 0.0, 0.43, 0.055))
+    b.append(ball(0.15, 0.035, 0.45, 0.04))
+    b.append(ball(0.15, -0.035, 0.45, 0.04))
+    b.append(ball(0.12, 0.06, 0.41, 0.034))
+    b.append(ball(0.12, -0.06, 0.41, 0.034))
+    b.append(ball(0.2, 0.045, 0.35, 0.016))
+    b.append(ball(0.2, -0.045, 0.35, 0.016))
+    b.append(ball(-0.02, 0.09, 0.17, 0.048, (1.3, 0.4, 0.8)))
+    b.append(ball(-0.02, -0.09, 0.17, 0.048, (1.3, 0.4, 0.8)))
+    b.append(ball(-0.16, 0, 0.14, 0.032, (1.45, 0.7, 0.45)))
+    for side in (0.035, -0.035):
+        b.append(ball(0.02, side, 0.07, 0.024))
+        b.append(ball(0.03, side, 0.02, 0.02))
     return b
 
 def clip_roo(arm):
@@ -738,7 +738,7 @@ def main():
     build(
         "cockatoo",
         bird_balls(),
-        quad_bones(0.2, 0.12, ((0.12, 0, 0.28), (0.18, 0, 0.34)), ((0.18, 0, 0.32), (0.3, 0, 0.3)), ((-0.08, 0, 0.16), (-0.2, 0, 0.12)), 0.09, 0.02, -0.06, 0.18, 0.08),
+        quad_bones(0.2, 0.12, ((0.1, 0, 0.28), (0.16, 0, 0.36)), ((0.18, 0, 0.34), (0.34, 0, 0.3)), ((-0.08, 0, 0.16), (-0.2, 0, 0.12)), 0.09, 0.02, -0.06, 0.18, 0.08),
         bird_color,
         0.012,
         0.78,
