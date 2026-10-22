@@ -1,6 +1,6 @@
 import { cpSync, mkdirSync, rmSync } from "node:fs";
 
-const files = ["index.html", "game3d.js", "privacy.html", "CREDITS.md", "favicon.ico", "favicon-16.png", "favicon-32.png", "apple-touch-icon.png"];
+const files = ["index.html", "game3d.js", "privacy.html", "support.html", "CREDITS.md", "favicon.ico", "favicon-16.png", "favicon-32.png", "apple-touch-icon.png"];
 
 rmSync("www", { recursive: true, force: true });
 mkdirSync("www/assets", { recursive: true });

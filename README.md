@@ -2,13 +2,13 @@
 
 A mobile farming strategy game set in Ferguson Valley, WA.
 
-Play it on the web at [the GitHub Pages site](https://danielcollins6330-ship-it.github.io/Valley-estates/). The privacy policy is [privacy.html](privacy.html). Credits are in [CREDITS.md](CREDITS.md). Store listing draft: [STORE_LISTING.md](STORE_LISTING.md).
+Play it on the web at [the GitHub Pages site](https://danielcollins6330-ship-it.github.io/Valley-estates/). Support is [support.html](support.html). The privacy policy is [privacy.html](privacy.html). Credits are in [CREDITS.md](CREDITS.md). Store listing draft: [STORE_LISTING.md](STORE_LISTING.md).
 
 The Android and iOS apps use Capacitor (`com.littleridgeestate.valleyestates`). They bundle the same files as the website, run fullscreen, and keep the save in local storage on the device. iPhone stays portrait. Foldables, Android split-screen, and iPad multitasking can rotate and resize without restarting the activity.
 
 ## Web files
 
-`index.html`, `game3d.js`, and `assets/textures.js` stay at the repository root so GitHub Pages can keep serving them. `npm run sync` copies those files, plus `privacy.html` and `assets/audio/`, into `www/` and then into the native projects.
+`index.html`, `game3d.js`, and `assets/textures.js` stay at the repository root so GitHub Pages can keep serving them. `npm run sync` copies those files, plus `privacy.html`, `support.html`, and `assets/audio/`, into `www/` and then into the native projects.
 
 Sound is ambience that follows the time of day and the rain, animal calls, action effects, and short Australian farmer lines. The menu has separate ambience, effects and voice sliders plus mute. Those settings are stored in `valleyEstatesAudio`, separate from the estate save. The first tap unlocks playback. Audio uses the page's media elements with the ambient session so the iOS silent switch can mute it, and it pauses when the app is in the background. Sources and licences are in [AUDIO_CREDITS.md](AUDIO_CREDITS.md).
 
