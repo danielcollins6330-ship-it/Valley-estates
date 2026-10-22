@@ -88,10 +88,20 @@ async function importAppleIntermediates(keychainPath) {
 }
 
 async function listBundleCapabilities(token, bundleResourceId) {
-  const url = new URL(`${BUNDLE_API}/${bundleResourceId}/bundleIdCapabilities`);
-  url.searchParams.set("limit", "200");
-  const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-  return { status: response.status, ok: response.ok, body: await readJson(response) };
+  // This relationship rejects filter and limit. Follow links.next instead.
+  const collected = [];
+  let url = `${BUNDLE_API}/${bundleResourceId}/bundleIdCapabilities`;
+  let status = 0;
+  let body = {};
+  while (url) {
+    const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+    status = response.status;
+    body = await readJson(response);
+    if (!response.ok) return { status, ok: false, body };
+    if (Array.isArray(body.data)) collected.push(...body.data);
+    url = typeof body.links?.next === "string" ? body.links.next : "";
+  }
+  return { status, ok: true, body: { data: collected } };
 }
 
 async function enableGameCenterCapability(token, bundleResourceId) {
