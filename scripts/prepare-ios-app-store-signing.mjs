@@ -36,13 +36,15 @@ function publicError(body) {
 // Private keys for these CI certificates were deleted with the runner.
 // Oldest first. Revoking one does not affect an IPA that is already uploaded.
 // F87GD5XVS2 never signed an upload. 4G8BZ8MGKN signed an IPA that Apple
-// rejected before an app record existed. 38798V9TFT signed the v1.0.10 upload.
-// ADJS9GQYHR signed the v1.0.11 upload.
+// rejected before an app record existed. 38798V9TFT signed the v1.0.10 upload
+// and was revoked for the v1.0.12 run. ADJS9GQYHR signed the v1.0.11 upload.
+// U86P563X6Z signed the v1.0.12 upload. None of these private keys were kept.
 export const UNUSED_CI_DISTRIBUTION_CERTIFICATES = [
   "F87GD5XVS2",
   "4G8BZ8MGKN",
   "38798V9TFT",
   "ADJS9GQYHR",
+  "U86P563X6Z",
 ];
 
 export function isCertificateLimit(status, body) {
