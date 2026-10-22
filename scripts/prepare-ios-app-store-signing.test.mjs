@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { chooseCertificateToRevoke, isCertificateLimit } from "./prepare-ios-app-store-signing.mjs";
+import { chooseCertificateToRevoke, gameCenterCapabilityEnabled, isCertificateLimit } from "./prepare-ios-app-store-signing.mjs";
 
 const limitBody = {
   errors: [{
@@ -24,5 +24,14 @@ assert.equal(chooseCertificateToRevoke(listed), "F87GD5XVS2");
 assert.equal(chooseCertificateToRevoke(listed.filter((item) => item.id !== "F87GD5XVS2")), "4G8BZ8MGKN");
 assert.equal(chooseCertificateToRevoke([{ id: "AAAAAAAAAA" }]), null);
 assert.equal(chooseCertificateToRevoke([]), null);
+
+assert.equal(gameCenterCapabilityEnabled([
+  { attributes: { capabilityType: "GAME_CENTER" } },
+]), true);
+assert.equal(gameCenterCapabilityEnabled([
+  { attributes: { capabilityType: "PUSH_NOTIFICATIONS" } },
+]), false);
+assert.equal(gameCenterCapabilityEnabled([]), false);
+assert.equal(gameCenterCapabilityEnabled(undefined), false);
 
 console.log("prepare-ios-app-store-signing tests passed");
