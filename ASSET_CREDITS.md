@@ -14,9 +14,13 @@ Close-up animals are original rigged meshes built for this game. Distant animals
 | `assets/animals/src/kangaroo.glb` | Eastern grey kangaroo. Big hind legs, thick tail. Clips: Idle, Walk, Graze, Lie, Hop. | CC0. Original, same pipeline. |
 | `assets/animals/src/cockatoo.glb` | Sulphur-crested cockatoo. White body, yellow crest. Walk flaps the wings. Clips: Idle, Walk, Graze, Lie. | CC0. Original, same pipeline. |
 
-The bundled renderer includes the skinning shader and does not include `AnimationMixer`. `assets/rig.js` samples the glTF clips, blends the previous clip into the next over 0.38 seconds, and writes bone matrices into the bone texture. Each animal starts at a different point in the clip, from its slot seed, so a herd does not step together.
+The bundled renderer includes the skinning shader and does not include `AnimationMixer`. `assets/rig.js` samples the glTF clips, blends the previous clip into the next over 0.38 seconds, and writes bone matrices into a bone texture. Each animal starts at a different point in the clip, from its slot seed, so a herd does not step together.
 
-Breed colour is vertex colour on the mesh. Cattle have four speckle variants. One sheep in five uses a black fleece variant. Coat and fleece detail is a triplanar normal, because the meshes have no texture coordinates.
+World scale matches the farmhand, about 0.55 units for a 1.7 m person. At that scale the cattle mesh is 1.40 m at the shoulder, the woolly sheep about 0.55 m, and the shorn sheep about 0.48 m.
+
+Each skinned mesh keeps its own bone texture. The matrices are stored in the row order this renderer's `texelFetch` reads. A shared atlas was tried and removed: every animal read the first slot, because the per-draw bone offset never reached the shader. The skeletons stay at 16 bones. The skin shader always fetches four influences per vertex, so a smaller skeleton would not make each vertex cheaper.
+
+Breed colour is vertex colour on the mesh. Cattle are forced to a black body, a white face, and a few white speckles, so the coat stays black in the scene sun. One sheep in five uses a black fleece variant. The cockatoo crest is painted sulphur yellow and the hen comb is painted red, because those colours were not in the exported vertices. Coat and fleece detail is one triplanar normal sample, because the meshes have no texture coordinates.
 
 ## Textures
 
@@ -25,7 +29,7 @@ Breed colour is vertex colour on the mesh. Cattle have four speckle variants. On
 | `assets/animals/coat.webp` | Tileable hair normal, 128×128 WebP. | CC0. Original, painted for this game. |
 | `assets/animals/wool.webp` | Tileable wool-clump normal, 128×128 WebP. | CC0. Original, painted for this game. |
 
-Materials stay rough, with a small warm emissive lift, so the darker coats sit in the same painted light as the farm. The scene exposure is unchanged.
+Materials stay rough. Cattle have no emissive lift and almost no environment reflection, so the black coat is not lifted to grey. Other coats keep a small warm emissive. The scene exposure is unchanged. Skinned meshes do not cast shadows. The painted cattle speckles are still in the instanced bodies: near-black and off-white, multiplied by the coat noise.
 
 ## Compression and the decoder
 
@@ -35,7 +39,7 @@ Runtime files are the meshopt-compressed glTF binaries in `assets/animals/*.glb`
 | --- | --- |
 | `assets/animals/meshopt_decoder.js` | MIT. Vendored from meshoptimizer 1.3. Copyright 2016–2026 Arseny Kapoulkine. |
 
-The game loads the compressed models, the two WebP normals, the decoder, and `assets/rig.js`. That download is about 743 KB (760,598 bytes), under the 4 MB budget. The `src/` glTF files stay in the repository for rebuilds and are not fetched at runtime.
+The game loads the compressed models, the two WebP normals, the decoder, and `assets/rig.js`. That download is about 745 KB (763,008 bytes), under the 4 MB budget. The `src/` glTF files stay in the repository for rebuilds and are not fetched at runtime.
 
 ## Rebuild
 

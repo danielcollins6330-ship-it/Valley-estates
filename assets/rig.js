@@ -2,14 +2,16 @@
 // AnimationMixer, so clips are sampled here and written into a bone texture.
 (function () {
   const BASE = new URL("./", document.currentScript.src);
+  // World units match the farmhand: about 0.55 units for a 1.7 m person.
+  // Scales below put the mesh height on a real body size (cattle 1.4 m).
   const KINDS = {
-    cattle: { file: "cattle.glb", scale: 0.56, rough: 0.84, fur: "coat", repeat: 7.2, amt: 0.5 },
-    sheep: { file: "sheep.glb", scale: 0.74, rough: 0.96, fur: "wool", repeat: 11, amt: 0.8 },
-    sheep_shorn: { file: "sheep_shorn.glb", scale: 0.8, rough: 0.74, fur: "coat", repeat: 8, amt: 0.22 },
-    dog: { file: "dog.glb", scale: 0.86, rough: 0.68, fur: "coat", repeat: 9, amt: 0.38 },
-    chicken: { file: "chicken.glb", scale: 1.05, rough: 0.6, fur: "coat", repeat: 6, amt: 0.18 },
-    kangaroo: { file: "kangaroo.glb", scale: 0.7, rough: 0.76, fur: "coat", repeat: 6.5, amt: 0.36 },
-    cockatoo: { file: "cockatoo.glb", scale: 1.45, rough: 0.48, fur: "coat", repeat: 5, amt: 0.12 },
+    cattle: { file: "cattle.glb", scale: 0.385, rough: 0.92, fur: "coat", repeat: 7.2, amt: 0.5 },
+    sheep: { file: "sheep.glb", scale: 0.297, rough: 0.96, fur: "wool", repeat: 11, amt: 0.8 },
+    sheep_shorn: { file: "sheep_shorn.glb", scale: 0.284, rough: 0.74, fur: "coat", repeat: 8, amt: 0.22 },
+    dog: { file: "dog.glb", scale: 0.353, rough: 0.68, fur: "coat", repeat: 9, amt: 0.38 },
+    chicken: { file: "chicken.glb", scale: 0.402, rough: 0.6, fur: "coat", repeat: 6, amt: 0.18 },
+    kangaroo: { file: "kangaroo.glb", scale: 0.469, rough: 0.76, fur: "coat", repeat: 6.5, amt: 0.36 },
+    cockatoo: { file: "cockatoo.glb", scale: 0.674, rough: 0.48, fur: "coat", repeat: 5, amt: 0.12 },
   };
   const POSE_CLIP = { walk: "Walk", graze: "Graze", idle: "Idle", lie: "Lie", run: "Run", hop: "Hop" };
   const POSE_RATE = { walk: 1, graze: 0.42, idle: 0.32, lie: 0.22, run: 1.45, hop: 1.2 };
@@ -22,6 +24,17 @@
   const slots = new Map();
   const tex = { coat: null, wool: null };
   let bytes = 0;
+
+  // Each mesh keeps its own bone texture. A shared atlas was tried: every
+  // animal sampled slot 0 because the per-draw offset never reached the shader.
+  function packBone(data, size, bone, elements) {
+    const j = bone * 4;
+    const x = j % size;
+    const y = size - 1 - ((j / size) | 0);
+    const o = (y * size + x) * 4;
+    if (elements) data.set(elements, o);
+    else data[o] = data[o + 5] = data[o + 10] = data[o + 15] = 1;
+  }
 
   function slerp(ax, ay, az, aw, bx, by, bz, bw, t) {
     let cos = ax * bx + ay * by + az * bz + aw * bw;
@@ -200,13 +213,34 @@
     return out;
   }
 
+  function darkenCattle(col, pos) {
+    const out = new Float32Array(col);
+    for (let i = 0; i < out.length; i += 3) {
+      const lum = out[i] * 0.3 + out[i + 1] * 0.59 + out[i + 2] * 0.11;
+      const x = pos[i];
+      const y = pos[i + 1];
+      const face = x > 0.7 && y > 0.4 && y < 1.2;
+      if (lum >= 0.84 && (face || y < 0.5)) {
+        out[i] = 0.95;
+        out[i + 1] = 0.94;
+        out[i + 2] = 0.9;
+      } else {
+        out[i] *= 0.02;
+        out[i + 1] *= 0.02;
+        out[i + 2] *= 0.02;
+      }
+    }
+    return out;
+  }
+
   function variantsFor(kind, parsed) {
-    const base = { main: geoFrom(parsed.pos, parsed.nrm, parsed.col, parsed.jointsAttr, parsed.weights, parsed.indices) };
+    const coat = kind === "cattle" ? darkenCattle(parsed.col, parsed.pos) : parsed.col;
+    const base = { main: geoFrom(parsed.pos, parsed.nrm, coat, parsed.jointsAttr, parsed.weights, parsed.indices) };
     if (kind === "cattle") {
       for (let s = 0; s < 4; s++) {
-        const col = paint(parsed.col, parsed.pos, (out, x, y, z, i) => {
+        const col = paint(coat, parsed.pos, (out, x, y, z, i) => {
           const h = Math.abs(Math.sin(x * 13.1 + z * 8.4 + s * 2.7) * Math.sin(y * 5.2 + s * 1.3));
-          const spot = Math.abs(z) > 0.04 && y > 0.28 && y < 1.12 && x < 0.92 && h > 0.52 + s * 0.07;
+          const spot = Math.abs(z) > 0.05 && y > 0.34 && y < 1.02 && x > 0.05 && x < 0.82 && h > 0.86;
           if (spot) {
             out[i] = 0.93;
             out[i + 1] = 0.91;
@@ -215,6 +249,32 @@
         });
         base["s" + s] = geoFrom(parsed.pos, parsed.nrm, col, parsed.jointsAttr, parsed.weights, parsed.indices);
       }
+    }
+    if (kind === "cockatoo") {
+      base.main = geoFrom(parsed.pos, parsed.nrm, paint(parsed.col, parsed.pos, (out, x, y, _z, i) => {
+        if (y > 0.185) {
+          out[i] = 0.96;
+          out[i + 1] = 0.75;
+          out[i + 2] = 0.08;
+        } else if (x > 0.095 && y > 0.12 && y < 0.185) {
+          out[i] = 0.16;
+          out[i + 1] = 0.15;
+          out[i + 2] = 0.13;
+        }
+      }), parsed.jointsAttr, parsed.weights, parsed.indices);
+    }
+    if (kind === "chicken") {
+      base.main = geoFrom(parsed.pos, parsed.nrm, paint(parsed.col, parsed.pos, (out, x, y, _z, i) => {
+        if (y > 0.29 && x > 0.04) {
+          out[i] = 0.72;
+          out[i + 1] = 0.1;
+          out[i + 2] = 0.06;
+        } else if (x > 0.11 && y > 0.22 && y < 0.3) {
+          out[i] = 0.92;
+          out[i + 1] = 0.62;
+          out[i + 2] = 0.08;
+        }
+      }), parsed.jointsAttr, parsed.weights, parsed.indices);
     }
     if (kind === "sheep" || kind === "sheep_shorn") {
       const col = paint(parsed.col, parsed.pos, (out, x, y, z, i) => {
@@ -237,8 +297,12 @@
       metalness: 0,
       envMapIntensity: 0.42,
     });
-    mat.emissive = new api.Color(0.025, 0.02, 0.016);
+    const cattle = kind === "cattle";
+    mat.emissive = new api.Color(cattle ? 0 : 0.012, cattle ? 0 : 0.01, cattle ? 0 : 0.008);
+    mat.envMapIntensity = cattle ? 0.01 : kind === "sheep" ? 0.22 : 0.42;
     mat.color = new api.Color(1, 0.985, 0.96);
+    if (kind === "sheep") mat.color.setRGB(0.74, 0.71, 0.64);
+    if (kind === "sheep_shorn") mat.color.setRGB(0.9, 0.86, 0.8);
     const map = spec.fur === "wool" ? tex.wool : tex.coat;
     mat.onBeforeCompile = (shader) => {
       shader.uniforms.tFur = { value: map };
@@ -253,12 +317,9 @@
         `#include <normal_fragment_begin>
 {
   vec3 bn = abs(normalize(vFurN));
-  bn = pow(bn, vec3(3.0));
-  bn /= bn.x + bn.y + bn.z + 1e-4;
-  vec3 tx = texture2D(tFur, vFurP.zy * uFurScale).xyz * 2.0 - 1.0;
-  vec3 ty = texture2D(tFur, vFurP.xz * uFurScale).xyz * 2.0 - 1.0;
-  vec3 tz = texture2D(tFur, vFurP.xy * uFurScale).xyz * 2.0 - 1.0;
-  vec3 tn = tx * bn.x + ty * bn.y + tz * bn.z;
+  vec3 n = normalize(vFurN);
+  vec2 uv = bn.y >= bn.x && bn.y >= bn.z ? vFurP.xz : (bn.x >= bn.z ? vFurP.zy : vFurP.xy);
+  vec3 tn = texture2D(tFur, uv * uFurScale).xyz * 2.0 - 1.0;
   vec3 N = normalize(normal);
   vec3 T = normalize(cross(N, vec3(0.0, 1.0, 0.0)));
   if (dot(T, T) < 1e-4) T = normalize(cross(N, vec3(1.0, 0.0, 0.0)));
@@ -399,13 +460,16 @@
       if (p < 0) model.worlds[i].copy(model.local);
       else model.worlds[i].multiplyMatrices(model.worlds[p], model.local);
     }
-    const data = mesh.skeleton.boneTexture.image.data;
+    const tex = mesh.skeleton.boneTexture;
+    const data = tex.image.data;
+    const size = tex.image.width;
     model.joints.forEach((node, i) => {
       model.bone.multiplyMatrices(model.worlds[node], model.ibms[i]);
       model.bone.premultiply(model.invMesh);
-      data.set(model.bone.elements, i * 16);
+      // texelFetch y=0 reads the last row of this array in the current Three upload.
+      packBone(data, size, i, model.bone.elements);
     });
-    mesh.skeleton.boneTexture.needsUpdate = true;
+    tex.needsUpdate = true;
   }
 
   function makeSlot(kind, variant) {
@@ -414,14 +478,14 @@
     const mesh = new api.Mesh(geo, model.mat);
     mesh.isSkinnedMesh = true;
     mesh.frustumCulled = false;
-    mesh.castShadow = true;
+    mesh.castShadow = false;
     mesh.receiveShadow = false;
     mesh.bindMatrix = new api.Mat4();
     mesh.bindMatrixInverse = new api.Mat4();
     const bones = model.joints.length;
     const size = Math.max(4, Math.ceil(Math.sqrt(bones * 4) / 4) * 4);
     const data = new Float32Array(size * size * 4);
-    for (let i = 0; i < bones; i++) data[i * 16] = data[i * 16 + 5] = data[i * 16 + 10] = data[i * 16 + 15] = 1;
+    for (let i = 0; i < bones; i++) packBone(data, size, i, null);
     const boneTexture = new api.DataTex(data, size, size, api.RGBA, api.FloatType);
     boneTexture.magFilter = boneTexture.minFilter = api.Nearest;
     boneTexture.wrapS = boneTexture.wrapT = api.Clamp;
@@ -438,7 +502,7 @@
     mesh.skeleton = {
       boneTexture,
       computeBoneTexture() {},
-      update() { writeBones(mesh); },
+      update() {},
     };
     const group = new api.Group();
     group.add(mesh);
@@ -521,14 +585,16 @@
       }
       anim.rate = opt.rate || POSE_RATE[nextPose] || 1;
       anim.blend = Math.min(1, anim.blend + dt / 0.38);
+      writeBones(slot.mesh);
       slot.group.visible = true;
       slot.group.position.set(x, y - slot.model.minY * slot.model.scale, z);
       slot.group.rotation.y = yaw;
-      slot.mesh.castShadow = true;
+      slot.mesh.castShadow = false;
     },
     hide(key) {
       const slot = slots.get(key);
-      if (slot) slot.group.visible = false;
+      if (!slot) return;
+      slot.group.visible = false;
     },
   };
 })();
