@@ -39,7 +39,15 @@ Runtime files are the meshopt-compressed glTF binaries in `assets/animals/*.glb`
 | --- | --- |
 | `assets/animals/meshopt_decoder.js` | MIT. Vendored from meshoptimizer 1.3. Copyright 2016–2026 Arseny Kapoulkine. |
 
-The game loads the compressed models, the two WebP normals, the decoder, and `assets/rig.js`. That download is about 745 KB (763,008 bytes), under the 4 MB budget. The `src/` glTF files stay in the repository for rebuilds and are not fetched at runtime.
+The game loads the compressed models, the two WebP normals, the decoder, and `assets/rig.js`. That download is about 741 KB (759,104 bytes of glTF, plus the two normals and the decoder), under the 4 MB budget. The `src/` glTF files stay in the repository for rebuilds and are not fetched at runtime. The building files add about 260 KB.
+
+## Buildings
+
+| File | What it is | Licence |
+| --- | --- | --- |
+| `assets/buildings/*.glb` | Homestead, winery, cellar door, Valley Villa, shearing shed, machinery shed, and sale yard. Weatherboard or stone, corrugated iron, verandahs. Each file has a near mesh and a far mesh. | CC0. Original, Blender 4.0.2. No third-party geometry. |
+
+`tools/build-buildings.py` rebuilds them. The game loads the files through `assets/buildings.js`. Low graphics, and anything far from the camera, uses the far mesh.
 
 ## Rebuild
 

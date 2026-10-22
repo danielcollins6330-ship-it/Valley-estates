@@ -6,7 +6,7 @@
   // Scales below put the mesh height on a real body size (cattle 1.4 m).
   const KINDS = {
     cattle: { file: "cattle.glb", scale: 0.385, rough: 0.92, fur: "coat", repeat: 7.2, amt: 0.5 },
-    sheep: { file: "sheep.glb", scale: 0.297, rough: 0.96, fur: "wool", repeat: 11, amt: 0.8 },
+    sheep: { file: "sheep.glb", scale: 0.297, rough: 0.96, fur: "wool", repeat: 11, amt: 0.45 },
     sheep_shorn: { file: "sheep_shorn.glb", scale: 0.284, rough: 0.74, fur: "coat", repeat: 8, amt: 0.22 },
     dog: { file: "dog.glb", scale: 0.353, rough: 0.68, fur: "coat", repeat: 9, amt: 0.38 },
     chicken: { file: "chicken.glb", scale: 0.402, rough: 0.6, fur: "coat", repeat: 6, amt: 0.18 },
@@ -219,15 +219,19 @@
       const lum = out[i] * 0.3 + out[i + 1] * 0.59 + out[i + 2] * 0.11;
       const x = pos[i];
       const y = pos[i + 1];
-      const face = x > 0.7 && y > 0.4 && y < 1.2;
-      if (lum >= 0.84 && (face || y < 0.5)) {
-        out[i] = 0.95;
-        out[i + 1] = 0.94;
-        out[i + 2] = 0.9;
+      const eye = lum < 0.22 && x > 0.7 && y > 0.85;
+      if (eye) {
+        out[i] = 0.04;
+        out[i + 1] = 0.03;
+        out[i + 2] = 0.025;
+      } else if (lum > 0.55) {
+        out[i] = Math.min(0.96, out[i]);
+        out[i + 1] = Math.min(0.94, out[i + 1]);
+        out[i + 2] = Math.min(0.9, out[i + 2]);
       } else {
-        out[i] *= 0.02;
-        out[i + 1] *= 0.02;
-        out[i + 2] *= 0.02;
+        out[i] = 0.045;
+        out[i + 1] = 0.036;
+        out[i + 2] = 0.03;
       }
     }
     return out;
@@ -240,7 +244,7 @@
       for (let s = 0; s < 4; s++) {
         const col = paint(coat, parsed.pos, (out, x, y, z, i) => {
           const h = Math.abs(Math.sin(x * 13.1 + z * 8.4 + s * 2.7) * Math.sin(y * 5.2 + s * 1.3));
-          const spot = Math.abs(z) > 0.05 && y > 0.34 && y < 1.02 && x > 0.05 && x < 0.82 && h > 0.86;
+          const spot = Math.abs(z) > 0.04 && y > 0.3 && y < 1.15 && x > -0.2 && x < 0.9 && h > 0.8;
           if (spot) {
             out[i] = 0.93;
             out[i + 1] = 0.91;
@@ -252,27 +256,32 @@
     }
     if (kind === "cockatoo") {
       base.main = geoFrom(parsed.pos, parsed.nrm, paint(parsed.col, parsed.pos, (out, x, y, _z, i) => {
-        if (y > 0.185) {
-          out[i] = 0.96;
-          out[i + 1] = 0.75;
+        const crest = y > 0.26 && x < 0.16;
+        if (crest) {
+          out[i] = 0.98;
+          out[i + 1] = 0.76;
           out[i + 2] = 0.08;
-        } else if (x > 0.095 && y > 0.12 && y < 0.185) {
-          out[i] = 0.16;
-          out[i + 1] = 0.15;
-          out[i + 2] = 0.13;
+        } else if (x > 0.14 && y < 0.26) {
+          out[i] = 0.22;
+          out[i + 1] = 0.2;
+          out[i + 2] = 0.18;
         }
       }), parsed.jointsAttr, parsed.weights, parsed.indices);
     }
     if (kind === "chicken") {
       base.main = geoFrom(parsed.pos, parsed.nrm, paint(parsed.col, parsed.pos, (out, x, y, _z, i) => {
-        if (y > 0.29 && x > 0.04) {
-          out[i] = 0.72;
-          out[i + 1] = 0.1;
-          out[i + 2] = 0.06;
-        } else if (x > 0.11 && y > 0.22 && y < 0.3) {
-          out[i] = 0.92;
-          out[i + 1] = 0.62;
-          out[i + 2] = 0.08;
+        if (y > 0.33 && x > 0.02 && Math.abs(_z) < 0.08) {
+          out[i] = 0.78;
+          out[i + 1] = 0.08;
+          out[i + 2] = 0.05;
+        } else if (x > 0.14 && y > 0.2 && y < 0.32 && Math.abs(_z) < 0.05) {
+          out[i] = 0.95;
+          out[i + 1] = 0.68;
+          out[i + 2] = 0.1;
+        } else if (y > 0.08) {
+          out[i] = Math.min(0.55, out[i] * 0.72);
+          out[i + 1] *= 0.55;
+          out[i + 2] *= 0.6;
         }
       }), parsed.jointsAttr, parsed.weights, parsed.indices);
     }
@@ -301,8 +310,8 @@
     mat.emissive = new api.Color(cattle ? 0 : 0.012, cattle ? 0 : 0.01, cattle ? 0 : 0.008);
     mat.envMapIntensity = cattle ? 0.01 : kind === "sheep" ? 0.22 : 0.42;
     mat.color = new api.Color(1, 0.985, 0.96);
-    if (kind === "sheep") mat.color.setRGB(0.74, 0.71, 0.64);
-    if (kind === "sheep_shorn") mat.color.setRGB(0.9, 0.86, 0.8);
+    if (kind === "sheep") mat.color.setRGB(1, 0.985, 0.95);
+    if (kind === "sheep_shorn") mat.color.setRGB(1, 0.96, 0.9);
     const map = spec.fur === "wool" ? tex.wool : tex.coat;
     mat.onBeforeCompile = (shader) => {
       shader.uniforms.tFur = { value: map };
