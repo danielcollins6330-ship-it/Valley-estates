@@ -6,8 +6,10 @@
   // Scales put the imported mesh height on a real body (cattle about 1.4 m).
   const KINDS = {
     cattle: { file: "cattle.glb", scale: 0.1, rough: 0.9, fur: "coat", repeat: 5.5, amt: 0.08 },
-    sheep: { file: "sheep.glb", scale: 0.0416, rough: 0.96, fur: "wool", repeat: 8, amt: 0.4 },
-    sheep_shorn: { file: "sheep_shorn.glb", scale: 0.0371, rough: 0.72, fur: "coat", repeat: 7, amt: 0.12 },
+    // Height is about 57% of the cattle mesh. Width is scaled up so the
+    // Babydoll reads chunky beside a cow instead of as a small dog.
+    sheep: { file: "sheep.glb", scale: 0.0605, broad: 1.32, long: 1.08, rough: 0.96, fur: "wool", repeat: 8, amt: 0.4 },
+    sheep_shorn: { file: "sheep_shorn.glb", scale: 0.0605, broad: 1.12, long: 1.02, rough: 0.72, fur: "coat", repeat: 7, amt: 0.12 },
     dog: { file: "dog.glb", scale: 0.0543, rough: 0.72, fur: "coat", repeat: 7, amt: 0.16 },
     chicken: { file: "chicken.glb", scale: 0.0102, rough: 0.62, fur: "coat", repeat: 5, amt: 0.1 },
     kangaroo: { file: "kangaroo.glb", scale: 0.469, rough: 0.76, fur: "coat", repeat: 6.5, amt: 0.36 },
@@ -233,7 +235,8 @@
           const lum = out[i] * 0.3 + out[i + 1] * 0.59 + out[i + 2] * 0.11;
           const ny = (y - minY) / spanY;
           const h = Math.abs(Math.sin(x * 3.1 + z * 6.4 + s * 2.7) * Math.sin(y * 2.2 + s * 1.3));
-          if (lum < 0.2 && ny > 0.16 && ny < 0.46 && h > 0.86) {
+          // Extra underline speckles stay off the legs and the shoulders.
+          if (lum < 0.2 && ny > 0.18 && ny < 0.4 && Math.abs(z) < 0.5 && h > 0.72) {
             out[i] = 0.95;
             out[i + 1] = 0.94;
             out[i + 2] = 0.9;
@@ -503,7 +506,9 @@
     };
     const group = new api.Group();
     group.add(mesh);
-    group.scale.setScalar(model.scale);
+    const broad = model.kind === "sheep" || model.kind === "sheep_shorn" ? KINDS[kind].broad : 1;
+    const long = model.kind === "sheep" || model.kind === "sheep_shorn" ? KINDS[kind].long : 1;
+    group.scale.set(model.scale * long, model.scale, model.scale * broad);
     group.userData.role = kind === "sheep_shorn" ? "sheep" : kind;
     return { group, mesh, kind, variant, model };
   }

@@ -6,9 +6,9 @@ Close-up cattle, sheep, the dog, and the hen use free CC0 meshes. Coat colour is
 
 | File | What it is | Licence |
 | --- | --- | --- |
-| `assets/animals/src/cattle.glb` | Quaternius cow from the Ultimate Animated Animal Pack, horns removed so it reads polled. Retextured as a Speckle Park: black body, white face, speckled underline. Clips: Idle, Walk, Graze (the pack's eating), Lie (held last frame of death), Run (gallop). | CC0. Quaternius, July 2021. https://quaternius.com/packs/ultimateanimatedanimals.html |
+| `assets/animals/src/cattle.glb` | Quaternius cow from the Ultimate Animated Animal Pack, horns removed so it reads polled. Retextured as a Speckle Park: black body, white on the face and head, a white strip along the topline and tail, speckled underline. Shoulders, chest, and legs stay black. Clips: Idle, Walk, Graze (the pack's eating), Lie (held last frame of death), Run (gallop). | CC0. Quaternius, July 2021. https://quaternius.com/packs/ultimateanimatedanimals.html |
 | `assets/animals/src/sheep.glb` | Quaternius sheep from the Farm Animal Pack. Painted as a Babydoll Southdown: cream fleece, tan teddy-bear face, dark legs. Clips: Idle, Walk, Run, Graze (idle with the head lowered), Lie. | CC0. Quaternius, June 2018. https://quaternius.com/packs/farmanimal.html and https://poly.pizza/bundle/Farm-Animal-Pack-1kUvRTPLzT |
-| `assets/animals/src/sheep_shorn.glb` | The same sheep mesh, fleece pulled in and repainted as skin. Slightly smaller in the world. Same clips. | CC0. Same pack as the woolly sheep. |
+| `assets/animals/src/sheep_shorn.glb` | The same sheep mesh, fleece pulled in and repainted as skin. Same height as the woolly sheep, with a narrower body. Same clips. | CC0. Same pack as the woolly sheep. |
 | `assets/animals/src/dog.glb` | Quaternius Shiba Inu from the Ultimate Animated Animal Pack, repainted red and tan as a kelpie. The curled tail is posed straight. Clips: Idle, Walk, Graze, Lie, Run. | CC0. Same Ultimate Animated Animal Pack. |
 | `assets/animals/src/chicken.glb` | Rigged hen by Čestmír Dammer. The Farm Animal Pack has no hen (llama, pig, pug, sheep, horse, cow, zebra). The separate Quaternius chicken on Poly Pizza could not be downloaded. Photo texture is not used. Comb scaled up. Painted buff, with a red comb and yellow beak and legs. Graze is the peck. Clips: Idle, Walk, Graze, Lie. | CC0. https://opengameart.org/content/chicken-animated |
 | `assets/animals/src/kangaroo.glb` | Eastern grey kangaroo. Big hind legs, thick tail. Clips: Idle, Walk, Graze, Lie, Hop. | CC0. Original mesh, kept. No suitable CC0 or CC-BY rigged replacement. |
@@ -16,7 +16,7 @@ Close-up cattle, sheep, the dog, and the hen use free CC0 meshes. Coat colour is
 
 The bundled renderer includes the skinning shader and does not include `AnimationMixer`. `assets/rig.js` samples the glTF clips, blends the previous clip into the next over 0.38 seconds, and writes bone matrices into a bone texture. Each animal starts at a different point in the clip, from its slot seed, so a herd does not step together.
 
-World scale matches the farmhand, about 0.55 units for a 1.7 m person. At that scale the cattle mesh is about 1.4 m tall, the woolly sheep about 0.56 m, the shorn sheep about 0.50 m, the dog about 0.52 m, and the hen about 0.40 m.
+World scale matches the farmhand, about 0.55 units for a 1.7 m person. At that scale the cattle mesh is about 1.4 m tall. The Babydoll stands at about 57% of that height, near 0.8 m, and is widened so the fleece reads chunky beside a cow. The shorn sheep keeps that height with a narrower body. The dog is about 0.52 m, and the hen about 0.40 m.
 
 Each skinned mesh keeps its own bone texture. The matrices are stored in the row order this renderer's `texelFetch` reads. A shared atlas was tried and removed: every animal read the first slot, because the per-draw bone offset never reached the shader. The imported rigs keep the author's bone counts (cattle 42, dog 46, sheep 24, hen 40). The kangaroo and cockatoo stay at 16. The skin shader always fetches four influences per vertex.
 
@@ -39,7 +39,7 @@ Runtime files are the meshopt-compressed glTF binaries in `assets/animals/*.glb`
 | --- | --- |
 | `assets/animals/meshopt_decoder.js` | MIT. Vendored from meshoptimizer 1.3. Copyright 2016–2026 Arseny Kapoulkine. |
 
-The game loads the compressed models, the two WebP normals, the decoder, and `assets/rig.js`. That download is about 1.6 MB (1,601,504 bytes of glTF, plus the two normals and the decoder). The `src/` glTF files stay in the repository for rebuilds and are not fetched at runtime. The building files add about 260 KB.
+The game loads the compressed models, the two WebP normals, the decoder, and `assets/rig.js`. That download is about 1.6 MB (1,601,428 bytes of glTF, plus the two normals and the decoder). The `src/` glTF files stay in the repository for rebuilds and are not fetched at runtime. The building files add about 260 KB.
 
 ## Buildings
 

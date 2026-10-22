@@ -4184,17 +4184,43 @@ function __(i,t,e){
     ?(lod===0?[h.lowB,h.lowH]:h.bodies.concat(h.heads,h.legs,lod>0?[h.tail]:[],lod>1?[h.earL,h.earR]:[]))
     :(lod===0?[h.lowB,h.lowH]:[h.wool,h.shorn,h.head,h.ruff,h.tail].concat(lod>0?h.legs:[],lod>1?[h.earL,h.earR]:[]));
   for(const m of show){m.visible=!0;m.count=n;m.castShadow=xi>0&&lod>0&&(m===h.lowB||m===h.wool||m===h.shorn||(h.bodies&&h.bodies.indexOf(m)>=0))}
-  for(;h.slots.length<n;){const k=h.slots.length,col=k%3,row=(k/3)|0;h.slots.push({x:(col-1)*.72,z:(row-.4)*.65,tx:(Math.random()-.5)*(i.w-.8),tz:(Math.random()-.5)*(i.h-.8),ang:.2+k*.4,wait:k%2?5:0,pose:"graze",ph:k*1.7})}
+  for(;h.slots.length<n;){const k=h.slots.length,col=k%3,row=(k/3)|0;const laid=cattle?[[-.75,-.55],[.75,-.55],[0,.7],[-.7,.7],[.7,.7],[0,-.9],[-.9,0],[.9,0]][k]:null;const spread=cattle?1.05:.62;h.slots.push({x:laid?laid[0]:(col-1)*spread,z:laid?laid[1]:(row-.4)*spread,tx:(Math.random()-.5)*(i.w-.8),tz:(Math.random()-.5)*(i.h-.8),ang:.2+k*.9,wait:k%2?5:0,pose:"graze",ph:k*1.7})}
   if(h.slots.length>n)h.slots.length=n;
   const fleece=Math.max(0,Math.min(100,Number(i.fleece)||0)),woolly=fleece>=35,woolS=.78+.22*Math.min(1,fleece/90);
+  const gap=cattle?1.2:.55;
   for(let a=0;a<n;a++){
     const r=h.slots[a];
     let moving=!1;
     if(r.wait>0)r.wait-=dt;
     else{
       const dx=r.tx-r.x,dz=r.tz-r.z,p=Math.hypot(dx,dz);
-      if(p<.06){r.tx=(Math.random()-.5)*(i.w-.9);r.tz=(Math.random()-.5)*(i.h-.9);r.wait=1.4+Math.random()*3.5;r.pose=Math.random()<.6?"graze":Math.random()<.28?"lie":"idle"}
-      else{const d=Math.min(p,.32*dt);r.x+=dx/p*d;r.z+=dz/p*d;let g=Math.atan2(-dz,dx)-r.ang;for(;g>Math.PI;)g-=Math.PI*2;for(;g<-Math.PI;)g+=Math.PI*2;r.ang+=g*Math.min(1,dt*3.2);moving=!0}
+      if(p<.06){
+        let tx=0,tz=0,tries=0;
+        do{tx=(Math.random()-.5)*(i.w-.9);tz=(Math.random()-.5)*(i.h-.9);tries++}while(tries<6&&h.slots.some((o,b)=>b!==a&&Math.hypot(tx-o.x,tz-o.z)<gap));
+        r.tx=tx;r.tz=tz;r.wait=1.4+Math.random()*3.5;r.pose=Math.random()<.6?"graze":Math.random()<.28?"lie":"idle"
+      }
+      else{
+        const d=Math.min(p,.32*dt),nx=r.x+dx/p*d,nz=r.z+dz/p*d;
+        let into=!1;
+        for(let b=0;b<n;b++){if(b===a)continue;const o=h.slots[b],was=Math.hypot(r.x-o.x,r.z-o.z),now=Math.hypot(nx-o.x,nz-o.z);if(now<gap&&now<was)into=!0}
+        if(!into){r.x=nx;r.z=nz;let g=Math.atan2(-dz,dx)-r.ang;for(;g>Math.PI;)g-=Math.PI*2;for(;g<-Math.PI;)g+=Math.PI*2;r.ang+=g*Math.min(1,dt*3.2);moving=!0}
+      }
+    }
+    let sepX=0,sepZ=0;
+    for(let b=0;b<n;b++){
+      if(b===a)continue;
+      const o=h.slots[b];
+      let ox=r.x-o.x,oz=r.z-o.z,d=Math.hypot(ox,oz);
+      if(d<1e-3){ox=(a-b+0.5)*.2;oz=.15;d=Math.hypot(ox,oz)}
+      if(d<gap){const push=(gap-d)/gap;sepX+=ox/d*push;sepZ+=oz/d*push}
+    }
+    if(sepX||sepZ){
+      const step=Math.min(1,dt*6);
+      r.x+=sepX*step;r.z+=sepZ*step;
+      const limX=Math.max(.35,i.w*.5-.45),limZ=Math.max(.35,i.h*.5-.45);
+      r.x=Math.max(-limX,Math.min(limX,r.x));
+      r.z=Math.max(-limZ,Math.min(limZ,r.z));
+      if(Math.hypot(sepX,sepZ)>.25)moving=!0;
     }
     const pose=moving?"walk":r.pose;
     const phase=(r.ph+=dt*(moving?8.5:pose==="graze"?1.5:.7));

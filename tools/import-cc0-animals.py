@@ -16,6 +16,7 @@
 
 import math
 import os
+import sys
 
 import bmesh
 import bpy
@@ -220,31 +221,35 @@ def one_material(obj):
 
 def cow_color(w, n, mat, mn, mx):
     span_x = max(1e-4, mx.x - mn.x)
+    span_y = max(1e-4, mx.y - mn.y)
     span_z = max(1e-4, mx.z - mn.z)
+    # +X is the nose, +Z is up, Y is across the body.
     nx = (w.x - mn.x) / span_x
     nz = (w.z - mn.z) / span_z
+    side = abs(w.y - (mn.y + mx.y) * 0.5) / (span_y * 0.5)
     if mat.startswith("Eye_Black"):
         return (0.02, 0.018, 0.016)
     if mat.startswith("Eye_White"):
         return (0.96, 0.96, 0.94)
     if mat.startswith("Hooves") or nz < 0.08:
         return shade((0.14, 0.08, 0.045), n, False)
-    nose = mat.startswith("Muzzle") and nx > 0.86
-    # Whole head in front of the neck, so the white reads as a mask.
-    face = nx > 0.60 and nz > 0.36
     if mat.startswith("Horns"):
         return shade((0.93, 0.9, 0.84), n, True)
+    # Pink only on the nose. The rest of the muzzle follows the head rule.
+    nose = mat.startswith("Muzzle") and nx > 0.9 and side < 0.35 and 0.4 < nz < 0.72
     if nose:
         return shade((0.93, 0.55, 0.52), n, True)
-    if face or mat.startswith("Muzzle"):
+    # The head is the front fifth and sits above the chest, so the shoulders,
+    # the chest, and the front legs stay black instead of a white belt.
+    head = nx > 0.80 and nz > 0.55
+    topline = n.z > 0.55 and nz > 0.88 and nx < 0.80 and side < 0.28
+    tail = nx < 0.08 and side < 0.2 and 0.62 < nz < 0.96
+    if head or topline or tail:
         return shade((0.99, 0.99, 0.97), n, True)
-    belly = 0.16 < nz < 0.34 and abs(w.y) < (mx.y - mn.y) * 0.22
-    speck = noise(w.x, w.y, w.z)
-    if belly:
-        if speck > 0.62:
-            return shade((0.05, 0.04, 0.035), n, False)
-        return shade((0.97, 0.97, 0.94), n, True)
-    if 0.18 < nz < 0.5 and speck > 0.84:
+    # Speckles on the underline. The belly itself stays black, and the
+    # low outer verts are the legs, so they are left out of the speckle.
+    belly = 0.18 < nz < 0.40 and side < 0.42 and 0.22 < nx < 0.72
+    if belly and noise(w.x, w.y, w.z) > 0.42:
         return shade((0.96, 0.95, 0.92), n, True)
     return shade((0.045, 0.038, 0.032), n, False)
 
@@ -565,20 +570,21 @@ def load_blend(path, keep, join_extras):
 
 
 def main():
-    arm, mesh = load_gltf(COW)
-    finish("cow", arm, mesh, os.path.join(OUT, "cattle.glb"))
-
-    arm, mesh = load_gltf(DOG)
-    finish("dog", arm, mesh, os.path.join(OUT, "dog.glb"))
-
-    arm, mesh = load_blend(SHEEP, ["Sheep"], [])
-    finish("sheep", arm, mesh, os.path.join(OUT, "sheep.glb"))
-
-    arm, mesh = load_blend(SHEEP, ["Sheep"], [])
-    finish("sheep", arm, mesh, os.path.join(OUT, "sheep_shorn.glb"), shorn=True)
-
-    arm, mesh = load_blend(HEN, ["Chicken"], ["Eyes"])
-    finish("hen", arm, mesh, os.path.join(OUT, "chicken.glb"))
+    only = sys.argv[sys.argv.index("--") + 1] if "--" in sys.argv else ""
+    if not only or only == "cow":
+        arm, mesh = load_gltf(COW)
+        finish("cow", arm, mesh, os.path.join(OUT, "cattle.glb"))
+    if not only or only == "dog":
+        arm, mesh = load_gltf(DOG)
+        finish("dog", arm, mesh, os.path.join(OUT, "dog.glb"))
+    if not only or only == "sheep":
+        arm, mesh = load_blend(SHEEP, ["Sheep"], [])
+        finish("sheep", arm, mesh, os.path.join(OUT, "sheep.glb"))
+        arm, mesh = load_blend(SHEEP, ["Sheep"], [])
+        finish("sheep", arm, mesh, os.path.join(OUT, "sheep_shorn.glb"), shorn=True)
+    if not only or only == "hen":
+        arm, mesh = load_blend(HEN, ["Chicken"], ["Eyes"])
+        finish("hen", arm, mesh, os.path.join(OUT, "chicken.glb"))
 
 
 if __name__ == "__main__":
