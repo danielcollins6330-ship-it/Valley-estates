@@ -27,10 +27,14 @@
 
   // Each mesh keeps its own bone texture. A shared atlas was tried: every
   // animal sampled slot 0 because the per-draw offset never reached the shader.
+  // DataTexture.flipY is false in this Three build, so texelFetch y=0 is the
+  // first row of the array. The skin shader reads that row (y = j / size).
+  // Flipping the row here sent every joint to a different bone and stretched
+  // the cow, dog, and sheep into thin limb skeletons.
   function packBone(data, size, bone, elements) {
     const j = bone * 4;
     const x = j % size;
-    const y = size - 1 - ((j / size) | 0);
+    const y = (j / size) | 0;
     const o = (y * size + x) * 4;
     if (elements) data.set(elements, o);
     else data[o] = data[o + 5] = data[o + 10] = data[o + 15] = 1;
@@ -459,7 +463,6 @@
     model.joints.forEach((node, i) => {
       model.bone.multiplyMatrices(model.worlds[node], model.ibms[i]);
       model.bone.premultiply(model.invMesh);
-      // texelFetch y=0 reads the last row of this array in the current Three upload.
       packBone(data, size, i, model.bone.elements);
     });
     tex.needsUpdate = true;
@@ -480,6 +483,7 @@
     const data = new Float32Array(size * size * 4);
     for (let i = 0; i < bones; i++) packBone(data, size, i, null);
     const boneTexture = new api.DataTex(data, size, size, api.RGBA, api.FloatType);
+    boneTexture.flipY = false;
     boneTexture.magFilter = boneTexture.minFilter = api.Nearest;
     boneTexture.wrapS = boneTexture.wrapT = api.Clamp;
     boneTexture.colorSpace = api.noCS;
