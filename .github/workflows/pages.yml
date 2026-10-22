@@ -32,7 +32,7 @@ jobs:
       - name: Stage the web root
         run: |
           mkdir -p _site/assets
-          cp index.html game3d.js privacy.html CREDITS.md README.md .nojekyll favicon.ico favicon-16.png favicon-32.png apple-touch-icon.png _site/
+          cp index.html game3d.js privacy.html support.html CREDITS.md README.md .nojekyll favicon.ico favicon-16.png favicon-32.png apple-touch-icon.png _site/
           cp assets/textures.js assets/logo.png _site/assets/
 
       - name: Upload artifact
