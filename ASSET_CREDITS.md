@@ -39,7 +39,7 @@ Runtime files are the meshopt-compressed glTF binaries in `assets/animals/*.glb`
 | --- | --- |
 | `assets/animals/meshopt_decoder.js` | MIT. Vendored from meshoptimizer 1.3. Copyright 2016–2026 Arseny Kapoulkine. |
 
-The game loads the compressed models, the two WebP normals, the decoder, and `assets/rig.js`. That download is about 741 KB (759,104 bytes of glTF, plus the two normals and the decoder), under the 4 MB budget. The `src/` glTF files stay in the repository for rebuilds and are not fetched at runtime. The building files add about 260 KB.
+The game loads the compressed models, the two WebP normals, the decoder, and `assets/rig.js`. That download is about 770 KB (787,976 bytes of glTF, plus the two normals and the decoder), under the 4 MB budget. The `src/` glTF files stay in the repository for rebuilds and are not fetched at runtime. The building files add about 260 KB.
 
 ## Buildings
 
@@ -51,4 +51,4 @@ The game loads the compressed models, the two WebP normals, the decoder, and `as
 
 ## Rebuild
 
-`tools/build-animals.py` is the headless Blender export. `tools/compress-animals.mjs` writes the meshopt binaries. Blender 4.x needs to be on `PATH`. The compressor needs `meshoptimizer@1.3.0` installed for Node (`npm install meshoptimizer@1.3.0`). That package is a build tool. The game only ships the decoder file listed above.
+`tools/build-animals.py` is the headless Blender export. Set `VE_ANIMAL` to one species name to export just that mesh. `tools/compress-animals.mjs` writes the meshopt binaries. Blender 4.x needs to be on `PATH`. The compressor needs `meshoptimizer@1.3.0` installed for Node (`npm install meshoptimizer@1.3.0`). That package is a build tool. The game only ships the decoder file listed above.

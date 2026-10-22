@@ -94,6 +94,38 @@ def bind(mesh, arm):
     arm.select_set(True)
     bpy.context.view_layer.objects.active = arm
     bpy.ops.object.parent_set(type="ARMATURE_AUTO")
+    # Heat weighting can leave a bone or a vertex with no influence, and the
+    # Blender 4.0 glTF exporter then crashes while inserting a neutral bone.
+    groups = {g.name: g for g in mesh.vertex_groups}
+    for bone in arm.data.bones:
+        if bone.name not in groups:
+            groups[bone.name] = mesh.vertex_groups.new(name=bone.name)
+    used = {name: False for name in groups}
+    for vert in mesh.data.vertices:
+        total = 0.0
+        for g in vert.groups:
+            total += g.weight
+            if g.weight > 0.001:
+                used[mesh.vertex_groups[g.group].name] = True
+        if total > 0.001:
+            continue
+        head_best = None
+        best_d = 1e9
+        for bone in arm.data.bones:
+            d = (vert.co - bone.head_local).length
+            if d < best_d:
+                best_d = d
+                head_best = bone.name
+        groups[head_best].add([vert.index], 1.0, "REPLACE")
+        used[head_best] = True
+    for name, ok in used.items():
+        if ok or name not in groups:
+            continue
+        bone = arm.data.bones.get(name)
+        if bone is None:
+            continue
+        nearest = min(mesh.data.vertices, key=lambda v: (v.co - bone.head_local).length)
+        groups[name].add([nearest.index], 0.02, "ADD")
 
 def begin(arm, name):
     if arm.animation_data is None:
@@ -250,10 +282,17 @@ def add_bits(mesh, bits):
     bpy.context.view_layer.objects.active = mesh
     bpy.ops.object.join()
     mesh = bpy.context.object
+    bpy.ops.object.mode_set(mode="EDIT")
+    bpy.ops.mesh.select_all(action="SELECT")
+    bpy.ops.mesh.normals_make_consistent(inside=False)
+    bpy.ops.object.mode_set(mode="OBJECT")
     bpy.ops.object.shade_smooth()
     return mesh
 
-def build(name, balls, bones, color, resolution, rough, extra=None, bits=None):
+def build(name, balls, bones, color, resolution, rough, extra=None, bits=None, clips=None):
+    only = os.environ.get("VE_ANIMAL")
+    if only and name != only:
+        return
     reset()
     mesh = mesh_from_balls(name, balls, resolution)
     if bits:
@@ -262,7 +301,10 @@ def build(name, balls, bones, color, resolution, rough, extra=None, bits=None):
     material(mesh, rough)
     arm = armature(bones)
     bind(mesh, arm)
-    clip_quad(arm)
+    if clips:
+        clips(arm)
+    else:
+        clip_quad(arm)
     if extra:
         extra(arm)
     export(os.path.join(OUT, name + ".glb"), arm, mesh)
@@ -273,44 +315,60 @@ def C(r, g, b):
 def near(x, y, z, cx, cy, cz, r):
     return (x - cx) ** 2 + (y - cy) ** 2 + (z - cz) ** 2 < r * r
 
+# A few large speckles, not fine noise, so they still read at game scale.
+CATTLE_SPOTS = (
+    (0.12, 0.22, 0.92, 0.12),
+    (-0.22, -0.2, 0.86, 0.11),
+    (0.28, -0.18, 0.74, 0.09),
+    (-0.08, 0.2, 0.64, 0.09),
+    (0.18, 0.16, 1.02, 0.08),
+    (-0.32, 0.12, 0.78, 0.08),
+)
+
 def cattle_color(x, y, z):
-    for ey in (0.09, -0.09):
-        if near(x, y, z, 1.02, ey, 1.16, 0.045):
+    for ey in (0.1, -0.1):
+        if near(x, y, z, 1.0, ey, 1.16, 0.05):
             return C(0.04, 0.03, 0.025)
-        # black eye patches on the white face
-        if near(x, y, z, 0.98, ey, 1.15, 0.07) and abs(y) > 0.04:
-            return C(0.07, 0.06, 0.05)
-    if x > 1.08 and abs(y) < 0.06 and z > 1.0 and z < 1.14:
-        return C(0.1, 0.07, 0.06)
+        # black spectacle patches on the white face
+        if near(x, y, z, 0.98, ey, 1.15, 0.055) and abs(y) > 0.04:
+            return C(0.07, 0.055, 0.045)
+    # grey-pink nose on the white face
+    if x > 1.06 and abs(y) < 0.055 and 0.98 < z < 1.14:
+        return C(0.45, 0.32, 0.3)
     # polled ears stay black
-    if z > 1.18 and abs(y) > 0.08 and x > 0.7:
+    if z > 1.16 and abs(y) > 0.09 and x > 0.62:
         return C(0.06, 0.05, 0.045)
-    white = x > 0.82 and z > 0.98 and abs(y) < 0.16
-    h = abs(math.sin(x * 12.3 + y * 4.1 + z * 7.7) * math.sin(x * 3.1 - y * 9.2 + 2.2))
-    if h > 0.62 and z > 0.4 and z < 1.15 and abs(y) > 0.06 and x < 0.9:
-        white = True
-    if z < 0.16 and h > 0.35:
-        white = True
-    if white:
-        return C(0.94, 0.92, 0.88)
-    return C(0.06, 0.05, 0.045)
+    # broad white face, the Speckle Park mark
+    if x > 0.7 and z > 0.92 and abs(y) < 0.2:
+        return C(0.95, 0.93, 0.9)
+    for cx, cy, cz, r in CATTLE_SPOTS:
+        if near(x, y, z, cx, cy, cz, r):
+            return C(0.94, 0.92, 0.88)
+    if z < 0.14:
+        return C(0.93, 0.91, 0.86)
+    return C(0.05, 0.04, 0.035)
 
 def sheep_color(woolly):
     def fn(x, y, z):
-        for ey in (0.05, -0.05):
-            if near(x, y, z, 0.52, ey, 0.54, 0.028):
+        for ey in (0.055, -0.055):
+            if near(x, y, z, 0.52, ey, 0.52, 0.032):
                 return C(0.08, 0.06, 0.05)
-        if x > 0.54 and abs(y) < 0.03 and z > 0.42 and z < 0.52:
-            return C(0.28, 0.16, 0.13)
-        if z < 0.1:
-            return C(0.42, 0.32, 0.24)
+        if x > 0.54 and abs(y) < 0.035 and 0.4 < z < 0.52:
+            return C(0.32, 0.18, 0.14)
+        # bare lower legs
+        if z < 0.12:
+            return C(0.55, 0.4, 0.3) if woolly else C(0.62, 0.44, 0.32)
         if woolly:
-            if x > 0.4:
-                return C(0.8, 0.7, 0.58)
-            n = 0.94 + 0.04 * math.sin(x * 22 + y * 17 + z * 9)
-            return C(n, n - 0.02, n - 0.05)
-        if x > 0.36 or z < 0.24:
-            return C(0.8, 0.64, 0.52)
+            # woolly face, a shade warmer than the fleece so the head reads
+            if x > 0.36:
+                return C(0.78, 0.66, 0.52)
+            if abs(y) > 0.12 and z > 0.5 and x > 0.22:
+                return C(0.72, 0.6, 0.48)
+            n = 0.93 + 0.03 * math.sin(x * 18 + y * 14 + z * 8)
+            return C(n, n - 0.015, n - 0.04)
+        # shorn: pale close coat, bare tan face and ears
+        if x > 0.32 or (abs(y) > 0.08 and z > 0.42 and x > 0.18):
+            return C(0.78, 0.58, 0.44)
         return C(0.9, 0.86, 0.78)
     return fn
 
@@ -322,8 +380,8 @@ def dog_color(x, y, z):
         return C(0.1, 0.06, 0.05)
     if z > 0.64 and abs(y) > 0.04:
         return C(0.45, 0.22, 0.12)
-    if z > 0.46 and -0.15 < x < 0.4 and abs(y) < 0.09:
-        return C(0.16, 0.09, 0.07)
+    if z > 0.36 and -0.25 < x < 0.38 and abs(y) < 0.08:
+        return C(0.14, 0.08, 0.06)
     if z < 0.12:
         return C(0.12, 0.08, 0.06)
     if x > 0.1 and z < 0.42:
@@ -331,45 +389,64 @@ def dog_color(x, y, z):
     return C(0.74, 0.34, 0.14)
 
 def hen_color(x, y, z):
-    if z > 0.35 and x > 0.06 and abs(y) < 0.05:
-        return C(0.82, 0.08, 0.06)
-    if x > 0.2 and 0.24 < z < 0.34 and abs(y) < 0.04:
-        return C(0.95, 0.7, 0.1)
-    if 0.12 < x < 0.2 and 0.22 < z < 0.3 and abs(y) < 0.05:
-        return C(0.72, 0.1, 0.08)
-    for ey in (0.055, -0.055):
-        if near(x, y, z, 0.18, ey, 0.28, 0.016):
-            return C(0.08, 0.06, 0.05)
-    if abs(y) > 0.08 and 0.16 < z < 0.32:
-        return C(0.58, 0.34, 0.14)
-    if z < 0.08:
-        return C(0.92, 0.72, 0.16)
-    return C(0.76, 0.46, 0.16)
+    # tall red comb
+    if z > 0.34 and x > 0.02 and abs(y) < 0.06:
+        return C(0.84, 0.08, 0.06)
+    # yellow beak
+    if x > 0.18 and 0.22 < z < 0.34 and abs(y) < 0.045:
+        return C(0.96, 0.72, 0.08)
+    # red wattle
+    if 0.12 < x < 0.22 and 0.18 < z < 0.28 and abs(y) < 0.06:
+        return C(0.75, 0.1, 0.07)
+    for ey in (0.06, -0.06):
+        if near(x, y, z, 0.16, ey, 0.3, 0.02):
+            return C(0.06, 0.05, 0.04)
+    # chestnut wings
+    if abs(y) > 0.07 and 0.14 < z < 0.32:
+        return C(0.55, 0.28, 0.1)
+    # yellow legs
+    if z < 0.1:
+        return C(0.95, 0.74, 0.14)
+    return C(0.72, 0.38, 0.12)
 
 def roo_color(x, y, z):
-    for ey in (0.055, -0.055):
-        if near(x, y, z, 0.48, ey, 1.08, 0.03):
+    for ey in (0.06, -0.06):
+        if near(x, y, z, 0.46, ey, 1.12, 0.035):
             return C(0.06, 0.05, 0.04)
-    if z > 1.2:
-        return C(0.4, 0.3, 0.22)
-    if x < -0.45:
-        return C(0.3, 0.22, 0.16)
-    if z < 0.75 and -0.05 < x < 0.3 and abs(y) < 0.12:
-        return C(0.78, 0.7, 0.58)
-    n = 0.46 + 0.05 * math.sin(x * 9 + z * 7)
-    return C(n + 0.08, n, n - 0.05)
+    # dark nose
+    if x > 0.52 and 0.95 < z < 1.12 and abs(y) < 0.04:
+        return C(0.18, 0.12, 0.1)
+    # ear backs a little darker
+    if z > 1.18:
+        return C(0.38, 0.28, 0.2)
+    # thick grey-brown tail
+    if x < -0.4:
+        return C(0.32, 0.24, 0.18)
+    # pale belly
+    if z < 0.82 and -0.1 < x < 0.28 and abs(y) < 0.14:
+        return C(0.82, 0.74, 0.62)
+    n = 0.48 + 0.04 * math.sin(x * 8 + z * 6)
+    return C(n + 0.1, n + 0.02, n - 0.04)
 
 def bird_color(x, y, z):
-    if z > 0.27 and x < 0.14:
-        return C(0.98, 0.78, 0.08)
-    if x > 0.16 and z < 0.26:
-        return C(0.28, 0.26, 0.24)
-    for ey in (0.04, -0.04):
-        if near(x, y, z, 0.12, ey, 0.22, 0.018):
-            return C(0.06, 0.06, 0.06)
-    if abs(y) > 0.1:
-        return C(0.9, 0.9, 0.88)
-    return C(0.97, 0.97, 0.95)
+    # Sulphur fan sitting on the crown.
+    if z > 0.34 and 0.05 < x < 0.26:
+        return C(0.98, 0.74, 0.04)
+    # Dark eye, then a pale ring so the face has a focal point.
+    for ey in (0.045, -0.045):
+        if near(x, y, z, 0.2, ey, 0.32, 0.016):
+            return C(0.04, 0.035, 0.03)
+        if near(x, y, z, 0.2, ey, 0.32, 0.028):
+            return C(0.9, 0.88, 0.8)
+    # Grey hooked beak, clearly in front of the white face.
+    if x > 0.26 and 0.2 < z < 0.36 and abs(y) < 0.07:
+        return C(0.32, 0.3, 0.28)
+    # Folded wing, a warm white so the wing separates from the body.
+    if abs(y) > 0.07 and 0.08 < z < 0.24 and x < 0.12:
+        return C(0.96, 0.9, 0.62)
+    if z < 0.055:
+        return C(0.42, 0.36, 0.3)
+    return C(0.98, 0.98, 0.96)
 
 def ball(x, y, z, r, size=None):
     return ((x, y, z), r, size)
@@ -382,11 +459,11 @@ def cattle_balls():
     b.append(ball(0.55, 0, 1.02, 0.16, (0.7, 0.75, 0.7)))
     b.append(ball(0.78, 0, 1.12, 0.16, (1.15, 0.9, 0.75)))
     b.append(ball(0.98, 0, 1.05, 0.1, (1.2, 0.85, 0.6)))
-    b.append(ball(0.78, 0.16, 1.22, 0.055, (0.55, 0.35, 0.7)))
-    b.append(ball(0.78, -0.16, 1.22, 0.055, (0.55, 0.35, 0.7)))
-    b.append(ball(1.04, 0.09, 1.16, 0.038))
-    b.append(ball(1.04, -0.09, 1.16, 0.038))
-    b.append(ball(1.12, 0, 1.06, 0.045, (0.7, 0.85, 0.55)))
+    b.append(ball(0.72, 0.18, 1.26, 0.06, (0.5, 0.32, 0.85)))
+    b.append(ball(0.72, -0.18, 1.26, 0.06, (0.5, 0.32, 0.85)))
+    b.append(ball(1.02, 0.1, 1.16, 0.042))
+    b.append(ball(1.02, -0.1, 1.16, 0.042))
+    b.append(ball(1.14, 0, 1.05, 0.05, (0.85, 0.9, 0.6)))
     for side in (0.16, -0.16):
         for x in (0.32, -0.32):
             b.append(ball(x, side, 0.62, 0.11))
@@ -408,8 +485,8 @@ def sheep_balls(woolly):
     b.append(ball(0.48, 0, 0.46, 0.075, (1.15, 0.9, 0.75)))
     b.append(ball(0.52, 0.05, 0.54, 0.028))
     b.append(ball(0.52, -0.05, 0.54, 0.028))
-    b.append(ball(0.36, 0.1, 0.58, 0.04, (0.45, 0.35, 0.55)))
-    b.append(ball(0.36, -0.1, 0.58, 0.04, (0.45, 0.35, 0.55)))
+    b.append(ball(0.34, 0.13, 0.58, 0.045, (0.4, 0.32, 0.7)))
+    b.append(ball(0.34, -0.13, 0.58, 0.045, (0.4, 0.32, 0.7)))
     for side in (0.1, -0.1):
         for x in (0.12, -0.14):
             b.append(ball(x, side, 0.2, 0.05))
@@ -426,8 +503,8 @@ def dog_balls():
     b.append(ball(0.62, 0.045, 0.56, 0.022))
     b.append(ball(0.62, -0.045, 0.56, 0.022))
     b.append(ball(0.7, 0, 0.5, 0.03, (1.3, 0.55, 0.5)))
-    b.append(ball(0.46, 0.07, 0.68, 0.04, (0.4, 0.45, 1.7)))
-    b.append(ball(0.46, -0.07, 0.68, 0.04, (0.4, 0.45, 1.7)))
+    b.append(ball(0.42, 0.07, 0.74, 0.038, (0.35, 0.4, 2.3)))
+    b.append(ball(0.42, -0.07, 0.74, 0.038, (0.35, 0.4, 2.3)))
     for side in (0.07, -0.07):
         for x in (0.16, -0.16):
             b.append(ball(x, side, 0.26, 0.045))
@@ -440,8 +517,8 @@ def hen_balls():
     b = [ball(0, 0, 0.22, 0.1, (1.25, 0.95, 0.85))]
     b.append(ball(0.12, 0, 0.3, 0.055))
     b.append(ball(0.2, 0, 0.3, 0.025, (1.3, 0.5, 0.4)))
-    b.append(ball(0.13, 0, 0.38, 0.028, (0.7, 0.35, 1.15)))
-    b.append(ball(0.17, 0, 0.4, 0.02, (0.55, 0.3, 0.9)))
+    b.append(ball(0.12, 0, 0.4, 0.032, (0.65, 0.32, 1.35)))
+    b.append(ball(0.16, 0, 0.44, 0.024, (0.5, 0.28, 1.15)))
     b.append(ball(0.16, 0, 0.27, 0.018, (0.5, 0.7, 0.45)))
     b.append(ball(0.18, 0.055, 0.28, 0.012))
     b.append(ball(0.18, -0.055, 0.28, 0.012))
@@ -462,11 +539,12 @@ def roo_balls():
     b.append(ball(0.52, 0, 1.02, 0.05, (1.3, 0.55, 0.45)))
     b.append(ball(0.48, 0.055, 1.08, 0.028))
     b.append(ball(0.48, -0.055, 1.08, 0.028))
-    b.append(ball(0.32, 0.08, 1.32, 0.028, (0.35, 0.28, 2.4)))
-    b.append(ball(0.32, -0.08, 1.32, 0.028, (0.35, 0.28, 2.4)))
+    b.append(ball(0.3, 0.09, 1.38, 0.03, (0.32, 0.26, 2.8)))
+    b.append(ball(0.3, -0.09, 1.38, 0.03, (0.32, 0.26, 2.8)))
     for side in (0.1, -0.1):
         b.append(ball(-0.12, side, 0.45, 0.08))
         b.append(ball(-0.08, side, 0.22, 0.06))
+        b.append(ball(0.0, side, 0.12, 0.07))
         b.append(ball(0.02, side, 0.04, 0.08, (1.6, 0.55, 0.4)))
         b.append(ball(0.18, side, 0.5, 0.035))
     b.append(ball(-0.45, 0, 0.35, 0.07))
@@ -475,20 +553,83 @@ def roo_balls():
     return b
 
 def bird_balls():
-    b = [ball(0, 0, 0.16, 0.07, (1.3, 0.85, 0.8))]
-    b.append(ball(0.1, 0, 0.2, 0.045))
-    b.append(ball(0.18, 0, 0.2, 0.02, (1.2, 0.45, 0.4)))
-    b.append(ball(0.06, 0, 0.32, 0.02, (0.45, 0.4, 1.8)))
-    b.append(ball(0.05, 0.025, 0.33, 0.016, (0.4, 0.3, 1.5)))
-    b.append(ball(0.05, -0.025, 0.33, 0.016, (0.4, 0.3, 1.5)))
-    b.append(ball(0.12, 0.04, 0.22, 0.016))
-    b.append(ball(0.12, -0.04, 0.22, 0.016))
-    b.append(ball(0.0, 0.15, 0.16, 0.028, (1.8, 0.14, 0.85)))
-    b.append(ball(0.0, -0.15, 0.16, 0.028, (1.8, 0.14, 0.85)))
-    b.append(ball(-0.1, 0, 0.14, 0.015, (1.5, 0.4, 0.2)))
-    for side in (0.03, -0.03):
-        b.append(ball(0.02, side, 0.02, 0.014))
+    # Sulphur-crested cockatoo. The body is the mass; the crest is a fan
+    # wide enough to read from the side, and the beak is a solid hook.
+    b = [ball(0.0, 0, 0.17, 0.12, (1.35, 1.05, 1.05))]
+    b.append(ball(0.1, 0, 0.26, 0.07))
+    b.append(ball(0.16, 0, 0.33, 0.072, (1.05, 1.0, 0.95)))
+    b.append(ball(0.32, 0, 0.3, 0.05, (1.65, 0.72, 0.78)))
+    b.append(ball(0.3, 0, 0.24, 0.032, (1.4, 0.6, 0.5)))
+    # Fat fan on the crown, forward enough to read from the front.
+    b.append(ball(0.16, 0.0, 0.46, 0.045))
+    b.append(ball(0.18, 0.055, 0.43, 0.04))
+    b.append(ball(0.18, -0.055, 0.43, 0.04))
+    b.append(ball(0.2, 0.1, 0.39, 0.034))
+    b.append(ball(0.2, -0.1, 0.39, 0.034))
+    b.append(ball(0.14, 0.0, 0.38, 0.04))
+    b.append(ball(0.2, 0.045, 0.33, 0.016))
+    b.append(ball(0.2, -0.045, 0.33, 0.016))
+    b.append(ball(-0.02, 0.1, 0.17, 0.04, (1.35, 0.28, 0.85)))
+    b.append(ball(-0.02, -0.1, 0.17, 0.04, (1.35, 0.28, 0.85)))
+    b.append(ball(-0.16, 0, 0.14, 0.028, (1.5, 0.7, 0.4)))
+    for side in (0.04, -0.04):
+        b.append(ball(0.02, side, 0.07, 0.022))
+        b.append(ball(0.04, side, 0.02, 0.02))
     return b
+
+def clip_roo(arm):
+    # Rest mesh is already upright. Idle only breathes and flicks the ears
+    # so the long ears, belly, and tail stay readable.
+    begin(arm, "Idle")
+    for frame, ear in ((1, 0.04), (16, 0.22), (32, 0.04), (48, 0.04)):
+        pose(arm, frame, {
+            "spine": (-0.08, 0, 0),
+            "neck": (-0.05, 0, 0),
+            "tail": (0.25, 0, 0.12 if frame == 16 else 0.02),
+            "ear.L": (-0.08, 0, ear),
+            "ear.R": (-0.08, 0, -ear),
+            "leg.FL": (0.25, 0, 0.15),
+            "leg.FR": (0.25, 0, -0.15),
+        })
+    finish(arm, "Idle")
+    begin(arm, "Walk")
+    for frame in (1, 7, 13, 19, 25):
+        pose(arm, frame, walk_rots(frame, 24, 0.28, 0.35))
+    finish(arm, "Walk")
+    begin(arm, "Graze")
+    for frame, nod in ((1, 0.55), (20, 0.8), (40, 0.55)):
+        pose(arm, frame, {
+            "neck": (nod, 0, 0), "head": (0.35, 0, 0),
+            "tail": (0.4, 0, 0),
+            "ear.L": (0.2, 0, 0.1), "ear.R": (0.2, 0, -0.1),
+        })
+    finish(arm, "Graze")
+    begin(arm, "Lie")
+    pose(arm, 1, {
+        "spine": (0.35, 0, 0),
+        "leg.BL": (0.8, 0, 0.3), "leg.BR": (0.8, 0, -0.3),
+        "leg.FL": (1.0, 0, 0.4), "leg.FR": (1.0, 0, -0.4),
+        "tail": (0.15, 0, 0.5),
+        "neck": (0.2, 0, 0),
+    }, loc=(0, 0, -0.12))
+    pose(arm, 30, {
+        "spine": (0.3, 0, 0),
+        "tail": (0.2, 0, 0.2),
+    }, loc=(0, 0, -0.1))
+    finish(arm, "Lie")
+    begin(arm, "Hop")
+    keys = [(1, 0.0, 0.55), (8, 0.28, -0.15), (16, 0.0, 0.6)]
+    for frame, height, tuck in keys:
+        pose(arm, frame, {
+            "spine": (-0.35 - height, 0, 0),
+            "leg.BL": (tuck, 0, 0.12), "leg.BR": (tuck, 0, -0.12),
+            "shin.BL": (0.9 if height < 0.08 else 0.15, 0, 0),
+            "shin.BR": (0.9 if height < 0.08 else 0.15, 0, 0),
+            "leg.FL": (0.45, 0, 0.2), "leg.FR": (0.45, 0, -0.2),
+            "tail": (0.85 - height, 0, 0),
+            "ear.L": (-0.25, 0, 0.08), "ear.R": (-0.25, 0, -0.08),
+        }, loc=(0, 0, height))
+    finish(arm, "Hop")
 
 def dog_run(arm):
     begin(arm, "Run")
@@ -498,21 +639,6 @@ def dog_run(arm):
         rots["tail"] = (-0.4, 0, 0.5 if frame in (5, 13) else -0.2)
         pose(arm, frame, rots, loc=(0, 0, 0.04 if frame in (5, 13) else 0))
     finish(arm, "Run")
-
-def roo_hop(arm):
-    begin(arm, "Hop")
-    keys = [(1, 0, 0.2), (8, 0.35, -0.4), (16, 0, 0.25)]
-    for frame, height, tuck in keys:
-        pose(arm, frame, {
-            "leg.BL": (tuck, 0, 0.1), "leg.BR": (tuck, 0, -0.1),
-            "shin.BL": (0.8 if height < 0.1 else 0.2, 0, 0),
-            "shin.BR": (0.8 if height < 0.1 else 0.2, 0, 0),
-            "spine": (-0.3 - height, 0, 0),
-            "tail": (0.9 - height * 1.5, 0, 0),
-            "ear.L": (-0.2, 0, 0.1), "ear.R": (-0.2, 0, -0.1),
-            "leg.FL": (0.4, 0, 0), "leg.FR": (0.4, 0, 0),
-        }, loc=(0, 0, height))
-    finish(arm, "Hop")
 
 def main():
     bpy.context.scene.render.fps = 24
@@ -524,11 +650,11 @@ def main():
         0.032,
         0.82,
         bits=[
-            ((1.0, 0.085, 1.13), 0.04, None),
-            ((1.0, -0.085, 1.13), 0.04, None),
-            ((1.1, 0, 1.05), 0.05, (0.8, 0.9, 0.6)),
-            ((0.8, 0.16, 1.2), 0.05, (0.6, 0.4, 0.85)),
-            ((0.8, -0.16, 1.2), 0.05, (0.6, 0.4, 0.85)),
+            ((1.0, 0.1, 1.16), 0.045, None),
+            ((1.0, -0.1, 1.16), 0.045, None),
+            ((1.12, 0, 1.04), 0.055, (0.9, 0.95, 0.65)),
+            ((0.74, 0.18, 1.24), 0.055, (0.5, 0.35, 0.9)),
+            ((0.74, -0.18, 1.24), 0.055, (0.5, 0.35, 0.9)),
         ],
     )
     build(
@@ -584,12 +710,12 @@ def main():
         0.015,
         0.7,
         bits=[
-            ((0.12, 0, 0.38), 0.03, (0.7, 0.4, 1.2)),
-            ((0.16, 0, 0.41), 0.02, (0.6, 0.35, 1.0)),
-            ((0.22, 0, 0.3), 0.02, (1.4, 0.45, 0.4)),
-            ((0.16, 0.05, 0.3), 0.014, None),
-            ((0.16, -0.05, 0.3), 0.014, None),
-            ((0.15, 0, 0.25), 0.016, (0.6, 0.8, 0.5)),
+            ((0.11, 0, 0.42), 0.034, (0.65, 0.35, 1.4)),
+            ((0.15, 0, 0.46), 0.022, (0.55, 0.3, 1.15)),
+            ((0.24, 0, 0.3), 0.022, (1.6, 0.4, 0.4)),
+            ((0.16, 0.055, 0.3), 0.016, None),
+            ((0.16, -0.055, 0.3), 0.016, None),
+            ((0.16, 0, 0.24), 0.018, (0.55, 0.7, 0.55)),
         ],
     )
     build(
@@ -599,7 +725,6 @@ def main():
         roo_color,
         0.04,
         0.8,
-        roo_hop,
         bits=[
             ((0.42, 0.05, 1.05), 0.03, None),
             ((0.42, -0.05, 1.05), 0.03, None),
@@ -607,23 +732,16 @@ def main():
             ((0.3, 0.08, 1.28), 0.03, (0.35, 0.3, 2.6)),
             ((0.3, -0.08, 1.28), 0.03, (0.35, 0.3, 2.6)),
         ],
+        clips=clip_roo,
     )
     # Bird uses the same quadruped clip set; wing bones are the front legs, renamed by the flap in Walk.
     build(
         "cockatoo",
         bird_balls(),
-        quad_bones(0.16, 0.06, ((0.08, 0, 0.2), (0.14, 0, 0.24)), ((0.14, 0, 0.22), (0.22, 0, 0.2)), ((-0.08, 0, 0.16), (-0.18, 0, 0.14)), 0.1, 0.02, -0.02, 0.14, 0.08),
+        quad_bones(0.2, 0.12, ((0.12, 0, 0.28), (0.18, 0, 0.34)), ((0.18, 0, 0.32), (0.3, 0, 0.3)), ((-0.08, 0, 0.16), (-0.2, 0, 0.12)), 0.09, 0.02, -0.06, 0.18, 0.08),
         bird_color,
         0.012,
-        0.55,
-        bits=[
-            ((0.04, 0, 0.3), 0.028, (0.45, 0.4, 1.8)),
-            ((0.03, 0.025, 0.34), 0.02, (0.4, 0.35, 1.6)),
-            ((0.03, -0.025, 0.34), 0.02, (0.4, 0.35, 1.6)),
-            ((0.18, 0, 0.2), 0.02, (1.3, 0.4, 0.45)),
-            ((0.12, 0.04, 0.22), 0.014, None),
-            ((0.12, -0.04, 0.22), 0.014, None),
-        ],
+        0.78,
     )
 
 if __name__ == "__main__":

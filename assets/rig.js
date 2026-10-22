@@ -5,13 +5,13 @@
   // World units match the farmhand: about 0.55 units for a 1.7 m person.
   // Scales below put the mesh height on a real body size (cattle 1.4 m).
   const KINDS = {
-    cattle: { file: "cattle.glb", scale: 0.385, rough: 0.92, fur: "coat", repeat: 7.2, amt: 0.5 },
+    cattle: { file: "cattle.glb", scale: 0.385, rough: 0.92, fur: "coat", repeat: 7.2, amt: 0.22 },
     sheep: { file: "sheep.glb", scale: 0.297, rough: 0.96, fur: "wool", repeat: 11, amt: 0.45 },
     sheep_shorn: { file: "sheep_shorn.glb", scale: 0.284, rough: 0.74, fur: "coat", repeat: 8, amt: 0.22 },
     dog: { file: "dog.glb", scale: 0.353, rough: 0.68, fur: "coat", repeat: 9, amt: 0.38 },
     chicken: { file: "chicken.glb", scale: 0.402, rough: 0.6, fur: "coat", repeat: 6, amt: 0.18 },
     kangaroo: { file: "kangaroo.glb", scale: 0.469, rough: 0.76, fur: "coat", repeat: 6.5, amt: 0.36 },
-    cockatoo: { file: "cockatoo.glb", scale: 0.674, rough: 0.48, fur: "coat", repeat: 5, amt: 0.12 },
+    cockatoo: { file: "cockatoo.glb", scale: 0.674, rough: 0.82, fur: "coat", repeat: 3.5, amt: 0.04 },
   };
   const POSE_CLIP = { walk: "Walk", graze: "Graze", idle: "Idle", lie: "Lie", run: "Run", hop: "Hop" };
   const POSE_RATE = { walk: 1, graze: 0.42, idle: 0.32, lie: 0.22, run: 1.45, hop: 1.2 };
@@ -255,16 +255,26 @@
       }
     }
     if (kind === "cockatoo") {
-      base.main = geoFrom(parsed.pos, parsed.nrm, paint(parsed.col, parsed.pos, (out, x, y, _z, i) => {
-        const crest = y > 0.26 && x < 0.16;
+      base.main = geoFrom(parsed.pos, parsed.nrm, paint(parsed.col, parsed.pos, (out, x, y, z, i) => {
+        const crest = y > 0.34 && x > 0.05 && x < 0.26;
+        const eye = Math.hypot(x - 0.2, Math.abs(z) - 0.045, y - 0.32) < 0.016;
+        const ring = Math.hypot(x - 0.2, Math.abs(z) - 0.045, y - 0.32) < 0.028;
         if (crest) {
           out[i] = 0.98;
-          out[i + 1] = 0.76;
-          out[i + 2] = 0.08;
-        } else if (x > 0.14 && y < 0.26) {
-          out[i] = 0.22;
-          out[i + 1] = 0.2;
-          out[i + 2] = 0.18;
+          out[i + 1] = 0.74;
+          out[i + 2] = 0.04;
+        } else if (eye) {
+          out[i] = 0.04;
+          out[i + 1] = 0.035;
+          out[i + 2] = 0.03;
+        } else if (ring) {
+          out[i] = 0.9;
+          out[i + 1] = 0.88;
+          out[i + 2] = 0.8;
+        } else if (x > 0.26 && y > 0.2 && y < 0.36 && Math.abs(z) < 0.07) {
+          out[i] = 0.32;
+          out[i + 1] = 0.3;
+          out[i + 2] = 0.28;
         }
       }), parsed.jointsAttr, parsed.weights, parsed.indices);
     }
@@ -278,10 +288,10 @@
           out[i] = 0.95;
           out[i + 1] = 0.68;
           out[i + 2] = 0.1;
-        } else if (y > 0.08) {
-          out[i] = Math.min(0.55, out[i] * 0.72);
-          out[i + 1] *= 0.55;
-          out[i + 2] *= 0.6;
+        } else if (y > 0.12 && x < 0.08) {
+          out[i] *= 0.92;
+          out[i + 1] *= 0.9;
+          out[i + 2] *= 0.85;
         }
       }), parsed.jointsAttr, parsed.weights, parsed.indices);
     }
@@ -308,7 +318,7 @@
     });
     const cattle = kind === "cattle";
     mat.emissive = new api.Color(cattle ? 0 : 0.012, cattle ? 0 : 0.01, cattle ? 0 : 0.008);
-    mat.envMapIntensity = cattle ? 0.01 : kind === "sheep" ? 0.22 : 0.42;
+    mat.envMapIntensity = cattle ? 0.01 : kind === "sheep" ? 0.22 : kind === "cockatoo" ? 0.05 : 0.42;
     mat.color = new api.Color(1, 0.985, 0.96);
     if (kind === "sheep") mat.color.setRGB(1, 0.985, 0.95);
     if (kind === "sheep_shorn") mat.color.setRGB(1, 0.96, 0.9);
