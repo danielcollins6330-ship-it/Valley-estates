@@ -22,6 +22,11 @@ const listed = [
 ];
 assert.equal(chooseCertificateToRevoke(listed), "F87GD5XVS2");
 assert.equal(chooseCertificateToRevoke(listed.filter((item) => item.id !== "F87GD5XVS2")), "4G8BZ8MGKN");
+assert.equal(chooseCertificateToRevoke([
+  { id: "ADJS9GQYHR" },
+  { id: "38798V9TFT" },
+]), "38798V9TFT");
+assert.equal(chooseCertificateToRevoke([{ id: "ADJS9GQYHR" }]), "ADJS9GQYHR");
 assert.equal(chooseCertificateToRevoke([{ id: "AAAAAAAAAA" }]), null);
 assert.equal(chooseCertificateToRevoke([]), null);
 
