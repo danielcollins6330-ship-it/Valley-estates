@@ -33,7 +33,9 @@ jobs:
         run: |
           mkdir -p _site/assets
           cp index.html game3d.js privacy.html support.html CREDITS.md README.md .nojekyll favicon.ico favicon-16.png favicon-32.png apple-touch-icon.png _site/
-          cp assets/textures.js assets/logo.png _site/assets/
+          cp assets/textures.js assets/logo.png assets/audio-policy.js assets/audio.js assets/expansion.js _site/assets/
+          mkdir -p _site/assets/audio
+          cp -a assets/audio/. _site/assets/audio/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

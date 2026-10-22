@@ -44,7 +44,7 @@ Kenney does not require credit. Credit is included anyway: Kenney (www.kenney.nl
 
 ## Farmer voice
 
-The eighteen lines in `assets/audio/voice/` were generated offline with [Piper](https://github.com/OHF-Voice/piper1-gpl) and the [en_AU-librivox-medium](https://huggingface.co/DataCraftsmanAustralia/piper-en_AU-librivox-medium) model, speaker 5 (`timothy_ferguson`, voice name banjo). The model weights were not added to this repository.
+The twenty-six lines in `assets/audio/voice/` were generated offline with [Piper](https://github.com/OHF-Voice/piper1-gpl) and the [en_AU-librivox-medium](https://huggingface.co/DataCraftsmanAustralia/piper-en_AU-librivox-medium) model, speaker 5 (`timothy_ferguson`, voice name banjo). The model weights were not added to this repository.
 
 | | |
 |---|---|
@@ -53,7 +53,7 @@ The eighteen lines in `assets/audio/voice/` were generated offline with [Piper](
 | Narrator for these clips | timothy_ferguson (LibriVox), speaker id 5 |
 | Base checkpoint | `en_GB-jenny_dioco-medium`, from the Jenny TTS dataset by **Jenny (Dioco)**. Commercial use is allowed. These clips are pre-generated; the game does not run the model. |
 
-Each event has three variants. Playback waits at least 12 seconds between any two lines and 45 seconds before the same event can speak again. A line that is waiting is kept and played when the gap has passed.
+Weather and stock events have three variants. Each season has two. Playback waits at least 12 seconds between any two lines and 45 seconds before the same event can speak again. A line that is waiting is kept and played when the gap has passed.
 
 - Harvest: “Crops are ready to harvest, mate.” / “Wheat's ready. Get the farmhands onto it.” / “Those paddocks of wheat won't pick themselves.”
 - Frost: “Frost's coming in tonight, cover the seedlings.” / “Cold night ahead. Keep the seedlings covered.” / “Frost on the way. The vines won't like it.”
@@ -61,3 +61,7 @@ Each event has three variants. Playback waits at least 12 seconds between any tw
 - Cattle: “Cattle are getting hungry.” / “The Speckle Parks want a feed.” / “Those cattle are looking hungry, mate.”
 - Market: “Market prices are up.” / “Prices are up at the market. Good day to sell.” / “Wine's fetching more today. Take it to market.”
 - Storm: “Storm brewing.” / “Storm's building out west.” / “Get the stock in. A storm's coming.”
+- Spring: “Spring's here. Budburst on the vines.” / “Buds are breaking. It's spring in the valley.”
+- Summer: “Summer's on us. Watch the stock for heat.” / “Hot days now. Keep an eye on the dams.”
+- Autumn: “Vintage is on. Get the grapes in.” / “Autumn harvest. The valley's ready to pick.”
+- Winter: “Winter pruning time. The vines need a cut.” / “Cold season. Prune the vines while they sleep.”

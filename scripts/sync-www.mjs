@@ -12,4 +12,5 @@ cpSync("assets/textures.js", "www/assets/textures.js");
 cpSync("assets/logo.png", "www/assets/logo.png");
 cpSync("assets/audio-policy.js", "www/assets/audio-policy.js");
 cpSync("assets/audio.js", "www/assets/audio.js");
+cpSync("assets/expansion.js", "www/assets/expansion.js");
 cpSync("assets/audio", "www/assets/audio", { recursive: true });
