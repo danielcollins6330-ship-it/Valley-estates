@@ -9,8 +9,8 @@ Close-up cattle, sheep, the dog, and the hen use free CC0 meshes. Coat colour is
 | `assets/animals/src/cattle.glb` | Quaternius cow from the Ultimate Animated Animal Pack, horns removed so it reads polled. Retextured as a Speckle Park: black body, white face, speckled underline. Clips: Idle, Walk, Graze (the pack's eating), Lie (held last frame of death), Run (gallop). | CC0. Quaternius, July 2021. https://quaternius.com/packs/ultimateanimatedanimals.html |
 | `assets/animals/src/sheep.glb` | Quaternius sheep from the Farm Animal Pack. Painted as a Babydoll Southdown: cream fleece, tan teddy-bear face, dark legs. Clips: Idle, Walk, Run, Graze (idle with the head lowered), Lie. | CC0. Quaternius, June 2018. https://quaternius.com/packs/farmanimal.html and https://poly.pizza/bundle/Farm-Animal-Pack-1kUvRTPLzT |
 | `assets/animals/src/sheep_shorn.glb` | The same sheep mesh, fleece pulled in and repainted as skin. Slightly smaller in the world. Same clips. | CC0. Same pack as the woolly sheep. |
-| `assets/animals/src/dog.glb` | Quaternius Shiba Inu from the Ultimate Animated Animal Pack, repainted red and tan as a kelpie. The tail is still the Shiba curl. Clips: Idle, Walk, Graze, Lie, Run. | CC0. Same Ultimate Animated Animal Pack. |
-| `assets/animals/src/chicken.glb` | Rigged hen by Čestmír Dammer. The Farm Animal Pack has no hen (llama, pig, pug, sheep, horse, cow, zebra). The separate Quaternius chicken on Poly Pizza could not be downloaded. Photo texture is not used. Painted chestnut, red comb, yellow beak and legs. Graze is the peck. Clips: Idle, Walk, Graze, Lie. | CC0. https://opengameart.org/content/chicken-animated |
+| `assets/animals/src/dog.glb` | Quaternius Shiba Inu from the Ultimate Animated Animal Pack, repainted red and tan as a kelpie. The curled tail is posed straight. Clips: Idle, Walk, Graze, Lie, Run. | CC0. Same Ultimate Animated Animal Pack. |
+| `assets/animals/src/chicken.glb` | Rigged hen by Čestmír Dammer. The Farm Animal Pack has no hen (llama, pig, pug, sheep, horse, cow, zebra). The separate Quaternius chicken on Poly Pizza could not be downloaded. Photo texture is not used. Comb scaled up. Painted buff, with a red comb and yellow beak and legs. Graze is the peck. Clips: Idle, Walk, Graze, Lie. | CC0. https://opengameart.org/content/chicken-animated |
 | `assets/animals/src/kangaroo.glb` | Eastern grey kangaroo. Big hind legs, thick tail. Clips: Idle, Walk, Graze, Lie, Hop. | CC0. Original mesh, kept. No suitable CC0 or CC-BY rigged replacement. |
 | `assets/animals/src/cockatoo.glb` | Sulphur-crested cockatoo. White body, yellow crest. Walk flaps the wings. Clips: Idle, Walk, Graze, Lie. | CC0. Original mesh, kept. Sketchfab's downloadable cockatoos were high-poly scans or unrigged statues. |
 
@@ -39,7 +39,7 @@ Runtime files are the meshopt-compressed glTF binaries in `assets/animals/*.glb`
 | --- | --- |
 | `assets/animals/meshopt_decoder.js` | MIT. Vendored from meshoptimizer 1.3. Copyright 2016–2026 Arseny Kapoulkine. |
 
-The game loads the compressed models, the two WebP normals, the decoder, and `assets/rig.js`. That download is about 1.6 MB (1,605,700 bytes of glTF, plus the two normals and the decoder). The `src/` glTF files stay in the repository for rebuilds and are not fetched at runtime. The building files add about 260 KB.
+The game loads the compressed models, the two WebP normals, the decoder, and `assets/rig.js`. That download is about 1.6 MB (1,601,504 bytes of glTF, plus the two normals and the decoder). The `src/` glTF files stay in the repository for rebuilds and are not fetched at runtime. The building files add about 260 KB.
 
 ## Buildings
 

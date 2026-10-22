@@ -229,14 +229,15 @@ def cow_color(w, n, mat, mn, mx):
         return (0.96, 0.96, 0.94)
     if mat.startswith("Hooves") or nz < 0.08:
         return shade((0.14, 0.08, 0.045), n, False)
-    nose = mat.startswith("Muzzle") and nx > 0.88
-    face = nx > 0.74 and nz > 0.48
+    nose = mat.startswith("Muzzle") and nx > 0.86
+    # Whole head in front of the neck, so the white reads as a mask.
+    face = nx > 0.60 and nz > 0.36
     if mat.startswith("Horns"):
         return shade((0.93, 0.9, 0.84), n, True)
     if nose:
-        return shade((0.93, 0.62, 0.58), n, True)
-    if face or (mat.startswith("Muzzle") and nz > 0.4):
-        return shade((0.98, 0.98, 0.96), n, True)
+        return shade((0.93, 0.55, 0.52), n, True)
+    if face or mat.startswith("Muzzle"):
+        return shade((0.99, 0.99, 0.97), n, True)
     belly = 0.16 < nz < 0.34 and abs(w.y) < (mx.y - mn.y) * 0.22
     speck = noise(w.x, w.y, w.z)
     if belly:
@@ -289,16 +290,16 @@ def hen_color(w, n, mat, mn, mx):
     nx = (w.x - mn.x) / span_x
     nz = (w.z - mn.z) / span_z
     if mat.startswith("Comb"):
-        return shade((0.86, 0.1, 0.07), n, False)
+        return (0.92, 0.06, 0.05)
     if "Eye" in mat or mat.startswith("Material"):
         return (0.03, 0.025, 0.02)
-    if nz < 0.11:
-        return shade((0.95, 0.74, 0.14), n, True)
-    if nx > 0.84 and 0.58 < nz < 0.78:
-        return shade((0.96, 0.68, 0.1), n, True)
-    if nx > 0.45 and 0.2 < nz < 0.5:
-        return shade((0.82, 0.55, 0.3), n, True)
-    return shade((0.58, 0.24, 0.09), n, False)
+    if nz < 0.12:
+        return shade((0.98, 0.8, 0.18), n, True)
+    if nx > 0.78 and 0.48 < nz < 0.78:
+        return shade((0.98, 0.74, 0.14), n, True)
+    if nx > 0.35 and 0.16 < nz < 0.55:
+        return shade((0.98, 0.86, 0.58), n, True)
+    return shade((0.96, 0.74, 0.42), n, True)
 
 
 def action_matches(name, prefix):
@@ -427,6 +428,60 @@ def prepare_clips(arm, kind):
     keep_actions(arm, {"Idle": idle, "Walk": walk, "Graze": eat, "Lie": lie, "Run": gallop})
 
 
+def grow_comb(obj):
+    mats = vert_materials(obj)
+    comb = [v.co.copy() for i, v in enumerate(obj.data.vertices) if mats[i].startswith("Comb")]
+    if len(comb) < 3:
+        print("comb verts", len(comb))
+        return
+    center = sum(comb, Vector()) / len(comb)
+    for i, v in enumerate(obj.data.vertices):
+        if not mats[i].startswith("Comb"):
+            continue
+        v.co = center + (v.co - center) * 4.2
+    print("grew comb", len(comb), "around", tuple(round(c, 3) for c in center))
+
+
+def pin_curve(action, data_path, values):
+    for index, value in enumerate(values):
+        curve = action.fcurves.find(data_path, index=index)
+        if curve is None:
+            curve = action.fcurves.new(data_path, index=index)
+        points = curve.keyframe_points
+        while len(points) > 2:
+            points.remove(points[-1])
+        if len(points) < 2:
+            points.add(2 - len(points))
+        points[0].co = (1.0, value)
+        points[1].co = (max(2.0, action.frame_range[1]), value)
+        points[0].interpolation = "LINEAR"
+        points[1].interpolation = "LINEAR"
+        curve.update()
+
+
+def straighten_tail(arm):
+    # Pose-space X rotation that drops the Shiba curl into a straight tail.
+    angle = math.radians(-28.0)
+    for action in list(bpy.data.actions):
+        for bone in ("Tail1", "Tail2", "Tail3"):
+            for curve in list(action.fcurves):
+                if curve.data_path == 'pose.bones["%s"].rotation_quaternion' % bone:
+                    action.fcurves.remove(curve)
+            pin_curve(action, 'pose.bones["%s"].rotation_euler' % bone, (angle, 0.0, 0.0))
+            pin_curve(action, 'pose.bones["%s"].location' % bone, (0.0, 0.0, 0.0))
+            pin_curve(action, 'pose.bones["%s"].scale' % bone, (1.0, 1.0, 1.0))
+        if arm.animation_data:
+            arm.animation_data.action = action
+        for bone in ("Tail1", "Tail2", "Tail3"):
+            pb = arm.pose.bones.get(bone)
+            if pb is None:
+                continue
+            pb.rotation_mode = "XYZ"
+            pb.rotation_euler = (angle, 0.0, 0.0)
+            pb.location = (0.0, 0.0, 0.0)
+            pb.scale = (1.0, 1.0, 1.0)
+
+
 def deflate_wool(obj):
     mats = vert_materials(obj)
     for i, v in enumerate(obj.data.vertices):
@@ -477,12 +532,16 @@ def finish(kind, arm, mesh, path, shorn=False):
     orient(arm, mesh)
     if kind == "cow":
         delete_faces_named(mesh, ["Horns"])
+    if kind == "hen":
+        grow_comb(mesh)
     if shorn:
         deflate_wool(mesh)
     paint(mesh, sheep_color(True) if shorn else COLOR[kind])
     one_material(mesh)
     clear_uvs(mesh)
     prepare_clips(arm, "sheep" if kind == "sheep" else kind)
+    if kind == "dog":
+        straighten_tail(arm)
     report(mesh, path)
     export(arm, mesh, path)
 
