@@ -152,7 +152,7 @@ const B={
  machine:{n:'Machinery Shed',e:'🚜',w:2,h:2,cost:{wood:160,stone:50},age:2,bt:24,col:'#7a5a3a',desc:'Farmhands gather and harvest faster.'},
  market:{n:'Market',e:'⚖️',w:3,h:3,cost:{wood:150,stone:50},age:2,bt:30,col:'#c99a2e',desc:'Trade resources for coins. Sell wine & wool.'},
  cellardoor:{n:'Cellar Door',e:'🚪',w:3,h:2,cost:{wood:180,stone:90,wine:6},age:2,bt:26,col:'#8a3d55',desc:'Visitors arrive for tastings and pay coins.'},
- villa:{n:'Bruma Villa',e:'🏛️',w:4,h:3,cost:{wood:320,stone:240,coins:450,wine:10},age:3,bt:48,col:'#c4a574',desc:'Guests stay at the villa, and your wine sells for more.'},
+ valleyvilla:{n:'Valley Villa',e:'🏛️',w:4,h:3,cost:{wood:320,stone:240,coins:450,wine:10},age:3,bt:48,col:'#c4a574',desc:'Guests stay at Valley Villa, and your wine sells for more.'},
  yard:{n:'Sale Yard',e:'🏷️',w:3,h:3,cost:{wood:90,stone:20},age:1,pass:1,bt:16,col:'#b8860b',desc:'Sell Speckle Park cattle and Babydoll sheep.'}};
 const TECH={
  axes:{n:'Sharp Axes',at:'lumber',age:0,cost:{food:60,wood:40},time:15,desc:'+40% wood gathering'},
@@ -347,10 +347,10 @@ function tick(dt){G.time+=dt;
    for(const note of VEExpansion.tickPaddock(b,dt,{tended:workerOn(b),drought:dry,irrig:!!G.techs.irrig,season:G.season,food:G.res.food,breedTech:!!G.techs.breed,shed:has(G,'shed')})){
     if(note.breed){if(G.res.food<note.food)continue;G.res.food-=note.food;b.count++}
     toast(note.t,note.c);if(note.say&&window.VEAudio)VEAudio.say(note.say)}}
-  if(b.type==='cellardoor'&&!cellarOpen){cellarOpen=true;const hit=VEExpansion.tickCellar(b,dt,{season:G.season,wine:G.wineTiers.bronze|0,winePrice:VEExpansion.quote(G.market,'wine'),villa:has(G,'villa'),roll:Math.random()});
+  if(b.type==='cellardoor'&&!cellarOpen){cellarOpen=true;const hit=VEExpansion.tickCellar(b,dt,{season:G.season,wine:G.wineTiers.bronze|0,winePrice:VEExpansion.quote(G.market,'wine'),villa:has(G,'valleyvilla'),roll:Math.random()});
    if(hit){VEExpansion.spendTier(G,'bronze',hit.wine);G.res.coins+=hit.coins;G.stats.coins+=hit.coins;G.stats.tastings++;b.guests++;floatText(b.x+1,b.y,'+'+hit.coins+'🪙');toast('🚪 Visitors paid '+hit.coins+'🪙 for a tasting.','good');if(window.VEAudio)VEAudio.sfx('coins')}}
-  if(b.type==='villa'){const stay=VEExpansion.tickVilla(b,dt,{season:G.season,open:G.stats.wine>=1||has(G,'cellardoor'),cellar:has(G,'cellardoor')});
-   if(stay.coins){G.res.coins+=stay.coins;G.stats.coins+=stay.coins;b._show=(b._show||0)+stay.coins;if(b._show>=1){const n=b._show|0;b._show-=n;floatText(b.x+1.5,b.y,'+'+n+'🪙')}}if(stay.arrived)toast('🏛️ Guests arrived at Bruma Villa.','good')}
+  if(b.type==='valleyvilla'){const stay=VEExpansion.tickVilla(b,dt,{season:G.season,open:G.stats.wine>=1||has(G,'cellardoor'),cellar:has(G,'cellardoor')});
+   if(stay.coins){G.res.coins+=stay.coins;G.stats.coins+=stay.coins;b._show=(b._show||0)+stay.coins;if(b._show>=1){const n=b._show|0;b._show-=n;floatText(b.x+1.5,b.y,'+'+n+'🪙')}}if(stay.arrived)toast('🏛️ Guests arrived at Valley Villa.','good')}
   if(b.type==='winery'){b.wt+=dt;const need=G.techs.barrels?3.5:6;if(b.wt>=need){b.wt=0;if(G.res.grapes>=4){G.res.grapes-=4;const vines=G.buildings.filter(v=>v.type==='vineyard'&&v.built);const tended=vines.some(workerOn);const tier=VEExpansion.bottleTier(vines,G.season,dry,tended);VEExpansion.addBottle(G,tier);G.stats.wine++;floatText(b.x+1.5,b.y,'+1 '+({bronze:'🥉',silver:'🥈',gold:'🥇'}[tier])+'🍷')}}
    if(G.techs.cellar){G.res.coins+=dt*0.35;G.stats.coins+=dt*0.35}}}
  // seasons & events
@@ -530,7 +530,7 @@ function panelHTML(){
   if(b.type==='paddock')h+=b.kind?` ${b.count} ${b.kind==='cattle'?'Speckle Park 🐄':'Babydoll 🐑'} · health ${b.health|0} · condition ${b.condition|0}`+(b.kind==='sheep'?` · fleece ${b.fleece|0}% · ${G.res.wool|0} wool`:` · stock ${b.stock|0}🥩`):' Empty.';
   if(b.type==='winery'){const vines=G.buildings.filter(v=>v.type==='vineyard'&&v.built);const tier=VEExpansion.bottleTier(vines,G.season,!!(G.events.drought&&!G.techs.irrig),vines.some(workerOn));h+=` 🍇 ${G.res.grapes|0} waiting · bottled ${G.stats.wine}. Next bottle is ${tier}. 🥉${G.wineTiers.bronze|0} 🥈${G.wineTiers.silver|0} 🥇${G.wineTiers.gold|0}.`;}
   if(b.type==='cellardoor')h+=` ${b.guests|0} tastings served.`;
-  if(b.type==='villa')h+=` ${b.guests|0} guests staying.`;
+  if(b.type==='valleyvilla')h+=` ${b.guests|0} guests staying.`;
   if(b.type==='yard')h+=` Sell from a stocked paddock.`;h+='</div>';
   if(b.research){const r=b.research;h+=`<div class="d">🔬 ${r.id.startsWith('age')?AGES[+r.id.slice(3)].n:TECH[r.id].n} ${Math.round(r.t/r.total*100)}%</div><div class="pb"><i style="width:${r.t/r.total*100}%"></i></div>`}
   if(b.queue.length)h+=`<div class="d">Training ${b.queue.length} farmhand(s)${b.blocked?' — ⚠️ need more Cottages':''}</div><div class="pb"><i style="width:${(b.qt||0)/12*100}%"></i></div>`;
@@ -545,7 +545,7 @@ function panelHTML(){
     h+=btn('sellstock','🏷️ Sell 1','+'+price+'🪙',has(G,'yard')?'':'dis',!has(G,'yard')||b.count<1)}}
   if(b.type==='vineyard'&&G.season===3)h+=btn('prune','✂️ Prune vines',b.pruned?'Done':'Winter cut','',!!b.pruned);
   if(b.type==='market'){const wine=listed('wine'),wool=listed('wool')*10,olive=Math.max(10,Math.round(wine*0.4));h+=`<div class="d">Prices today — wine ${wine}🪙, wool ${listed('wool')}🪙 a bale, cattle ${listed('cattle')}🪙, lambs ${listed('lamb')}🪙. The bars are recent wine prices.</div><div class="chart">${VEExpansion.chartHtml(G.market,'wine')}</div>`;
-   for(const tier of ['gold','silver','bronze']){const price=VEExpansion.wineSellPrice(wine,tier,has(G,'villa'));const n=G.wineTiers[tier]|0;h+=btn('sellwine:'+tier,({gold:'🥇 Gold',silver:'🥈 Silver',bronze:'🥉 Bronze'}[tier])+' wine','+'+price+'🪙 · '+n,'',n<1)}
+   for(const tier of ['gold','silver','bronze']){const price=VEExpansion.wineSellPrice(wine,tier,has(G,'valleyvilla'));const n=G.wineTiers[tier]|0;h+=btn('sellwine:'+tier,({gold:'🥇 Gold',silver:'🥈 Silver',bronze:'🥉 Bronze'}[tier])+' wine','+'+price+'🪙 · '+n,'',n<1)}
    h+=btn('sell:wool:10:'+wool,'🧶 Sell 10 wool','+'+wool+'🪙','',G.res.wool<10)+btn('sell:olives:8:'+olive,'🫒 Sell 8 olives','+'+olive+'🪙','',G.res.olives<8)+btn('sell:food:100:'+marketPrice(30),'Sell 100🌾','+'+marketPrice(30)+'🪙','',G.res.food<100)+btn('sell:wood:100:'+marketPrice(30),'Sell 100🪵','+'+marketPrice(30)+'🪙','',G.res.wood<100)+btn('sell:stone:100:'+marketPrice(45),'Sell 100🪨','+'+marketPrice(45)+'🪙','',G.res.stone<100)+btn('buy:food:100:60','Buy 100🌾','-60🪙','alt',G.res.coins<60)+btn('buy:stone:100:80','Buy 100🪨','-80🪙','alt',G.res.coins<80)}
   if(!b.research)for(const[id,tc]of Object.entries(TECH)){if(tc.at!==b.type||G.techs[id])continue;const lock=G.age<tc.age;
    h+=btn('tech:'+id,'🔬 '+tc.n,lock?'🔒 '+AGES[tc.age].n:costStr(tc.cost)+' · '+tc.desc,'alt',lock||!canAfford(tc.cost))}
@@ -568,7 +568,7 @@ function act(a){if(window.VEHaptics)VEHaptics.tap('light');const b=G.buildings.f
  case'vet':if(b&&b.kind&&pay({coins:25})){b.health=Math.min(100,(b.health||0)+40);b.condition=Math.min(100,(b.condition||0)+12);b.vetWarned=0;toast('🩺 Vet check done. The stock look better.','good')}break;
  case'shear':if(b&&b.kind==='sheep'){const bales=VEExpansion.shearBales(b.fleece,b.count);if(bales){b.fleece=0;G.res.wool+=bales;toast('🧶 Sheared '+bales+' wool.','good');if(window.VEAudio)VEAudio.sfx('harvest')}}break;
  case'sellstock':if(b&&b.count>0&&has(G,'yard')){const price=VEExpansion.stockQuote(b.kind,b.health,b.condition,listed(b.kind==='cattle'?'cattle':'lamb'));b.count--;G.res.coins+=price;G.stats.coins+=price;G.stats.soldStock=(G.stats.soldStock||0)+1;floatText(b.x+1,b.y,'+'+price+'🪙');toast('🏷️ Sold at the yard for '+price+'🪙','good');if(window.VEAudio){VEAudio.sfx('coins');VEAudio.sfx(b.kind==='cattle'?'cow':'sheep')}}break;
- case'sellwine':{const tier=p[1];const price=VEExpansion.wineSellPrice(listed('wine'),tier,has(G,'villa'));if(VEExpansion.spendTier(G,tier,1)){G.res.coins+=price;G.stats.coins+=price;floatText((b?b.x:20)+1,b?b.y:20,'+'+price+'🪙');if(window.VEAudio)VEAudio.sfx('coins')}break}
+ case'sellwine':{const tier=p[1];const price=VEExpansion.wineSellPrice(listed('wine'),tier,has(G,'valleyvilla'));if(VEExpansion.spendTier(G,tier,1)){G.res.coins+=price;G.stats.coins+=price;floatText((b?b.x:20)+1,b?b.y:20,'+'+price+'🪙');if(window.VEAudio)VEAudio.sfx('coins')}break}
  case'prune':if(b&&b.type==='vineyard'&&G.season===3&&!b.pruned){b.pruned=1;toast('✂️ Vines pruned. Spring budburst will be stronger.','good');if(window.VEAudio)VEAudio.sfx('plant')}break;
  case'sell':if(G.res[p[1]]>=+p[2]){G.res[p[1]]-=+p[2];G.res.coins+=+p[3];G.stats.coins+=+p[3];floatText(b?b.x+1:20,b?b.y:20,'+'+p[3]+'🪙');if(window.VEAudio)VEAudio.sfx('coins')}break;
  case'buy':if(G.res.coins>=+p[3]){G.res.coins-=+p[3];G.res[p[1]]+=+p[2]}break;

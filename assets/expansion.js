@@ -9,7 +9,7 @@
   const ACHIEVEMENTS = [
     { id: "vintage", title: "First vintage", hint: "Reach autumn with a vineyard.", reward: { coins: 50 } },
     { id: "cattle10", title: "10 Speckle Park", hint: "Own 10 Speckle Park cattle.", reward: { coins: 80 } },
-    { id: "villa", title: "Open Bruma Villa", hint: "Build the villa.", reward: { coins: 100, food: 40 } },
+    { id: "valleyvilla", title: "Open Valley Villa", hint: "Build the Valley Villa.", reward: { coins: 100, food: 40 } },
     { id: "bushfire", title: "Survived a bushfire", hint: "See a bushfire burn out.", reward: { wood: 60, coins: 30 } },
   ];
 
@@ -32,7 +32,7 @@
   function freshExtras(type) {
     if (type === "paddock") return { health: 86, condition: 72, fleece: 0, breedT: 0 };
     if (type === "cellardoor") return { guests: 0, visitT: 0 };
-    if (type === "villa") return { guests: 0, stayT: 0 };
+    if (type === "valleyvilla") return { guests: 0, stayT: 0 };
     if (type === "vineyard") return { pruned: 0, care: 0 };
     if (type === "olive") return { olives: 0 };
     return {};
@@ -68,7 +68,14 @@
     ensureTiers(game);
     if (game.dailyStreak == null) game.dailyStreak = 0;
     if (game.choice) game.choice = null;
-    for (const building of game.buildings || []) decorateBuilding(building);
+    for (const building of game.buildings || []) {
+      if (building && building.type === "villa") building.type = "valleyvilla";
+      decorateBuilding(building);
+    }
+    if (game.achievements.villa != null) {
+      if (game.achievements.valleyvilla == null) game.achievements.valleyvilla = game.achievements.villa;
+      delete game.achievements.villa;
+    }
     return game;
   }
 
@@ -468,7 +475,7 @@
     const seconds = Math.max(0, Math.min(4 * 3600, Number(elapsedSec) || 0));
     if (seconds < 90) return null;
     const guests = (game.buildings || []).reduce((sum, building) => {
-      if (building.type !== "villa" || !building.built) return sum;
+      if (building.type !== "valleyvilla" || !building.built) return sum;
       return sum + (building.guests || 0);
     }, 0);
     const cellar = (game.buildings || []).some((building) => building.type === "cellardoor" && building.built) ? 1 : 0;
@@ -529,7 +536,7 @@
   function achievementMet(game, id) {
     if (id === "vintage") return game.season === 2 && built(game, "vineyard");
     if (id === "cattle10") return cattleTotal(game) >= 10;
-    if (id === "villa") return built(game, "villa");
+    if (id === "valleyvilla") return built(game, "valleyvilla");
     if (id === "bushfire") return (game.stats && game.stats.survivedFire >= 1) || false;
     return false;
   }

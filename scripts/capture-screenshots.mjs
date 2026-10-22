@@ -355,7 +355,7 @@ async function setupScene(page, name) {
         ["paddock", hx + 6, hy - 2],
         ["market", hx - 2, hy + 6],
         ["cellardoor", hx - 8, hy + 5],
-        ["villa", hx + 9, hy + 8],
+        ["valleyvilla", hx + 9, hy + 8],
         ["yard", hx + 1, hy - 7],
       ];
       const buildings = [];
@@ -398,7 +398,7 @@ async function setupScene(page, name) {
       const vine = place("vineyard", hx + 5, hy - 2);
       const winery = place("winery", hx + 5, hy + 1);
       const cellar = place("cellardoor", hx - 6, hy + 1);
-      const villaB = place("villa", hx - 7, hy - 6);
+      const villaB = place("valleyvilla", hx - 7, hy - 6);
       if (vine) vine.grapes = 74;
       if (cellar) {
         cellar.visitT = 40;
@@ -416,7 +416,7 @@ async function setupScene(page, name) {
         y: pts.reduce((s, b) => s + b.y + b.h / 2, 0) / pts.length,
       };
       zoom = zoomFor(0.72);
-      placed.push(vine && "vineyard", winery && "winery", cellar && "cellardoor", villaB && "villa", (G.stats.tastings || 0) > 0 ? "tasting" : "no-tasting");
+      placed.push(vine && "vineyard", winery && "winery", cellar && "cellardoor", villaB && "valleyvilla", (G.stats.tastings || 0) > 0 ? "tasting" : "no-tasting");
     } else if (scene === "stockyard") {
       G.age = 1;
       G.time = 30;
@@ -507,7 +507,7 @@ async function setupScene(page, name) {
   if (name === "empire") {
     assert(report.age === 3, "empire is not Valley Empire age");
     assert(report.buildings.filter((b) => b !== "homestead").length >= 6, "empire is too small");
-    assert(report.placed.includes("cellardoor") && report.placed.includes("villa"), "empire is missing the cellar door or villa");
+    assert(report.placed.includes("cellardoor") && report.placed.includes("valleyvilla"), "empire is missing the cellar door or Valley Villa");
   }
   return report;
 }
@@ -636,7 +636,7 @@ try {
       G.stats.wine = 4;
       G.achievements = {};
       const cellar = place("cellardoor", home.x - 6, home.y + 1);
-      const villa = place("villa", home.x - 7, home.y - 6);
+      const villa = place("valleyvilla", home.x - 7, home.y - 6);
       const yard = place("yard", home.x + 2, home.y + 6);
       const cattle = place("paddock", home.x - 6, home.y - 1);
       const sheep = place("paddock", home.x + 5, home.y + 2);
@@ -707,7 +707,7 @@ try {
         health: sheep ? sheep.health : 0,
         pruned: vine ? vine.pruned : 0,
         vintage: G.achievements.vintage,
-        villaGoal: G.achievements.villa,
+        villaGoal: G.achievements.valleyvilla,
         coach,
         price,
         meshes,
@@ -726,7 +726,7 @@ try {
     assert(smoke.vintage === 1 && smoke.villaGoal === 1, "achievements were not saved on the estate");
     assert(smoke.coach === 1, "tutorial did not advance");
     assert(smoke.price > 35, "villa did not raise the wine price");
-    for (const type of ["cellardoor", "villa", "yard"]) {
+    for (const type of ["cellardoor", "valleyvilla", "yard"]) {
       const mesh = smoke.meshes.find((item) => item.type === type);
       assert(mesh && mesh.kids >= 3, type + " mesh is missing");
     }
@@ -739,7 +739,7 @@ try {
       await boot(view, shot);
       const report = await setupScene(view, scene);
       console.log("feature", JSON.stringify(report));
-      if (scene === "tourism") assert(report.placed.includes("tasting") && report.placed.includes("villa"), "tourism scene incomplete");
+      if (scene === "tourism") assert(report.placed.includes("tasting") && report.placed.includes("valleyvilla"), "tourism scene incomplete");
       if (scene === "stockyard") assert(report.placed.includes("yard") && report.placed.includes("sheep"), "stockyard scene incomplete");
       await view.evaluate((n) => {
         const game = window.VE.G;

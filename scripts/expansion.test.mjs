@@ -32,6 +32,21 @@ const fresh = { tutorialSeen: false, buildings: [], res: {}, stats: {} };
 expansion.migrateSave(fresh);
 assert.equal(fresh.coach, 0);
 
+const renamed = {
+  tutorialSeen: true,
+  season: 0,
+  res: { coins: 0, food: 0, wood: 0 },
+  stats: { survivedFire: 0 },
+  achievements: { villa: 1 },
+  buildings: [{ type: "villa", built: true, guests: 2 }],
+};
+expansion.migrateSave(renamed);
+assert.equal(renamed.buildings[0].type, "valleyvilla");
+assert.equal(renamed.buildings[0].guests, 2);
+assert.equal(renamed.achievements.valleyvilla, 1);
+assert.equal(Object.hasOwn(renamed.achievements, "villa"), false);
+assert.equal(expansion.claimAchievements(renamed).length, 0);
+
 assert.equal(expansion.seasonInfo(0).phase, "Budburst");
 assert.equal(expansion.seasonInfo(1).voice, "summer");
 assert.equal(expansion.seasonInfo(2).phase, "Vintage");
@@ -82,11 +97,11 @@ const goals = {
     { type: "vineyard", built: true },
     { type: "paddock", built: true, kind: "cattle", count: 6 },
     { type: "paddock", built: true, kind: "cattle", count: 4 },
-    { type: "villa", built: true },
+    { type: "valleyvilla", built: true },
   ],
 };
 let unlocked = expansion.claimAchievements(goals);
-assert.equal(JSON.stringify([...unlocked].map((item) => item.id).sort()), JSON.stringify(["cattle10", "villa", "vintage"]));
+assert.equal(JSON.stringify([...unlocked].map((item) => item.id).sort()), JSON.stringify(["cattle10", "valleyvilla", "vintage"]));
 assert.ok(goals.res.coins >= 50 + 80 + 100);
 assert.equal(expansion.claimAchievements(goals).length, 0);
 goals.stats.survivedFire = 1;
@@ -181,7 +196,7 @@ assert.equal(rolled.id, expansion.CHOICES[0].id);
 
 const away = {
   buildings: [
-    { type: "villa", built: true, guests: 4 },
+    { type: "valleyvilla", built: true, guests: 4 },
     { type: "cellardoor", built: true },
     { type: "olive", built: true },
     { type: "paddock", built: true, kind: "sheep", count: 2 },
@@ -217,7 +232,7 @@ assert.ok(livestockPerMin < activeWine);
 assert.ok(expansion.oliveRate(2, false) * 60 / 8 * expansion.quote(expansion.freshMarket(), "wine") < activeWine * 8);
 
 const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
-for (const needle of ["assets/expansion.js", "assets/haptics.js", "cellardoor", "Bruma Villa", "yard", "olive", "sellwine", "migrateSave", "coachAdvance", "claimAchievements"]) {
+for (const needle of ["assets/expansion.js", "assets/haptics.js", "cellardoor", "Valley Villa", "yard", "olive", "sellwine", "migrateSave", "coachAdvance", "claimAchievements"]) {
   assert.ok(html.includes(needle), "index missing " + needle);
 }
 const policy = readFileSync(new URL("../assets/audio-policy.js", import.meta.url), "utf8");
