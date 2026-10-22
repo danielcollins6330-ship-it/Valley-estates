@@ -28,7 +28,7 @@ Release builds run in GitHub Actions. Android signing still uses the keystore se
 
 After that id exists, create the app yourself: App Store Connect → My Apps → + → New App, and choose this bundle id. The TestFlight upload cannot succeed until that app record exists.
 
-`.github/workflows/ios-testflight.yml` runs on a `v*` tag or when someone starts it with `workflow_dispatch`. It registers the bundle id, builds the web bundle, runs `cap sync ios`, creates an Apple Distribution certificate and an App Store profile for that run, archives with that profile, exports an IPA, and uploads that IPA to TestFlight. The upload does not submit the app for App Store review. Apple limits how many distribution certificates a team can hold. When that limit is already reached, this workflow revokes one known unused CI certificate (`F87GD5XVS2`, or `4G8BZ8MGKN` if the first is already gone) and tries once more. Those certificates were created by earlier runs and their private keys were not kept. It does not revoke any other certificate.
+`.github/workflows/ios-testflight.yml` runs on a `v*` tag or when someone starts it with `workflow_dispatch`. It registers the bundle id, builds the web bundle, runs `cap sync ios`, creates an Apple Distribution certificate and an App Store profile for that run, archives with that profile, exports an IPA, and uploads that IPA to TestFlight. Before that profile is created, the workflow enables the Game Center capability on the bundle ID so the profile includes `com.apple.developer.game-center`, matching `ios/App/App/App.entitlements`. The upload does not submit the app for App Store review. Apple limits how many distribution certificates a team can hold. When that limit is already reached, this workflow revokes one known unused CI certificate (`F87GD5XVS2`, or `4G8BZ8MGKN` if the first is already gone) and tries once more. Those certificates were created by earlier runs and their private keys were not kept. It does not revoke any other certificate.
 
 Add these repository secrets (Settings → Secrets and variables → Actions):
 
@@ -37,4 +37,4 @@ Add these repository secrets (Settings → Secrets and variables → Actions):
 - `APPLE_TEAM_ID` — the Apple Developer team id
 - `ASC_API_KEY_P8` — the full `.p8` file, including the `BEGIN` and `END` lines
 
-The workflow stops immediately if any of those secrets is missing. It writes the `.p8` to a private temp file for `xcodebuild` and `altool`, and it does not print the key. The TestFlight build number is the GitHub Actions run number. The marketing version stays the `1.0` set in the Xcode project.
+The workflow stops immediately if any of those secrets is missing. It writes the `.p8` to a private temp file for `xcodebuild` and `altool`, and it does not print the key. The TestFlight build number is the GitHub Actions run number. The marketing version is `MARKETING_VERSION` in the Xcode project.
