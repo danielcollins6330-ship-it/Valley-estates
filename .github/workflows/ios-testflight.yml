@@ -114,11 +114,11 @@ jobs:
       - name: Archive the iOS app
         run: |
           set -euo pipefail
-          if [ "${GITHUB_RUN_NUMBER}" -le 12 ]; then
-            echo "Refusing build number ${GITHUB_RUN_NUMBER}. App Store Connect already has build 12 of this app."
-            exit 1
-          fi
-          echo "Marketing version comes from the Xcode project (1.0.12). Build number ${GITHUB_RUN_NUMBER}."
+          # 1.0.12 (17) was accepted by App Store Connect on 2026-10-24.
+          # Build 16 would be lower than that upload, so 1.1.0 is build 18.
+          BUILD_NUMBER=18
+          echo "Marketing version 1.1.0. Build number ${BUILD_NUMBER}."
+          echo "BUILD_NUMBER=${BUILD_NUMBER}" >> "${GITHUB_ENV}"
           # The committed project stays automatic for the simulator workflow.
           # This job switches the checkout to the App Store profile created above.
           # An App Store profile does not need a registered device.
@@ -141,8 +141,8 @@ jobs:
             PROVISIONING_PROFILE_SPECIFIER="${PROFILE_NAME}" \
             OTHER_CODE_SIGN_FLAGS="--keychain ${KEYCHAIN_PATH}" \
             CODE_SIGN_ENTITLEMENTS="App/App.entitlements" \
-            MARKETING_VERSION=1.0.12 \
-            CURRENT_PROJECT_VERSION="${GITHUB_RUN_NUMBER}" \
+            MARKETING_VERSION=1.1.0 \
+            CURRENT_PROJECT_VERSION="${BUILD_NUMBER}" \
             archive
 
       - name: Export the App Store IPA
