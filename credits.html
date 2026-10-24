@@ -1,0 +1,244 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Valley Estates credits and licences</title><style>body{margin:0 auto;padding:24px;max-width:900px;font-family:system-ui,sans-serif;line-height:1.5;background:#fbf4e8;color:#30251c}a{color:#7a3d0c}h1{font-size:1.7rem}h2{font-size:1.2rem;margin-top:2em}pre{font-size:.85rem;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}nav{position:sticky;top:0;padding:12px 0;background:#fbf4e8}</style></head><body><nav><a href="index.html">Back to the estate</a></nav><h1>Credits and licences</h1><p>Source credits, asset modifications and applicable licence notices. Assets are bundled with the installed game; no external service is needed to read this page.</p><section><h2>Game, textures and code</h2><pre># Valley Estates v4 — Credits &amp; Licences
+
+The textures below are CC0 1.0 (public domain). Code dependencies use MIT licences and retain their required notices. Sound files use a mix of CC0, CC BY and CC BY-SA. Every clip, its source and its licence are in [AUDIO_CREDITS.md](AUDIO_CREDITS.md).
+
+## Textures — Poly Haven (CC0 1.0, https://polyhaven.com/license)
+Downloaded at 1K (diffuse + OpenGL normal), converted to WebP (diffuse 1024², normals 512²) and embedded as data URIs in `assets/textures.js` (needed so WebGL can use them when opened from `file://`).
+
+| Asset | Used for | Source |
+|---|---|---|
+| leafy_grass | terrain base grass | https://polyhaven.com/a/leafy_grass (files: https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/leafy_grass/) |
+| sparse_grass | terrain dry pasture (hills/summer) | https://polyhaven.com/a/sparse_grass (files: https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/sparse_grass/) |
+| withered_grass | hay bales, sawdust | https://polyhaven.com/a/withered_grass (files: https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/withered_grass/) |
+| forest_leaves_02 | forest floor | https://polyhaven.com/a/forest_leaves_02 (files: https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/forest_leaves_02/) |
+| coast_sand_01 | river/lake banks | https://polyhaven.com/a/coast_sand_01 (files: https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/coast_sand_01/) |
+| aerial_rocks_02 | rock tiles + boulders | https://polyhaven.com/a/aerial_rocks_02 (files: https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/aerial_rocks_02/) |
+| farm_soil | wheat fields, vineyards | https://polyhaven.com/a/farm_soil (files: https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/farm_soil/) |
+| gravel | winery courtyard, market, foundations | https://polyhaven.com/a/gravel (files: https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/gravel/) |
+| corrugated_iron | homestead/cottage/shed roofs, water tanks | https://polyhaven.com/a/corrugated_iron (files: https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/corrugated_iron/) |
+| rusty_corrugated_iron | barn roof | https://polyhaven.com/a/rusty_corrugated_iron (files: https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rusty_corrugated_iron/) |
+| weathered_plank_siding | weatherboard walls | https://polyhaven.com/a/weathered_plank_siding (files: https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/weathered_plank_siding/) |
+| brick_4 | chimney, winery sandstone walls (tinted) | https://polyhaven.com/a/brick_4 (files: https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/brick_4/) |
+| clay_roof_tiles | winery terracotta roof | https://polyhaven.com/a/clay_roof_tiles (files: https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/clay_roof_tiles/) |
+| eucalyptus_bark | tree trunks, logs | https://polyhaven.com/a/eucalyptus_bark (files: https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/eucalyptus_bark/) |
+| red_laterite_soil_stones | quarry, building foundations, dam bank | https://polyhaven.com/a/red_laterite_soil_stones (files: https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/red_laterite_soil_stones/) |
+| wood_planks | verandah decks, barrels, crates | https://polyhaven.com/a/wood_planks (files: https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/wood_planks/) |
+
+## Code
+| Library | Licence | Source |
+|---|---|---|
+| three.js r170 (+ EffectComposer, RenderPass, UnrealBloomPass, ShaderPass, OutputPass, BufferGeometryUtils), bundled into `game3d.js` with esbuild | MIT | https://github.com/mrdoob/three.js / https://www.npmjs.com/package/three |
+
+## 3D models
+
+Current close-up cattle, sheep, dog and hen meshes include CC0 models by Quaternius and Čestmír Dammer. Earlier procedural animal meshes are used for distant animals and low graphics. Buildings and the remaining animal models are original procedural work. See [ASSET_CREDITS.md](ASSET_CREDITS.md) for exact authors, source links, transformations, model licences and the MIT-licensed meshoptimizer decoder.
+
+## Original work
+Game design, code and procedural art: Valley Estates (Daniel Collins / Grok Bot), 2026.
+</pre></section><section><h2>Animal and building assets</h2><pre># Animal model credits
+
+Close-up cattle, sheep, the dog, and the hen use free CC0 meshes. Coat colour is painted vertex colour on top of those meshes. Distant animals, and the Low graphics setting, keep the earlier instanced bodies. The kangaroo and the cockatoo are still the original meshes: the CC0 and CC-BY models found for them were scans and statues, not rigs that would hold up at this poly count.
+
+## Geometry and animation
+
+| File | What it is | Licence |
+| --- | --- | --- |
+| `assets/animals/src/cattle.glb` | Quaternius cow from the Ultimate Animated Animal Pack, horns removed so it reads polled. Retextured as a Speckle Park: black body, white on the face and head, a white strip along the topline and tail, speckled underline. Shoulders, chest, and legs stay black. Clips: Idle, Walk, Graze (the pack&#x27;s eating), Lie (held last frame of death), Run (gallop). | CC0. Quaternius, July 2021. https://quaternius.com/packs/ultimateanimatedanimals.html |
+| `assets/animals/src/sheep.glb` | Quaternius sheep from the Farm Animal Pack. Painted as a Babydoll Southdown: cream fleece, tan teddy-bear face, dark legs. Clips: Idle, Walk, Run, Graze (idle with the head lowered), Lie. | CC0. Quaternius, June 2018. https://quaternius.com/packs/farmanimal.html and https://poly.pizza/bundle/Farm-Animal-Pack-1kUvRTPLzT |
+| `assets/animals/src/sheep_shorn.glb` | The same sheep mesh, fleece pulled in and repainted as skin. Same height as the woolly sheep, with a narrower body. Same clips. | CC0. Same pack as the woolly sheep. |
+| `assets/animals/src/dog.glb` | Quaternius Shiba Inu from the Ultimate Animated Animal Pack, repainted red and tan as a kelpie. The curled tail is posed straight. Clips: Idle, Walk, Graze, Lie, Run. | CC0. Same Ultimate Animated Animal Pack. |
+| `assets/animals/src/chicken.glb` | Rigged hen by Čestmír Dammer. The Farm Animal Pack has no hen (llama, pig, pug, sheep, horse, cow, zebra). The separate Quaternius chicken on Poly Pizza could not be downloaded. Photo texture is not used. Comb scaled up. Painted buff, with a red comb and yellow beak and legs. Graze is the peck. Clips: Idle, Walk, Graze, Lie. | CC0. https://opengameart.org/content/chicken-animated |
+| `assets/animals/src/kangaroo.glb` | Eastern grey kangaroo. Big hind legs, thick tail. Clips: Idle, Walk, Graze, Lie, Hop. | CC0. Original mesh, kept. No suitable CC0 or CC-BY rigged replacement. |
+| `assets/animals/src/cockatoo.glb` | Sulphur-crested cockatoo. White body, yellow crest. Walk flaps the wings. Clips: Idle, Walk, Graze, Lie. | CC0. Original mesh, kept. Sketchfab&#x27;s downloadable cockatoos were high-poly scans or unrigged statues. |
+
+The bundled renderer includes the skinning shader and does not include `AnimationMixer`. `assets/rig.js` samples the glTF clips, blends the previous clip into the next over 0.38 seconds, and writes bone matrices into a bone texture. Each animal starts at a different point in the clip, from its slot seed, so a herd does not step together.
+
+World scale matches the farmhand, about 0.55 units for a 1.7 m person. At that scale the cattle mesh is about 1.4 m tall. The Babydoll stands at about 57% of that height, near 0.8 m, and is widened so the fleece reads chunky beside a cow. The shorn sheep keeps that height with a narrower body. The dog is about 0.52 m, and the hen about 0.40 m.
+
+Each skinned mesh keeps its own bone texture. The matrices are stored in the row order this renderer&#x27;s `texelFetch` reads. A shared atlas was tried and removed: every animal read the first slot, because the per-draw bone offset never reached the shader. The imported rigs keep the author&#x27;s bone counts (cattle 42, dog 46, sheep 24, hen 40). The kangaroo and cockatoo stay at 16. The skin shader always fetches four influences per vertex.
+
+Breed colour is vertex colour painted in Blender, with a soft light-from-above so the coats are not flat. One sheep in five uses a darker fleece. The cockatoo crest is still painted sulphur yellow in `assets/rig.js`, because that mesh is the original one. Coat and fleece detail is one triplanar normal sample. The imported meshes are not using their old flat material colours.
+
+## Textures
+
+| File | What it is | Licence |
+| --- | --- | --- |
+| `assets/animals/coat.webp` | Tileable hair normal, 128×128 WebP. | CC0. Original, painted for this game. |
+| `assets/animals/wool.webp` | Tileable wool-clump normal, 128×128 WebP. | CC0. Original, painted for this game. |
+
+Materials stay rough. Cattle have no emissive lift and almost no environment reflection, so the black coat is not lifted to grey. Other coats keep a small warm emissive. The scene exposure is unchanged. Skinned meshes do not cast shadows. The painted cattle speckles are still in the instanced bodies: near-black and off-white, multiplied by the coat noise.
+
+## Compression and the decoder
+
+Runtime files are the meshopt-compressed glTF binaries in `assets/animals/*.glb` (not the `src/` originals). Positions, normals, weights, and colours are compressed with `EXT_meshopt_compression` and are not quantized, so the decoded vertices match the skeleton. Draco was not available in this Blender build (`libextern_draco.so` is missing). Quantizing meshopt was rejected because it pulled the mesh off the bones.
+
+| File | Licence |
+| --- | --- |
+| `assets/animals/meshopt_decoder.js` | MIT. Vendored from meshoptimizer 1.3. Copyright 2016–2026 Arseny Kapoulkine. |
+
+The game loads the compressed models, the two WebP normals, the decoder, and `assets/rig.js`. That download is about 1.6 MB (1,601,428 bytes of glTF, plus the two normals and the decoder). The `src/` glTF files stay in the repository for rebuilds and are not fetched at runtime. The building files add about 260 KB.
+
+## Buildings
+
+| File | What it is | Licence |
+| --- | --- | --- |
+| `assets/buildings/*.glb` | Homestead, winery, cellar door, Valley Villa, shearing shed, machinery shed, and sale yard. Weatherboard or stone, corrugated iron, verandahs. Each file has a near mesh and a far mesh. | CC0. Original, Blender 4.0.2. No third-party geometry. |
+
+`tools/build-buildings.py` rebuilds them. The game loads the files through `assets/buildings.js`. Low graphics, and anything far from the camera, uses the far mesh.
+
+## Rebuild
+
+`tools/import-cc0-animals.py` bakes the Quaternius cow, Shiba, and sheep, and the Dammer hen, into `assets/animals/src`. It reads the source files from `/tmp` (not committed). `tools/build-animals.py` still builds the kangaroo and the cockatoo, and it skips the imported species so a full run does not put the metaball meshes back. `tools/compress-animals.mjs` writes the meshopt binaries. Blender 4.x needs to be on `PATH`. The compressor needs `meshoptimizer@1.3.0` installed for Node (`npm install meshoptimizer@1.3.0`). That package is a build tool. The game only ships the decoder file listed above.
+</pre></section><section><h2>Audio and pre-generated voices</h2><pre># Valley Estates — audio credits
+
+Every file under `assets/audio/` is listed here. Clips were trimmed, faded, and encoded to mono AAC in `.m4a` so they play in iOS Safari. The Piper voice model was not committed. Nothing here was generated by a paid API.
+
+Total encoded audio is about 0.9 MB.
+
+## Ambience
+
+| File | Source | Licence |
+|---|---|---|
+| `wind.m4a` | Derivative of [Gentle breeze and birds singing](https://commons.wikimedia.org/wiki/File:Gentle_breeze_and_birds_singing.ogg) by ezwa, via PDSounds. Low-pass, 16 s trim, fades. | Public domain |
+| `birds.m4a` | Same recording. High-pass so the morning bird layer sits above the wind, 16 s trim, fades. | Public domain |
+| `crickets.m4a` | [Crickets](https://opengameart.org/content/crickets) by OpenGameArt user dklon. Wild recording, 16 s trim, fades. | [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/) |
+| `rain.m4a` | [Rain (Ambient, Not Loopable)](https://opengameart.org/content/rain-ambient-not-loopable-2-versions-available) by Ove Melaa. 14 s trim from the short version, fades. The original is not a seamless loop. | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+
+Morning also plays the magpie and kookaburra one-shots below. Night plays crickets. Wind runs all day. Rain plays when the valley is raining, and louder while a storm event is active.
+
+## Animals and birds
+
+| File | Source | Licence |
+|---|---|---|
+| `cow.m4a` | [Cow Moo](https://freesound.org/people/invertedturtle/sounds/546481/) by invertedturtle on Freesound (sound 546481). Encoded from the public preview of that CC0 recording. | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `sheep.m4a` | [Sheep Baa](https://opengameart.org/content/sheep-baa) by AntumDeluge, from a recording by mikewest. | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `sheep-babydoll.m4a` | Pitch-shifted derivative of the same CC0 sheep recording, used for Babydoll sheep. | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `chicken.m4a` | [Chickens demanding food](https://commons.wikimedia.org/wiki/File:Chickens_demanding_food.ogg) by alys, via PDSounds. Trimmed. | Public domain |
+| `dog.m4a` | [Barking of a dog 2](https://commons.wikimedia.org/wiki/File:Barking_of_a_dog_2.ogg) by Amada44. Trimmed. This encoded file stays under the same licence. | [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/) |
+| `magpie.m4a` | [Magpiesong](https://commons.wikimedia.org/wiki/File:Magpiesong.ogg) by Meganesia. Trimmed. This encoded file stays under the same licence. | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) |
+| `kookaburra.m4a` | [Laughing kookaburra](https://commons.wikimedia.org/wiki/File:LaughingKookaburra.ogg) by Kuco, recorded in southwest Australia. Trimmed. | Public domain |
+
+Chickens and the dog are homestead calls. Cattle and sheep play only while that paddock has stock. Magpies and kookaburras play in the morning.
+
+## Effects
+
+| File | Source | Licence |
+|---|---|---|
+| `plant.m4a` | `scratch_004.ogg` from [Kenney Interface Sounds](https://kenney.nl/assets/interface-sounds) 1.0. Used for planting and replanting. | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `harvest.m4a` | `drop_004.ogg` from the same Kenney pack. Used when food or grapes are dropped off. | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `build.m4a` | `confirmation_001.ogg` from the same Kenney pack. Used when a foundation is placed and when a building finishes. | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `alert.m4a` | `error_003.ogg` from the same Kenney pack. Used for warning toasts. | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `coins.m4a` | [Coin sounds](https://opengameart.org/content/coin-sounds) by syncopika, recorded from real coins. Trimmed. | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `tractor.m4a` | [Ursus C-328 engine](https://commons.wikimedia.org/wiki/File:WWS_TractorUrsusC328engine.ogg) by Work With Sounds / Museum of Municipal Engineering. 8 s trim. Plays while a farmhand works a wheat field. | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+
+Kenney does not require credit. Credit is included anyway: Kenney (www.kenney.nl).
+
+## Farmer voice
+
+The thirty-one lines in `assets/audio/voice/` were generated offline with [Piper](https://github.com/OHF-Voice/piper1-gpl) and the [en_AU-librivox-medium](https://huggingface.co/DataCraftsmanAustralia/piper-en_AU-librivox-medium) model, speaker 5 (`timothy_ferguson`, voice name banjo). The model weights were not added to this repository.
+
+| | |
+|---|---|
+| Model | `en_AU-librivox-medium`, [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+| Training audio | Public-domain LibriVox readings, dataset [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| Narrator for these clips | timothy_ferguson (LibriVox), speaker id 5 |
+| Base checkpoint | `en_GB-jenny_dioco-medium`, from the Jenny TTS dataset by **Jenny (Dioco)**. Commercial use is allowed. These clips are pre-generated; the game does not run the model. |
+
+Weather and stock events have three variants. Each season has two. Playback waits at least 12 seconds between any two lines and 45 seconds before the same event can speak again. A line that is waiting is kept and played when the gap has passed.
+
+- Harvest: “Crops are ready to harvest, mate.” / “Wheat&#x27;s ready. Get the farmhands onto it.” / “Those paddocks of wheat won&#x27;t pick themselves.”
+- Frost: “Frost&#x27;s coming in tonight, cover the seedlings.” / “Cold night ahead. Keep the seedlings covered.” / “Frost on the way. The vines won&#x27;t like it.”
+- Rain: “Rain&#x27;s on the way.” / “Sky&#x27;s closing in. Rain&#x27;ll be here soon.” / “Good rain coming through. The valley needs it.”
+- Cattle: “Cattle are getting hungry.” / “The Speckle Parks want a feed.” / “Those cattle are looking hungry, mate.”
+- Market: “Market prices are up.” / “Prices are up at the market. Good day to sell.” / “Wine&#x27;s fetching more today. Take it to market.”
+- Storm: “Storm brewing.” / “Storm&#x27;s building out west.” / “Get the stock in. A storm&#x27;s coming.”
+- Spring: “Spring&#x27;s here. Budburst on the vines.” / “Buds are breaking. It&#x27;s spring in the valley.”
+- Summer: “Summer&#x27;s on us. Watch the stock for heat.” / “Hot days now. Keep an eye on the dams.”
+- Autumn: “Vintage is on. Get the grapes in.” / “Autumn harvest. The valley&#x27;s ready to pick.”
+- Winter: “Winter pruning time. The vines need a cut.” / “Cold season. Prune the vines while they sleep.”
+- Wine show: “The Ferguson Valley show wants a bottle.”
+- Tourist bus: “A tourist bus is at the gate.”
+- Stray dog: “A stray dog is in the sheep paddock.”
+- Hail: “Hail is coming over the ridge.”
+- Neighbour: “The neighbour wants to borrow the tractor.”
+</pre></section><section><h2>MIT software licence notices</h2><pre>
+
+Three.js r170
+Source: https://raw.githubusercontent.com/mrdoob/three.js/r170/LICENSE
+
+The MIT License
+
+Copyright © 2010-2024 three.js authors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the &quot;Software&quot;), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+====================
+
+Capacitor 8.5.3
+Source: https://raw.githubusercontent.com/ionic-team/capacitor/8.5.3/LICENSE
+
+MIT License
+
+Copyright (c) 2017-present Drifty Co.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the &quot;Software&quot;), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+====================
+
+meshoptimizer 1.3
+Source: https://raw.githubusercontent.com/zeux/meshoptimizer/v1.3/LICENSE.md
+
+MIT License
+
+Copyright (c) 2016-2026 Arseny Kapoulkine
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the &quot;Software&quot;), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+</pre></section></body></html>

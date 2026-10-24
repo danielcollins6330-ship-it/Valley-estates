@@ -80,6 +80,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Run regression tests before signing
+        run: npm test
+
       - name: Bundle the game and sync iOS
         run: npm run www && npx cap sync ios
 

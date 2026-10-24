@@ -1,7 +1,7 @@
 (function (root) {
   const VOICE_GAP_MS = 12000;
   const VOICE_EVENT_GAP_MS = 45000;
-  const VARIANTS = { harvest: 3, frost: 3, rain: 3, cattle: 3, market: 3, storm: 3 };
+  const VARIANTS = { harvest: 3, frost: 3, rain: 3, cattle: 3, market: 3, storm: 3, spring: 2, summer: 2, autumn: 2, winter: 2, medal: 1, bus: 1, dog: 1, hail: 1, neighbour: 1 };
 
   function clamp(value, min, max) {
     return Math.min(max, Math.max(min, value));

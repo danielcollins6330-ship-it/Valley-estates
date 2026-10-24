@@ -1,0 +1,45 @@
+/* Entry only. Native launch uses the same warm paper; no forced splash delay. */
+:root{--entry-paper:#f4f1e8;--entry-ink:#193b30;--entry-muted:#57685e;--entry-line:#d4d8cb;--entry-accent:#a5753c}
+html{font-size:17px;font:-apple-system-body}
+html,body{background:var(--entry-paper)}
+html.entry-active,body.entry-active,#modal.entry-modal,#modal.entry-modal #sheet{touch-action:pan-y pinch-zoom}
+body.app-booting>#cv,body.app-booting>#hud,body.app-booting>#bar,body.app-booting>#sub,body.app-booting>#goal,body.app-booting>#mini,body.app-booting>#side,body.app-booting>#rside,body.app-booting>#panel,body.app-booting>#toasts{visibility:hidden}
+#entry-boot{position:fixed;inset:0;z-index:30;background:var(--entry-paper);color:var(--entry-muted);display:grid;place-content:center;gap:16px;text-align:center;font-size:1rem;padding:calc(24px + env(safe-area-inset-top,0px)) 24px calc(24px + env(safe-area-inset-bottom,0px));line-height:1.5}
+#entry-boot[hidden]{display:none}
+.entry-progress{width:24px;height:24px;border:2px solid var(--entry-line);border-top-color:var(--entry-ink);border-radius:50%;margin:auto;animation:entry-spin .9s linear infinite}
+@keyframes entry-spin{to{transform:rotate(360deg)}}
+#entry-boot button,#entry-boot a{min-height:48px;padding:12px 20px;font:600 1rem system-ui,-apple-system,sans-serif;color:var(--entry-ink);border:1px solid var(--entry-line);border-radius:14px;background:transparent;text-decoration:none}
+body.entry-active>#cv,body.entry-active>#hud,body.entry-active>#bar,body.entry-active>#sub,body.entry-active>#goal,body.entry-active>#mini,body.entry-active>#side,body.entry-active>#rside,body.entry-active>#panel,body.entry-active>#toasts{visibility:hidden}
+#modal.entry-modal{inset:0;width:100%;height:100%;background:var(--entry-paper);align-items:stretch;color:var(--entry-ink)}
+#modal.entry-modal #sheet{width:100%;max-width:none;height:100%;max-height:none;border-radius:0;margin:0;padding:0;background:var(--entry-paper);overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch}
+.entry-shell{max-width:1100px;min-height:100%;margin:auto;display:flex;flex-direction:column;padding:calc(24px + env(safe-area-inset-top,0px)) max(24px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(24px,env(safe-area-inset-left,0px));color:var(--entry-ink);font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+.entry-brand{font-size:.75rem;font-weight:650;letter-spacing:.16em;text-transform:uppercase;display:flex;align-items:center;gap:10px;color:var(--entry-muted)}
+.entry-brand svg{width:32px;height:24px;flex-shrink:0}
+.entry-layout{display:grid;align-items:center;flex:1;gap:26px;padding-top:20px}
+.entry-art{width:100%;height:clamp(112px,23dvh,220px);max-height:31dvh;min-height:100px;display:block;border-radius:20px;overflow:hidden;background:#e6e8da}
+.entry-copy{max-width:460px}
+#sheet .entry-eyebrow{font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--entry-muted);font-weight:650;margin:0 0 12px}
+#sheet .entry-title{font-family:ui-serif,Georgia,serif;font-size:clamp(2.45rem,11vw,3.75rem);line-height:1.02;font-weight:500;letter-spacing:-.045em;margin:0 0 18px;color:var(--entry-ink);outline:none}
+#sheet .entry-description{font-size:1rem;line-height:1.55;color:var(--entry-muted);margin:0;max-width:33ch}
+.entry-actions{display:flex;flex-direction:column;gap:8px;margin-top:24px}
+.entry-button{width:100%;min-height:52px;border:0;border-radius:14px;background:var(--entry-ink);color:#fff;font:600 1rem/1.35 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;padding:15px 20px;cursor:pointer;box-shadow:none}
+.entry-button.secondary{background:transparent;color:var(--entry-ink);font-weight:550}
+.entry-button:hover{filter:brightness(1.08)}
+.entry-button:focus-visible,.entry-footer a:focus-visible{outline:3px solid var(--entry-accent);outline-offset:4px}
+.entry-trust{font-size:.8rem;line-height:1.5;color:var(--entry-muted);margin:18px 0 0}
+.entry-footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 16px;font-size:.75rem;line-height:1.5;color:var(--entry-muted);padding-top:24px;margin-top:16px;border-top:1px solid var(--entry-line)}
+.entry-footer a{display:inline-flex;align-items:center;min-height:44px;color:var(--entry-muted);text-decoration:none;padding:4px 0}
+.entry-footer p{margin:0;display:flex;align-items:center;min-height:44px}
+.entry-footer nav{display:flex;gap:18px}
+.entry-steps{list-style:none;margin:4px 0 0;padding:0;counter-reset:entry-step}
+.entry-steps li{counter-increment:entry-step;position:relative;padding:16px 0 16px 44px;border-bottom:1px solid var(--entry-line)}
+.entry-steps li::before{content:counter(entry-step,decimal-leading-zero);position:absolute;left:0;top:18px;font-size:.75rem;letter-spacing:.08em;color:var(--entry-accent);font-weight:650}
+.entry-steps h2{font-size:1rem;line-height:1.4;margin:0 0 4px;font-weight:650}
+.entry-steps p{font-size:.9rem;line-height:1.5;margin:0;color:var(--entry-muted)}
+.entry-shell.help .entry-title{font-size:clamp(2rem,8vw,2.85rem)}
+.entry-shell.help .entry-layout{padding-top:28px;align-content:center}
+@media(min-width:760px){.entry-shell{padding-left:48px;padding-right:48px}.entry-layout{grid-template-columns:1.1fr 1fr;gap:56px;padding:40px 0}.entry-art{max-height:560px;min-height:360px;height:58dvh}.entry-copy{padding:12px 0}.entry-title{font-size:64px}.entry-shell.help .entry-layout{grid-template-columns:1fr;max-width:560px;width:100%;margin:auto}.entry-footer{margin-top:0}}
+@media(max-height:680px) and (max-width:759px){.entry-shell{padding-top:calc(16px + env(safe-area-inset-top,0px))}.entry-art{max-height:20dvh;min-height:76px}.entry-layout{gap:18px}.entry-actions{margin-top:16px}.entry-footer{padding-top:12px;margin-top:12px}}
+@media(prefers-reduced-motion:reduce){.entry-progress{animation:none;border-color:var(--entry-ink)}.entry-button{transition:none}}
+@media(prefers-contrast:more){:root{--entry-muted:#31483c;--entry-line:#788b7b}.entry-button{outline:1px solid currentColor}}
+@media(forced-colors:active){.entry-button{border:2px solid ButtonText}.entry-art{forced-color-adjust:auto}}
