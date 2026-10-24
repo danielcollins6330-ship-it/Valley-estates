@@ -18,7 +18,7 @@ It provides self-contained entertainment without an account or an internet conne
 
 ## 3. Access and main-feature instructions
 
-No login, demo credentials, backend setup or sample files are required. Launch the installed app and dismiss the introductory instructions. A new estate starts with a homestead and three farmhands. Existing progress loads from device-local storage.
+No login, demo credentials, backend setup or sample files are required. On a first launch, choose Start your estate, or optionally open How to play. Returning players resume their saved estate without repeating onboarding. A new estate starts with a homestead and three farmhands. Existing progress loads from device-local storage.
 
 1. Tap a farmhand, then a nearby tree, rock or berry bush to gather resources. Drag to pan and pinch to zoom.
 2. Open Build using the hammer control. Select a cottage, field or barn and confirm placement on clear terrain. Assign a farmhand to construction.

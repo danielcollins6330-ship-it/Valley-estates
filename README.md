@@ -57,3 +57,9 @@ Estate saves keep the `valleyEstatesV4` key. A normal save retains the previous 
 
 Storage quota failures are reported instead of pretending that a save succeeded. If both snapshots are damaged or storage itself has been cleared, recovery cannot recreate the lost estate. This remains device-local storage, not cloud backup. The deterministic tests cover the recovery state machine and real game save/load function integration with controlled renderer and storage stubs; handset and native file-export behaviour still require device testing before release.
 
+
+## App entry and Apple review evidence
+
+The iOS launch storyboard is an unbranded warm-paper surface that matches the first interactive screen. There is no minimum splash delay. First-time players receive a restrained estate welcome with optional guidance. Existing estates resume automatically once onboarding has been completed. The simulation pauses during welcome/help, restores its prior speed afterward, and cannot bypass damaged-save recovery. Menu reopens the short tutorial.
+
+The entry has keyboard focus containment, explicit dialog labelling, safe-area padding, scalable system-font body text, motion/contrast preferences and 44-point-or-larger controls. Automated checks do not certify VoiceOver, Dynamic Type, native scaling or physical-device interaction; those still need device QA. See `store/app-review/entry-design.md` for the Apple guidance and device checklist. Apple Guideline 2.1 still requires the requested real-device recording and complete review information before resubmission.
