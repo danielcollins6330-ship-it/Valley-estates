@@ -80,6 +80,7 @@
       delete game.achievements.villa;
     }
     if (!game.gear || typeof game.gear !== "object") game.gear = {};
+    game.difficulty = difficultySpec(game.difficulty).id;
     game.order = game.order && typeof game.order === "object" && game.order.good ? game.order : null;
     if (game.nextOrder == null) game.nextOrder = 40;
     (game.units || []).forEach((unit, index) => decorateHand(unit, index));
@@ -780,12 +781,37 @@
     return Math.max(6, Math.round(salePrice(kind, health, condition) * (listed / base)));
   }
 
+  const DIFFICULTIES = {
+    easy: { id: "easy", name: "Easy", cost: 0.85, drought: 0.65, weeds: 0.55, events: 0.75 },
+    normal: { id: "normal", name: "Normal", cost: 1, drought: 1, weeds: 1, events: 1 },
+    hard: { id: "hard", name: "Hard", cost: 1.25, drought: 1.45, weeds: 1.5, events: 1.3 },
+  };
+
+  function difficultySpec(id) {
+    return DIFFICULTIES[id] || DIFFICULTIES.normal;
+  }
+
+  function scaleCost(cost, difficulty) {
+    const mul = difficultySpec(difficulty).cost;
+    const out = {};
+    for (const key of Object.keys(cost || {})) {
+      const value = Number(cost[key]) || 0;
+      if (value <= 0) {
+        out[key] = 0;
+        continue;
+      }
+      out[key] = Math.max(1, Math.round(value * mul));
+    }
+    return out;
+  }
+
   function droughtMul(game) {
     if (game.techs && game.techs.irrig) return 1;
     let mul = 0.5;
     if (built(game, "dam")) mul = 0.72;
     if (built(game, "tank")) mul = Math.min(0.94, mul + 0.22);
-    return mul;
+    const pressure = difficultySpec(game && game.difficulty).drought;
+    return clamp(1 - (1 - mul) * pressure, 0.22, 1);
   }
 
   function workMul(game) {
@@ -839,10 +865,11 @@
     return clamp(1 - (level - 18) / 150, 0.48, 1);
   }
 
-  function weedClearCost(plot, sprayer) {
+  function weedClearCost(plot, sprayer, difficulty) {
     const level = Number(plot && plot.weeds) || 0;
     if (level < 12) return 0;
-    return Math.max(6, Math.round(level * 0.4 * (sprayer ? 0.4 : 1)));
+    const weeds = difficultySpec(difficulty).weeds;
+    return Math.max(6, Math.round(level * 0.4 * (sprayer ? 0.4 : 1) * weeds));
   }
 
   function clearWeeds(plot, sprayer) {
@@ -1077,6 +1104,9 @@
     spendTier: spendTier,
     wineSellPrice: wineSellPrice,
     stockQuote: stockQuote,
+    DIFFICULTIES: DIFFICULTIES,
+    difficultySpec: difficultySpec,
+    scaleCost: scaleCost,
     droughtMul: droughtMul,
     workMul: workMul,
     tractorMul: tractorMul,

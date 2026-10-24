@@ -21,6 +21,9 @@ body.entry-active>#cv,body.entry-active>#hud,body.entry-active>#bar,body.entry-a
 #sheet .entry-eyebrow{font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--entry-muted);font-weight:650;margin:0 0 12px}
 #sheet .entry-title{font-family:ui-serif,Georgia,serif;font-size:clamp(2.45rem,11vw,3.75rem);line-height:1.02;font-weight:500;letter-spacing:-.045em;margin:0 0 18px;color:var(--entry-ink);outline:none}
 #sheet .entry-description{font-size:1rem;line-height:1.55;color:var(--entry-muted);margin:0;max-width:33ch}
+.entry-pace{display:flex;gap:8px;margin-top:18px}
+.entry-pace .entry-button{min-height:44px;padding:10px 8px;border:1px solid var(--entry-line)}
+.entry-pace .entry-button[aria-pressed="true"]{background:var(--entry-ink);color:#fff}
 .entry-actions{display:flex;flex-direction:column;gap:8px;margin-top:24px}
 .entry-button{width:100%;min-height:52px;border:0;border-radius:14px;background:var(--entry-ink);color:#fff;font:600 1rem/1.35 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;padding:15px 20px;cursor:pointer;box-shadow:none}
 .entry-button.secondary{background:transparent;color:var(--entry-ink);font-weight:550}
