@@ -162,6 +162,7 @@ const B={
  vineyard:{n:'Vineyard',e:'🍇',w:2,h:2,cost:{wood:60,stone:20},age:1,pass:1,bt:14,col:'#5a7a2f',desc:'Grapevines regrow. Grapes → Winery.'},
  winery:{n:'Winery',e:'🍷',w:3,h:3,cost:{wood:120,stone:60},age:1,drop:['grapes'],bt:30,col:'#6b2142',desc:'Turns 4 grapes into 1 bottle of wine.'},
  paddock:{n:'Paddock',e:'🐄',w:3,h:3,cost:{wood:80},age:1,pass:1,bt:15,col:'#6d8b3a',desc:'Speckle Park cattle (beef) or Babydoll sheep (wool).'},
+ broadacre:{n:'Broadacre Paddock',e:'🏞️',w:4,h:4,cost:{wood:180,stone:40},age:3,pass:1,bt:24,col:'#4f6b2e',desc:'A Valley Empire paddock. Holds a larger herd, up to 14 head.'},
  dam:{n:'Farm Dam',e:'💧',w:2,h:2,cost:{stone:80},age:1,bt:20,col:'#3a7bbf',desc:'Softens drought. Must sit beside water. Add a Water Tank to soften it more.'},
  tank:{n:'Water Tank',e:'🛢️',w:2,h:2,cost:{stone:70,wood:30},age:1,bt:16,col:'#6a7d86',desc:'Stores water anywhere and softens drought. Best paired with a Farm Dam.'},
  shed:{n:'Shearing Shed',e:'🧶',w:2,h:2,cost:{wood:110,stone:20},age:1,bt:18,col:'#8d6a45',desc:'Babydoll sheep grow fleece faster.'},
@@ -196,7 +197,7 @@ const MISSIONS=[
  {t:'Advance to Settler Age',h:'Tap the Homestead and research the Settler Age (250 food, 120 wood).',c:g=>g.age>=1},
  {t:'Plant a Vineyard',h:'Grapes are the Ferguson Valley speciality.',c:g=>has(g,'vineyard')},
  {t:'Build a Winery',h:'Deliver grapes to a Winery to bottle wine.',c:g=>has(g,'winery')},
- {t:'Stock a Paddock',h:'Build a Paddock, then buy Speckle Park cattle or Babydoll sheep.',c:g=>g.buildings.some(b=>b.type==='paddock'&&b.count>0)},
+ {t:'Stock a Paddock',h:'Build a Paddock, then buy Speckle Park cattle or Babydoll sheep.',c:g=>g.buildings.some(b=>(b.type==='paddock'||b.type==='broadacre')&&b.count>0)},
  {t:'Bottle 8 wines',h:'Keep farmhands on vineyards. Each winery bottles 4 grapes → 1 wine.',c:g=>g.stats.wine>=8},
  {t:'Advance to Estate Age',h:'Unlocks the Market and advanced techs.',c:g=>g.age>=2},
  {t:'Build a Market',h:'Sell wine and wool for coins.',c:g=>has(g,'market')},
@@ -206,6 +207,7 @@ const MISSIONS=[
 const SEASONS=[{n:'Spring',e:'🌸'},{n:'Summer',e:'☀️'},{n:'Autumn',e:'🍂'},{n:'Winter',e:'❄️'}];
 const SEASON_LEN=120;
 function has(g,t){return g.buildings.some(b=>b.type===t&&b.built)}
+function isPad(b){return !!(b&&(b.type==='paddock'||b.type==='broadacre'))}
 const RICON={food:'🌾',wood:'🪵',stone:'🪨',coins:'🪙',grapes:'🍇',wine:'🍷',wool:'🧶',olives:'🫒'};
 
 // ===================== STATE =====================
@@ -285,7 +287,7 @@ function command(units,tx,ty){if(!units.length)return;const b=bAt(tx,ty);const t
    else if(b.type==='field')setTask(u,{type:'farm',bid:b.id,res:'food'}),label='Farm';
    else if(b.type==='vineyard')setTask(u,{type:'farm',bid:b.id,res:'grapes'}),label='Tend vines';
    else if(b.type==='olive')setTask(u,{type:'farm',bid:b.id,res:'olives'}),label='Pick olives';
-   else if(b.type==='paddock')setTask(u,{type:'farm',bid:b.id,res:b.kind==='sheep'?'wool':'food'}),label='Tend stock';
+   else if(isPad(b))setTask(u,{type:'farm',bid:b.id,res:b.kind==='sheep'?'wool':'food'}),label='Tend stock';
    else if(B[b.type].drop&&u.carry>0){u.task={type:'deposit'};u.phase='return';pathTo(u,rectB(b));label='Drop off'}
    else moveTo(u,tx,ty,k),label='Move';}
   else if(RES_OF[t]){setTask(u,{type:'gather',tx,ty,res:RES_OF[t]});label={wood:'Chop',stone:'Mine',food:'Forage'}[RES_OF[t]]}
@@ -351,7 +353,7 @@ function scanCues(){if(!window.VEAudio)return;let said=false;
   if(b.type==='field'||b.type==='vineyard'){const amount=b.type==='field'?b.food:b.grapes,need=b.type==='field'?140:70,drop=b.type==='field'?100:40;
    const ready=amount>=need&&!workerOn(b);if(!ready||amount<drop)harvestTold.delete(b.id);
    if(ready&&!harvestTold.has(b.id)&&!said){harvestTold.add(b.id);said=true;VEAudio.say('harvest')}}
-  if(b.type==='paddock'&&b.kind==='cattle'&&b.count>0){if(workerOn(b))b.hungry=0;else{b.hungry=(b.hungry||0)+2;if(b.hungry>=140){b.hungry=0;toast('🐄 Cattle are getting hungry.','warn');VEAudio.say('cattle')}}}}}
+  if(isPad(b)&&b.kind==='cattle'&&b.count>0){if(workerOn(b))b.hungry=0;else{b.hungry=(b.hungry||0)+2;if(b.hungry>=140){b.hungry=0;toast('🐄 Cattle are getting hungry.','warn');VEAudio.say('cattle')}}}}}
 function tick(dt){G.time+=dt;const festPhase=VEExpansion.festivalPhase(G.time,SEASON_LEN);const festRush=festPhase==='festival'?2:festPhase==='show'?1.4:1;
  for(const u of G.units)stepUnit(u,dt);
  let cellarOpen=false;
@@ -363,7 +365,7 @@ function tick(dt){G.time+=dt;const festPhase=VEExpansion.festivalPhase(G.time,SE
   if(b.type==='field'||b.type==='vineyard')VEExpansion.tickWeeds(b,dt,{sprayer:VEExpansion.ownsGear(G,'sprayer'),tended:workerOn(b)});
   if(b.type==='vineyard'){const vineHand=G.units.some(u=>u.task&&u.task.bid===b.id&&u.skill==='vines');VEExpansion.tickCare(b,dt*(vineHand?1.25:1),workerOn(b),dry);const bite=VEExpansion.birdBite(b,dt,!!(G.events.dogScare>G.time));if(bite){b.grapes=Math.max(0,b.grapes-bite);if(!G.events.birds){G.events.birds=1;toast('🦜 Cockatoos are in the vines. Send the dog from the vineyard.','warn')}}b.grapes=Math.min(80,b.grapes+dt*VEExpansion.vineRate(G.season,!!b.pruned,dry&&VEExpansion.droughtMul(G)<0.85)*VEExpansion.weedYield(b.weeds))}
   if(b.type==='olive')b.olives=Math.min(80,(b.olives||0)+dt*VEExpansion.oliveRate(G.season,dry&&VEExpansion.droughtMul(G)<0.85));
-  if(b.type==='paddock'&&b.count>0){b.pt+=dt;if(b.pt>=10){b.pt=0;const cond=b.condition>60?1.15:b.condition<35?0.6:1;b.stock=Math.min(200,b.stock+(b.kind==='cattle'?4:3)*b.count*(G.techs.breed?1.6:1)*VEExpansion.grazeMul(G.techs)*cond)}
+  if(isPad(b)&&b.count>0){b.pt+=dt;if(b.pt>=10){b.pt=0;const cond=b.condition>60?1.15:b.condition<35?0.6:1;b.stock=Math.min(200,b.stock+(b.kind==='cattle'?4:3)*b.count*(G.techs.breed?1.6:1)*VEExpansion.grazeMul(G.techs)*cond)}
    for(const note of VEExpansion.tickPaddock(b,dt,{tended:workerOn(b),drought:dry,irrig:!!G.techs.irrig,season:G.season,food:G.res.food,breedTech:!!G.techs.breed,shed:has(G,'shed'),pasture:!!G.techs.pasture,shade:!!G.techs.shade,genes:VEExpansion.geneMul(G.techs),mower:VEExpansion.ownsGear(G,'mower')})){
     if(note.breed){if(G.res.food<note.food)continue;G.res.food-=note.food;b.count++}
     toast(note.t,note.c);if(note.say&&window.VEAudio)VEAudio.say(note.say)}
@@ -403,7 +405,7 @@ function randomEvent(){const s=G.season,r=Math.random();
  if(s===1&&r<0.5){G.events.drought=G.time+60;toast(G.techs.irrig?'☀️ Drought — irrigation keeps crops going.':'☀️ Drought! Field & vine yields reduced. Build a Dam / Irrigation.','warn');return}
  if(s===1&&r<0.85&&G.age>=1){startFire();return}
  if(s===3&&r<0.6){G.events.frost=G.time+40;if(window.VEAudio)VEAudio.say('frost');if(G.techs.frostfan){toast('❄️ Frost — frost fans protect the vines.');return}const keep=VEExpansion.frostKeep(G.techs);G.buildings.forEach(b=>{if(b.type==='vineyard')b.grapes*=keep;if(b.type==='field')b.food=Math.max(0,b.food-25)});toast(G.techs.trough?'❄️ Frost. Night watering saved some grapes.':'❄️ Frost! Vines and fields damaged.','warn');return}
- if((s===0||s===2)&&r<0.6){const sp=G.buildings.filter(b=>b.type==='paddock'&&b.kind==='sheep'&&b.count>0);if(sp.length){if(G.techs.fence){toast('🦊 A fox prowled but your fences held.');return}const p=sp[0];p.count--;toast('🦊 A fox took a Babydoll sheep! Research Fox-proof Fencing.','warn');return}}
+ if((s===0||s===2)&&r<0.6){const sp=G.buildings.filter(b=>isPad(b)&&b.kind==='sheep'&&b.count>0);if(sp.length){if(G.techs.fence){toast('🦊 A fox prowled but your fences held.');return}const p=sp[0];p.count--;toast('🦊 A fox took a Babydoll sheep! Research Fox-proof Fencing.','warn');return}}
  if((s===0||s===3)&&r>=0.6&&r<0.82){G.events.storm=G.time+48;toast('⛈️ Storm brewing.','warn');if(window.VEAudio)VEAudio.say('storm');return}
  if(r<0.3){G.res.coins+=40;G.stats.coins+=40;toast('🧺 Visitors from Bunbury bought produce: +40🪙','good')}
  if(has(G,'market')&&!(G.events.market>G.time)&&Math.random()<0.4){G.events.market=G.time+40;toast('📈 Market prices are up.','good');if(window.VEAudio)VEAudio.say('market');panelDirty=true}}
@@ -558,7 +560,7 @@ function panelHTML(){
  if(b){const d=B[b.type];let h=`<h4>${d.e} ${d.n}${b.built?'':' (under construction '+Math.round(b.prog*100)+'%)'}</h4><div class="d">${d.desc}`;
   if(b.type==='field')h+=` 🌾 ${b.food|0}/150 food left.`+((b.weeds|0)>=12?` Weeds ${b.weeds|0}%.`:'');if(b.type==='vineyard')h+=` 🍇 ${b.grapes|0}/80 grapes. Care ${b.care|0}. Next bottle ${VEExpansion.tierFromScore(VEExpansion.vineScore(b,G.season,!!(G.events.drought&&!G.techs.irrig),workerOn(b))+VEExpansion.qualityBonus(G.techs))}.`+(b.pruned?' Pruned for budburst.':'')+(G.events.dogScare>G.time?' The dog is on watch.':'')+((b.weeds|0)>=12?` Weeds ${b.weeds|0}%.`:'');
   if(b.type==='olive')h+=` 🫒 ${b.olives|0}/80 olives.`;
-  if(b.type==='paddock')h+=b.kind?` ${b.count} ${b.kind==='cattle'?'Speckle Park 🐄':'Babydoll 🐑'} · health ${b.health|0} · condition ${b.condition|0}`+(b.kind==='sheep'?` · fleece ${b.fleece|0}% · ${G.res.wool|0} wool`:` · stock ${b.stock|0}🥩`):' Empty.';
+  if(isPad(b))h+=b.kind?` ${b.count}/${VEExpansion.stockCap(b)} ${b.kind==='cattle'?'Speckle Park 🐄':'Babydoll 🐑'} · health ${b.health|0} · condition ${b.condition|0}`+(b.kind==='sheep'?` · fleece ${b.fleece|0}% · ${G.res.wool|0} wool`:` · stock ${b.stock|0}🥩`):' Empty.';
   if(b.type==='winery'){const vines=G.buildings.filter(v=>v.type==='vineyard'&&v.built);const tier=VEExpansion.bottleTier(vines,G.season,!!(G.events.drought&&!G.techs.irrig),vines.some(workerOn),VEExpansion.qualityBonus(G.techs));h+=` 🍇 ${G.res.grapes|0} waiting · bottled ${G.stats.wine}. Next bottle is ${tier}. 🥉${G.wineTiers.bronze|0} 🥈${G.wineTiers.silver|0} 🥇${G.wineTiers.gold|0}.`;}
   if(b.type==='cellardoor')h+=` ${b.guests|0} tastings served.`;
   if(b.type==='valleyvilla')h+=` ${b.guests|0} guests staying.`;
@@ -572,8 +574,8 @@ function panelHTML(){
   if(b.type==='field'&&b.food<1){const wood=VEExpansion.seedWood(G,false);h+=btn('replant','🌱 Replant','🪵'+wood,'',!canAfford({wood:wood}))}
   if((b.type==='field'||b.type==='vineyard')&&VEExpansion.weedClearCost(b,VEExpansion.ownsGear(G,'sprayer'))>0){const cost=VEExpansion.weedClearCost(b,VEExpansion.ownsGear(G,'sprayer'));h+=btn('weeds','🌿 Clear weeds',cost+'🪙'+(VEExpansion.ownsGear(G,'sprayer')?' · sprayer':''),'',G.res.coins<cost)}
   if(b.type==='tractorshed'){h+=`<div class="d">Fit an attachment. Each one stays on the tractor.</div>`;for(const item of VEExpansion.GEAR){const owned=VEExpansion.ownsGear(G,item.id);h+=btn('gear:'+item.id,'🚜 '+item.name,owned?'Fitted':costStr(item.cost)+' · '+item.effect,'',owned||G.age<item.age||!canAfford(item.cost))}}
-  if(b.type==='paddock'){if(!b.kind){h+=btn('cattle','🐄 Speckle Park ×2','🌾120','',!canAfford({food:120}))+btn('sheep','🐑 Babydoll ×2','🌾80','',!canAfford({food:80}))}
-   else{const price=VEExpansion.stockQuote(b.kind,b.health,b.condition,listed(b.kind==='cattle'?'cattle':'lamb'));h+=btn('breed','❤️ Breed +1',b.kind==='cattle'?'🌾60':'🌾40','',b.count>=8||!canAfford({food:b.kind==='cattle'?60:40}))+btn('vet','🩺 Vet check','🪙25','',!b.kind||!canAfford({coins:25}));
+  if(isPad(b)){if(!b.kind){h+=btn('cattle','🐄 Speckle Park ×2','🌾120','',!canAfford({food:120}))+btn('sheep','🐑 Babydoll ×2','🌾80','',!canAfford({food:80}))}
+   else{const price=VEExpansion.stockQuote(b.kind,b.health,b.condition,listed(b.kind==='cattle'?'cattle':'lamb'));h+=btn('breed','❤️ Breed +1',b.kind==='cattle'?'🌾60':'🌾40','',b.count>=VEExpansion.stockCap(b)||!canAfford({food:b.kind==='cattle'?60:40}))+btn('vet','🩺 Vet check','🪙25','',!b.kind||!canAfford({coins:25}));
     if(b.kind==='sheep')h+=btn('shear','🧶 Shear wool',b.fleece>=50?'Ready':'Fleece '+((b.fleece|0))+'%','',b.fleece<50);
     h+=btn('sellstock','🏷️ Sell 1','+'+price+'🪙',has(G,'yard')?'':'dis',!has(G,'yard')||b.count<1)}}
   if(b.type==='vineyard'&&G.season===3)h+=btn('prune','✂️ Prune vines',b.pruned?'Done':'Winter cut','',!!b.pruned);
@@ -582,9 +584,9 @@ function panelHTML(){
    if(order)h+=`<div class="d">📋 Order: ${order.qty} ${order.label} in ${Math.max(0,Math.ceil(order.until-G.time))}s for +${order.reward}🪙. You have ${VEExpansion.orderHave(G,order)}.</div>`+btn('deliver','📋 Deliver order','+'+order.reward+'🪙','',!VEExpansion.orderReady(G,order));
    for(const tier of ['gold','silver','bronze']){const price=VEExpansion.wineSellPrice(wine,tier,has(G,'valleyvilla'));const n=G.wineTiers[tier]|0;h+=btn('sellwine:'+tier,({gold:'🥇 Gold',silver:'🥈 Silver',bronze:'🥉 Bronze'}[tier])+' wine','+'+price+'🪙 · '+n,'',n<1)}
    h+=btn('sell:wool:10:'+wool,'🧶 Sell 10 wool','+'+wool+'🪙','',G.res.wool<10)+btn('sell:olives:8:'+olive,'🫒 Sell 8 olives','+'+olive+'🪙','',G.res.olives<8)+btn('sell:food:100:'+marketPrice(30),'Sell 100🌾','+'+marketPrice(30)+'🪙','',G.res.food<100)+btn('sell:wood:100:'+marketPrice(30),'Sell 100🪵','+'+marketPrice(30)+'🪙','',G.res.wood<100)+btn('sell:stone:100:'+marketPrice(45),'Sell 100🪨','+'+marketPrice(45)+'🪙','',G.res.stone<100)+btn('buy:food:100:60','Buy 100🌾','-60🪙','alt',G.res.coins<60)+btn('buy:stone:100:80','Buy 100🪨','-80🪙','alt',G.res.coins<80)}
-  if(!b.research){for(const node of VEExpansion.researchAt(b.type)){if(G.techs[node.id])continue;const state=VEExpansion.researchState(G,node.id);
+  if(!b.research){const host=b.type==='broadacre'?'paddock':b.type;for(const node of VEExpansion.researchAt(host)){if(G.techs[node.id])continue;const state=VEExpansion.researchState(G,node.id);
     h+=btn('tech:'+node.id,'🔬 '+node.name,state.ok?costStr(node.cost)+' · '+node.benefit:'🔒 '+state.reason,'alt',!state.ok||!canAfford(node.cost))}
-   for(const[id,tc]of Object.entries(TECH)){if(VEExpansion.researchById(id)||tc.at!==b.type||G.techs[id])continue;const lock=G.age<tc.age,active=VEExpansion.researchProgress(G,id);
+   for(const[id,tc]of Object.entries(TECH)){if(VEExpansion.researchById(id)||tc.at!==host||G.techs[id])continue;const lock=G.age<tc.age,active=VEExpansion.researchProgress(G,id);
     h+=btn('tech:'+id,'🔬 '+tc.n,active?'Researching: '+active.remaining+'s remaining':lock?'🔒 '+AGES[tc.age].n:costStr(tc.cost)+' · '+tc.desc,'alt',!!active||lock||!canAfford(tc.cost))}}
   h+=btn('deselect','✖ Close','','red')+'</div>';return h}
  return `<h4><img class="logo" src="assets/logo.png" alt=""> Valley Estates</h4><div class="d">Ferguson Valley, WA. Drag to pan, pinch to zoom. Tap a farmhand then tap where to work. Tap 🔨 to build. Seasons bring drought, frost, foxes and bushfires!</div><div class="btns">${btn('build','🔨 Build','')}${btn('selidle','👥 Select idle','')}${btn('tc','🏠 Homestead','','alt')}</div>`}
@@ -599,7 +601,7 @@ function act(a){if(window.VEHaptics)VEHaptics.tap('light');const b=G.buildings.f
  case'train':if(b&&b.queue.length<5&&pay({food:50}))b.queue.push(1);break;
  case'crew':openCrew();break;case'study':showResearch();break;
  case'age':{const a2=AGES[G.age+1];if(a2&&b&&b.built&&b.type==='homestead'&&!b.research&&!VEExpansion.researchProgress(G,'age'+(G.age+1))&&pay(a2.cost)){b.research={id:'age'+(G.age+1),t:0,total:a2.time};toast('⬆️ Researching '+a2.n)}break}
- case'tech':{const node=VEExpansion.researchById(p[1]);const tc=node||TECH[p[1]];const state=node?VEExpansion.researchState(G,p[1]):{ok:!!tc&&G.age>=tc.age};if(b&&b.built&&tc&&b.type===tc.at&&!b.research&&!G.techs[p[1]]&&!VEExpansion.researchProgress(G,p[1])&&state.ok&&pay(tc.cost)){b.research={id:p[1],t:0,total:tc.time}}break}
+ case'tech':{const node=VEExpansion.researchById(p[1]);const tc=node||TECH[p[1]];const state=node?VEExpansion.researchState(G,p[1]):{ok:!!tc&&G.age>=tc.age};const host=b&&b.type==='broadacre'?'paddock':b&&b.type;if(b&&b.built&&tc&&host===tc.at&&!b.research&&!G.techs[p[1]]&&!VEExpansion.researchProgress(G,p[1])&&state.ok&&pay(tc.cost)){b.research={id:p[1],t:0,total:tc.time}}break}
  case'skillset':{const hand=selUnits()[0];if(hand&&VEExpansion.setSkill(hand,p[1]))toast(hand.name+' now specialises in '+VEExpansion.skillLabel(p[1]));break}
  case'prio':{const hand=selUnits()[0];if(hand&&VEExpansion.setPriority(hand,p[1]))toast(hand.name+' will take '+VEExpansion.priorityLabel(p[1]).toLowerCase()+' work');break}
  case'dog':if(b&&b.type==='vineyard'){G.events.dogScare=G.time+50;delete G.events.birds;toast('🐕 The dog is in the vines. The cockatoos lift off.','good')}break;
@@ -608,7 +610,7 @@ function act(a){if(window.VEHaptics)VEHaptics.tap('light');const b=G.buildings.f
  case'weeds':if(b){const cost=VEExpansion.weedClearCost(b,VEExpansion.ownsGear(G,'sprayer'));if(cost&&pay({coins:cost})){VEExpansion.clearWeeds(b,VEExpansion.ownsGear(G,'sprayer'));toast('🌿 Weeds sprayed off.','good');if(window.VEAudio)VEAudio.sfx('plant')}}break;
  case'gear':{const fit=VEExpansion.buyGear(G,p[1]);if(!fit.ok){toast(fit.text,'warn');break}if(!pay(fit.cost)){delete G.gear[p[1]];toast('Need '+costStr(fit.cost),'warn');break}toast(fit.text,'good');if(window.VEAudio)VEAudio.sfx('build');break}
  case'cattle':case'sheep':if(b&&pay({food:p[0]==='cattle'?120:80})){b.kind=p[0];b.count=2;b.health=90;b.condition=78;b.fleece=0;toast(p[0]==='cattle'?'🐄 Speckle Park cattle arrived':'🐑 Babydoll sheep arrived','good');if(window.VEAudio)VEAudio.sfx(p[0]==='cattle'?'cow':'sheep')}break;
- case'breed':if(b&&b.count<8&&pay({food:b.kind==='cattle'?60:40}))b.count++;break;
+ case'breed':if(b&&b.count<VEExpansion.stockCap(b)&&pay({food:b.kind==='cattle'?60:40}))b.count++;break;
  case'vet':if(b&&b.kind&&pay({coins:25})){b.health=Math.min(100,(b.health||0)+40);b.condition=Math.min(100,(b.condition||0)+12);b.vetWarned=0;toast('🩺 Vet check done. The stock look better.','good')}break;
  case'shear':if(b&&b.kind==='sheep'){const bales=VEExpansion.shearBales(b.fleece,b.count,VEExpansion.ownsGear(G,'baler'));if(bales){b.fleece=0;G.res.wool+=bales;toast('🧶 Sheared '+bales+' wool.','good');if(window.VEAudio)VEAudio.sfx('harvest')}}break;
  case'sellstock':if(b&&b.count>0&&has(G,'yard')){const price=VEExpansion.stockQuote(b.kind,b.health,b.condition,listed(b.kind==='cattle'?'cattle':'lamb'));b.count--;G.res.coins+=price;G.stats.coins+=price;G.stats.soldStock=(G.stats.soldStock||0)+1;floatText(b.x+1,b.y,'+'+price+'🪙');toast('🏷️ Sold at the yard for '+price+'🪙','good');if(window.VEAudio){VEAudio.sfx('coins');VEAudio.sfx(b.kind==='cattle'?'cow':'sheep')}}break;
@@ -732,7 +734,7 @@ function frame(now){const real=Math.min(0.1,(now-last)/1000);last=now;
  uiT+=real;if(uiT>0.25||panelDirty){uiT=0;panelDirty=false;updateBar();renderPanel();updateResearchSheet()}
  miniT+=real;if(miniT>0.5){miniT=0;drawMini()}
  saveT+=real;if(saveT>10){saveT=0;save()}
- if(window.VEAudio){const info=VE3D.dayInfo(G);VEAudio.sync({night:info.night,dusk:info.dusk,p:info.p,raining:!!(VE3D.raining&&VE3D.raining(G))||!!G.events.storm,storm:!!G.events.storm,cattle:G.buildings.some(b=>b.built&&b.type==='paddock'&&b.kind==='cattle'&&b.count>0),sheep:G.buildings.some(b=>b.built&&b.type==='paddock'&&b.kind==='sheep'&&b.count>0),farming:G.units.some(u=>{if(!u.task||u.task.type!=='farm'||u.task.res!=='food')return false;const b=G.buildings.find(x=>x.id===u.task.bid);return !!(b&&b.type==='field')})})}
+ if(window.VEAudio){const info=VE3D.dayInfo(G);VEAudio.sync({night:info.night,dusk:info.dusk,p:info.p,raining:!!(VE3D.raining&&VE3D.raining(G))||!!G.events.storm,storm:!!G.events.storm,cattle:G.buildings.some(b=>b.built&&isPad(b)&&b.kind==='cattle'&&b.count>0),sheep:G.buildings.some(b=>b.built&&isPad(b)&&b.kind==='sheep'&&b.count>0),farming:G.units.some(u=>{if(!u.task||u.task.type!=='farm'||u.task.res!=='food')return false;const b=G.buildings.find(x=>x.id===u.task.bid);return !!(b&&b.type==='field')})})}
  draw();frames++;requestAnimationFrame(frame)}
 addEventListener('resize',scheduleResize);
 addEventListener('orientationchange',scheduleResize);

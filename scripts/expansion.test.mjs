@@ -196,8 +196,16 @@ assert.ok(mown.condition > rough.condition);
 assert.ok(mown.hay > 0);
 assert.ok(expansion.shearBales(80, 4, true) > expansion.shearBales(80, 4, false));
 assert.ok(expansion.fieldMul({ gear: { seeder: 1 } }) > 1);
+assert.ok(expansion.fieldMul({ gear: { combine: 1 } }) > expansion.fieldMul({ gear: { seeder: 1 } }));
+assert.equal(expansion.buyGear({ age: 1, buildings: [{ type: "tractorshed", built: true }], gear: {} }, "combine").ok, false);
+const empire = { age: 2, buildings: [{ type: "tractorshed", built: true }], gear: {} };
+assert.equal(expansion.buyGear(empire, "combine").ok, true);
 assert.equal(expansion.seedWood({ gear: { seeder: 1 } }, false), 12);
 assert.equal(expansion.seedWood({ gear: {} }, true), 20);
+assert.equal(expansion.stockCap({ type: "paddock" }), 8);
+assert.equal(expansion.stockCap({ type: "broadacre" }), 14);
+const herd = { type: "broadacre", kind: "cattle", count: 10, health: 80, condition: 70, breedT: 54, fleece: 0 };
+assert.equal(expansion.tickPaddock(herd, 2, { tended: true, drought: false, season: 0, food: 40, breedTech: false }).some((note) => note.breed), true);
 assert.ok(expansion.oliveRate(2, false) > expansion.oliveRate(2, true));
 assert.ok(expansion.oliveRate(3, false) < expansion.oliveRate(0, false));
 
