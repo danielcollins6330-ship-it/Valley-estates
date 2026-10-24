@@ -542,27 +542,46 @@
     return map;
   }
 
+  function rigJob(id) {
+    const key = "rig:" + id;
+    return {
+      start() { if (window.VELoad) VELoad.track(key); },
+      end() { if (window.VELoad) VELoad.settle(key); },
+    };
+  }
+
   async function boot(next) {
     api = next;
+    const jobs = ["decoder", "coat", "wool", ...Object.keys(KINDS).map((kind) => "glb:" + kind)];
+    const steps = Object.fromEntries(jobs.map((id) => [id, rigJob(id)]));
+    for (const step of Object.values(steps)) step.start();
     try {
       const mod = await import(new URL("animals/meshopt_decoder.js", BASE));
       decoder = mod.MeshoptDecoder;
       await decoder.ready;
+      steps.decoder.end();
       const coatUrl = new URL("animals/coat.webp", BASE).href;
       const woolUrl = new URL("animals/wool.webp", BASE).href;
       const [coatImg, woolImg] = await Promise.all([loadImage(coatUrl), loadImage(woolUrl)]);
       if (!coatImg || !woolImg) throw new Error("fur texture missing");
       tex.coat = imageTexture(coatImg);
       tex.wool = imageTexture(woolImg);
+      steps.coat.end();
+      steps.wool.end();
       await Promise.all(Object.keys(KINDS).map(async (kind) => {
-        const res = await fetch(new URL("animals/" + KINDS[kind].file, BASE));
-        const buf = await res.arrayBuffer();
-        bytes += buf.byteLength;
-        models[kind] = prepare(kind, parseGLB(buf));
+        try {
+          const res = await fetch(new URL("animals/" + KINDS[kind].file, BASE));
+          const buf = await res.arrayBuffer();
+          bytes += buf.byteLength;
+          models[kind] = prepare(kind, parseGLB(buf));
+        } finally {
+          steps["glb:" + kind].end();
+        }
       }));
       window.VERig.ready = true;
       window.VERig.bytes = bytes;
     } catch (err) {
+      for (const step of Object.values(steps)) step.end();
       window.VERig.error = String(err && err.message || err);
       console.error("VERig", err);
     }

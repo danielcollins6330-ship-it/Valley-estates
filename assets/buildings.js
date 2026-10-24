@@ -373,18 +373,27 @@ roughnessFactor=mix(roughnessFactor,0.48,veIronMask(vColor));`)
     error: "",
     async boot(next) {
       api = next;
+      const mark = (type) => {
+        if (window.VELoad) VELoad.settle("glb:" + type);
+      };
+      for (const type of FILES) if (window.VELoad) VELoad.track("glb:" + type);
       try {
         for (const type of FILES) {
-          const res = await fetch(new URL("buildings/" + type + ".glb", BASE));
-          if (!res.ok) throw new Error(type + " " + res.status);
-          const buf = await res.arrayBuffer();
-          bytes += buf.byteLength;
-          const parsed = readGLB(buf);
-          cache[type] = load(parsed.json, parsed.bin);
+          try {
+            const res = await fetch(new URL("buildings/" + type + ".glb", BASE));
+            if (!res.ok) throw new Error(type + " " + res.status);
+            const buf = await res.arrayBuffer();
+            bytes += buf.byteLength;
+            const parsed = readGLB(buf);
+            cache[type] = load(parsed.json, parsed.bin);
+          } finally {
+            mark(type);
+          }
         }
         window.VEBuildings.ready = true;
         window.VEBuildings.bytes = bytes;
       } catch (err) {
+        for (const type of FILES) mark(type);
         window.VEBuildings.error = String(err && err.message || err);
         console.error("VEBuildings", err);
       }

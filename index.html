@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
-html,body{margin:0;height:100%;overflow:hidden;background:#1d140b;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#fff;touch-action:none;overscroll-behavior:none}
+html,body{margin:0;height:100%;overflow:hidden;background:#f4f1e8;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#fff;touch-action:none;overscroll-behavior:none}
 #cv,#hud{position:fixed;inset:0;width:100%;height:100%;display:block}#hud{pointer-events:none;z-index:1}
 :root{--safe-t:env(safe-area-inset-top,0px);--safe-r:env(safe-area-inset-right,0px);--safe-b:env(safe-area-inset-bottom,0px);--safe-l:env(safe-area-inset-left,0px);--hud-left:0px;--hud-top:0px;--hud-width:100%;--hud-height:100%;--panel-h:200px;--panel-w:100%;--chrome-bottom:calc(100% - var(--hud-top) - var(--hud-height));--btn:46px;--mini:104px;--mini-gap:6px}
 #bar{position:fixed;top:var(--hud-top);left:var(--hud-left);width:var(--hud-width);right:auto;display:flex;gap:2px;justify-content:space-between;padding:calc(6px + var(--safe-t)) calc(6px + var(--safe-r)) 6px calc(6px + var(--safe-l));background:linear-gradient(#3d2a17ee,#2a1c0edd);font-size:13px;font-weight:700;z-index:5;overflow-x:auto;scrollbar-width:none}
@@ -115,7 +115,7 @@ html.layout-wide.lefty #rside{left:calc(var(--hud-left) + 8px + var(--safe-l))}
 </style>
 <link rel="stylesheet" href="assets/entry.css">
 </head><body class="app-booting">
-<div id="entry-boot" role="status" aria-live="polite"><span class="entry-progress" aria-hidden="true"></span><span>Preparing your estate</span></div>
+<div id="entry-boot" aria-busy="true"><div class="boot-card"><svg class="boot-mark" viewBox="0 0 128 72" aria-hidden="true"><g fill="none" stroke="#193b30" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"><path d="M18 46c0-10 8-16 18-16 4 0 7 1 10 3 2-6 8-10 15-10 8 0 14 6 15 13 6-1 12 3 13 9" fill="#f7f4ec"/><path d="M22 48v12M34 48v12M52 48v12"/><circle cx="20" cy="34" r="6" fill="#193b30" stroke="none"/><path d="M78 50c2-14 12-22 24-22 8 0 14 4 18 10 6-2 14 2 16 8" fill="#1c1a17" stroke="none"/><path d="M112 36c6-2 12 2 12 8" fill="#f7f4ec" stroke="#1c1a17"/><circle cx="120" cy="40" r="1.3" fill="#1c1a17" stroke="none"/><path d="M86 50v12M102 50v12M116 46v10" stroke="#1c1a17"/><path d="M108 28c2-6 6-8 8-6M118 26c2-4 6-4 7-1" stroke="#1c1a17"/></g></svg><h1 class="boot-title">Valley Estates</h1><p class="boot-credit">Red Gum Interactive</p><div class="boot-bar" id="boot-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Loading the valley"><span id="boot-fill"></span></div><p class="boot-tips"><span>Tap a farmhand in a straw hat, then a tree or a rock.</span><span>The round tank by the homestead holds the house water.</span><span>Speckle Park cattle want a paddock with room to graze.</span><span>Summer dries the valley. Irrigation keeps the vines going.</span></p></div></div>
 <script src="assets/entry.js"></script>
 <canvas id="cv"></canvas><canvas id="hud"></canvas>
 <div id="bar"><span id="rF">🌾0</span><span id="rW">🪵0</span><span id="rS">🪨0</span><span id="rC">🪙0</span><span id="rG">🍇0</span><span id="rV">🍷0</span><span id="rL">🧶0</span><span id="rO">🫒0</span><span id="rP">👤0/0</span></div>
@@ -760,7 +760,8 @@ resize();const initialLoad=load();if(initialLoad!==true){newGame();if(initialLoa
 if(!saveBlocked&&!G.tutorialSeen)showIntro();else if(!saveBlocked&&G.offlineNote){showOffline(G.offlineNote);G.offlineNote=''}
 if(!saveBlocked&&G.tutorialSeen&&G.dailyNote){toast(G.dailyNote,'good');G.dailyNote=''}
 if(!saveBlocked)save();
-if(window.VEEntry)VEEntry.finishBoot();
+function revealEstate(){const boot=document.getElementById('entry-boot');const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;document.body.classList.remove('app-booting');if(!boot||boot.hidden||reduce){if(window.VEEntry)VEEntry.finishBoot();return}let closed=false;const close=()=>{if(closed)return;closed=true;if(window.VEEntry)VEEntry.finishBoot()};boot.addEventListener('transitionend',e=>{if(e.target===boot&&e.propertyName==='opacity')close()});boot.classList.add('is-done');setTimeout(close,700)}
+if(window.VELoad)VELoad.whenReady(revealEstate);else if(window.VEEntry)VEEntry.finishBoot();
 requestAnimationFrame(frame);
 // test hooks
 window.VE={camCenter,unitScreen:u=>w2s(u.x,u.y,0.3),get G(){return G},tick,updateBar,command,w2s,s2w,centerOn,cam,act,confirmPlace,setPlacing:(t,x,y)=>{placing={type:t,x,y};panelDirty=true},validPlace,B,save,findNear,T,N,popCap,setSpeed:v=>speed=v,resize,scanCues,marketPrice,get frames(){return frames},setViewportSegments:rects=>{window.__veSegments=rects&&rects.length?rects:null;resize()},metrics(){const r=VE3D._dbg().renderer,el=r.domElement,panel=$('panel').getBoundingClientRect(),bar=$('bar').getBoundingClientRect(),miniR=$('mini').getBoundingClientRect();return {W,H,DPR,bufW:el.width,bufH:el.height,pr:r.getPixelRatio(),clientW:el.clientWidth,clientH:el.clientHeight,cls:document.documentElement.className,panel:{left:panel.left,top:panel.top,right:panel.right,bottom:panel.bottom,width:panel.width,height:panel.height},bar:{left:bar.left,right:bar.right,top:bar.top,width:bar.width},mini:{left:miniR.left,right:miniR.right,top:miniR.top,width:miniR.width,height:miniR.height},seed:G.seed,coins:G.res.coins,frames}}}

@@ -273,6 +273,16 @@
     if (paused) pauseAll();
   });
 
+  const PRELOAD = ["alert", "birds", "build", "chicken", "coins", "cow", "crickets", "dog", "harvest", "kookaburra", "magpie", "plant", "rain", "sheep", "sheep-babydoll", "tractor", "wind", "voice/autumn-0", "voice/autumn-1", "voice/bus-0", "voice/cattle-0", "voice/cattle-1", "voice/cattle-2", "voice/dog-0", "voice/frost-0", "voice/frost-1", "voice/frost-2", "voice/hail-0", "voice/harvest-0", "voice/harvest-1", "voice/harvest-2", "voice/market-0", "voice/market-1", "voice/market-2", "voice/medal-0", "voice/neighbour-0", "voice/rain-0", "voice/rain-1", "voice/rain-2", "voice/spring-0", "voice/spring-1", "voice/storm-0", "voice/storm-1", "voice/storm-2", "voice/summer-0", "voice/summer-1", "voice/winter-0", "voice/winter-1"];
+  if (typeof fetch === "function") {
+    for (const name of PRELOAD) {
+      const id = "audio:" + name;
+      if (window.VELoad) VELoad.track(id);
+      fetch(src(name)).then(function (res) { return res.arrayBuffer(); }).catch(function () {}).then(function () { if (window.VELoad) VELoad.settle(id); });
+    }
+  }
+  if (window.VELoad) VELoad.seal();
+
   window.VEAudio = {
     unlock: unlock,
     sync: sync,
