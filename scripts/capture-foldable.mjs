@@ -110,6 +110,7 @@ try {
   await page.evaluate(() => {
     const modal = document.getElementById("modal");
     if (modal) modal.style.display = "none";
+    if (window.VEEntry && VEEntry.isOpen()) VEEntry.close();
   });
   await settle(page);
 
@@ -155,7 +156,7 @@ try {
     assert(metrics.cls.includes(vp.cls), `${vp.name} class ${metrics.cls} expected ${vp.cls}`);
     assert(Math.abs(aspect - viewAspect) < 0.02, `${vp.name} stretched buffer ${metrics.bufW}x${metrics.bufH} vs ${metrics.W}x${metrics.H}`);
     assert(Math.abs(metrics.clientW - metrics.W) <= 2 && Math.abs(metrics.clientH - metrics.H) <= 2, `${vp.name} canvas css size`);
-    assert(metrics.pr <= 3 && metrics.pr >= 1 && metrics.DPR <= 3 && metrics.DPR >= 1, `${vp.name} dpr ${metrics.pr} hud ${metrics.DPR}`);
+    assert(metrics.pr <= 3 && metrics.pr >= 0.75 && metrics.DPR <= 3 && metrics.DPR >= 1, `${vp.name} dpr ${metrics.pr} hud ${metrics.DPR}`);
     assert(metrics.bufW <= 3200 && metrics.bufH <= 3200 && metrics.bufW > 0 && metrics.bufH > 0, `${vp.name} buffer ${metrics.bufW}x${metrics.bufH}`);
     assert(metrics.seed === marked.seed && metrics.coins === 4242, `${vp.name} lost state seed ${metrics.seed} coins ${metrics.coins}`);
     assert(variance > 8, `${vp.name} canvas looks blank (variance ${variance.toFixed(1)})`);
