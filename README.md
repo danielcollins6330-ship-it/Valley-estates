@@ -34,7 +34,7 @@ Release builds run in GitHub Actions. Android signing still uses the keystore se
 
 After that id exists, create the app yourself: App Store Connect → My Apps → + → New App, and choose this bundle id. The TestFlight upload cannot succeed until that app record exists.
 
-`.github/workflows/ios-testflight.yml` runs on a `v*` tag or when someone starts it with `workflow_dispatch`. It registers the bundle id, builds the web bundle, runs `cap sync ios`, creates an Apple Distribution certificate and an App Store profile for that run, archives with that profile, exports an IPA, and uploads that IPA to TestFlight. Before that profile is created, the workflow enables the Game Center capability on the bundle ID so the profile includes `com.apple.developer.game-center`, matching `ios/App/App/App.entitlements`. The upload does not submit the app for App Store review. Apple limits how many distribution certificates a team can hold. When that limit is already reached, this workflow revokes known unused CI certificates, oldest first (`F87GD5XVS2`, `4G8BZ8MGKN`, `38798V9TFT`, `ADJS9GQYHR`, `U86P563X6Z`, then `CMYTHGHAD5`), until Apple accepts a new one. Those certificates were created by earlier runs and their private keys were not kept. It does not revoke any other certificate.
+`.github/workflows/ios-testflight.yml` runs on a `v*` tag or when someone starts it with `workflow_dispatch`. It registers the bundle id, builds the web bundle, runs `cap sync ios`, creates an Apple Distribution certificate and an App Store profile for that run, archives with that profile, exports an IPA, and uploads that IPA to TestFlight. Before that profile is created, the workflow enables the Game Center capability on the bundle ID so the profile includes `com.apple.developer.game-center`, matching `ios/App/App/App.entitlements`. The upload does not submit the app for App Store review. Apple limits how many distribution certificates a team can hold. When that limit is already reached, this workflow revokes known unused CI certificates, oldest first (`F87GD5XVS2`, `4G8BZ8MGKN`, `38798V9TFT`, `ADJS9GQYHR`, `U86P563X6Z`, `CMYTHGHAD5`, `2NKTCPPZ67`, then `3RUYR25SZW`), until Apple accepts a new one. Those certificates were created by earlier runs and their private keys were not kept. It does not revoke any other certificate.
 
 Add these repository secrets (Settings → Secrets and variables → Actions):
 
@@ -43,7 +43,7 @@ Add these repository secrets (Settings → Secrets and variables → Actions):
 - `APPLE_TEAM_ID` — the Apple Developer team id
 - `ASC_API_KEY_P8` — the full `.p8` file, including the `BEGIN` and `END` lines
 
-The workflow stops immediately if any of those secrets is missing. It writes the `.p8` to a private temp file for `xcodebuild` and `altool`, and it does not print the key. The marketing version archived for TestFlight is 1.1.0, and the build number is 19. App Store Connect already accepted 1.1.0 (18).
+The workflow stops immediately if any of those secrets is missing. It writes the `.p8` to a private temp file for `xcodebuild` and `altool`, and it does not print the key. The marketing version archived for TestFlight is 1.1.0, and the build number is 20. App Store Connect already accepted 1.1.0 (19).
 
 ## Web and native asset integrity
 

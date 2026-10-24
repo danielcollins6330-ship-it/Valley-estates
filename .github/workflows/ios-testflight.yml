@@ -114,9 +114,9 @@ jobs:
       - name: Archive the iOS app
         run: |
           set -euo pipefail
-          # 1.1.0 (18) was accepted by App Store Connect on 2026-10-24.
-          # The next TestFlight upload is build 19.
-          BUILD_NUMBER=19
+          # 1.1.0 (19) was accepted by App Store Connect on 2026-10-24.
+          # The next TestFlight upload is build 20.
+          BUILD_NUMBER=20
           echo "Marketing version 1.1.0. Build number ${BUILD_NUMBER}."
           echo "BUILD_NUMBER=${BUILD_NUMBER}" >> "${GITHUB_ENV}"
           # The committed project stays automatic for the simulator workflow.

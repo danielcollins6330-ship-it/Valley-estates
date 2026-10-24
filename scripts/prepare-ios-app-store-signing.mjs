@@ -39,7 +39,8 @@ function publicError(body) {
 // rejected before an app record existed. 38798V9TFT signed the v1.0.10 upload
 // and was revoked for the v1.0.12 run. ADJS9GQYHR signed the v1.0.11 upload.
 // U86P563X6Z signed the v1.0.12 upload. CMYTHGHAD5 signed the 1.0.12 (17)
-// upload on 2026-10-24. None of these private keys were kept.
+// upload on 2026-10-24. 2NKTCPPZ67 signed 1.1.0 (18). 3RUYR25SZW signed
+// 1.1.0 (19). None of these private keys were kept.
 export const UNUSED_CI_DISTRIBUTION_CERTIFICATES = [
   "F87GD5XVS2",
   "4G8BZ8MGKN",
@@ -47,6 +48,8 @@ export const UNUSED_CI_DISTRIBUTION_CERTIFICATES = [
   "ADJS9GQYHR",
   "U86P563X6Z",
   "CMYTHGHAD5",
+  "2NKTCPPZ67",
+  "3RUYR25SZW",
 ];
 
 export function isCertificateLimit(status, body) {
