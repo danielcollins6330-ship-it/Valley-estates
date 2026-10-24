@@ -38,13 +38,15 @@ function publicError(body) {
 // F87GD5XVS2 never signed an upload. 4G8BZ8MGKN signed an IPA that Apple
 // rejected before an app record existed. 38798V9TFT signed the v1.0.10 upload
 // and was revoked for the v1.0.12 run. ADJS9GQYHR signed the v1.0.11 upload.
-// U86P563X6Z signed the v1.0.12 upload. None of these private keys were kept.
+// U86P563X6Z signed the v1.0.12 upload. CMYTHGHAD5 signed the 1.0.12 (17)
+// upload on 2026-10-24. None of these private keys were kept.
 export const UNUSED_CI_DISTRIBUTION_CERTIFICATES = [
   "F87GD5XVS2",
   "4G8BZ8MGKN",
   "38798V9TFT",
   "ADJS9GQYHR",
   "U86P563X6Z",
+  "CMYTHGHAD5",
 ];
 
 export function isCertificateLimit(status, body) {
@@ -256,8 +258,9 @@ async function main() {
     });
     return { status: certResponse.status, body: await readJson(certResponse) };
   };
+  const revoked = new Set();
   let created = await requestDistributionCertificate();
-  if (created.status !== 201 && isCertificateLimit(created.status, created.body)) {
+  while (created.status !== 201 && isCertificateLimit(created.status, created.body)) {
     console.error(`App Store Connect rejected the distribution certificate with HTTP ${created.status}.`);
     console.error(publicError(created.body));
     const listUrl = new URL(CERT_API);
@@ -275,7 +278,7 @@ async function main() {
       const expires = certificate.attributes?.expirationDate || "unknown expiry";
       console.error(`Listed iOS Distribution certificate ${certificate.id} (${name}, ${expires}).`);
     }
-    const revokeId = chooseCertificateToRevoke(existing);
+    const revokeId = chooseCertificateToRevoke(existing.filter((certificate) => !revoked.has(certificate.id)));
     if (!revokeId) {
       console.error("No known unused CI distribution certificate was listed.");
       console.error("Revoke an unused Apple Distribution certificate at developer.apple.com → Certificates, Identifiers & Profiles, then rerun.");
@@ -293,6 +296,7 @@ async function main() {
       console.error(publicError(revokeBody));
       process.exit(1);
     }
+    revoked.add(revokeId);
     console.log(`Revoked unused CI distribution certificate ${revokeId}.`);
     created = await requestDistributionCertificate();
   }

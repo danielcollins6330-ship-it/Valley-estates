@@ -31,6 +31,11 @@ assert.equal(chooseCertificateToRevoke([
   { id: "U86P563X6Z" },
   { id: "ADJS9GQYHR" },
 ]), "ADJS9GQYHR");
+assert.equal(chooseCertificateToRevoke([
+  { id: "CMYTHGHAD5" },
+  { id: "U86P563X6Z" },
+]), "U86P563X6Z");
+assert.equal(chooseCertificateToRevoke([{ id: "CMYTHGHAD5" }]), "CMYTHGHAD5");
 assert.equal(chooseCertificateToRevoke([{ id: "AAAAAAAAAA" }]), null);
 assert.equal(chooseCertificateToRevoke([]), null);
 
