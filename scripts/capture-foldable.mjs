@@ -155,8 +155,8 @@ try {
     assert(metrics.cls.includes(vp.cls), `${vp.name} class ${metrics.cls} expected ${vp.cls}`);
     assert(Math.abs(aspect - viewAspect) < 0.02, `${vp.name} stretched buffer ${metrics.bufW}x${metrics.bufH} vs ${metrics.W}x${metrics.H}`);
     assert(Math.abs(metrics.clientW - metrics.W) <= 2 && Math.abs(metrics.clientH - metrics.H) <= 2, `${vp.name} canvas css size`);
-    assert(metrics.pr <= 2 && metrics.DPR <= 2, `${vp.name} dpr ${metrics.pr}`);
-    assert(metrics.bufW <= 2560 && metrics.bufH <= 2560 && metrics.bufW > 0 && metrics.bufH > 0, `${vp.name} buffer ${metrics.bufW}x${metrics.bufH}`);
+    assert(metrics.pr <= 3 && metrics.pr >= 1 && metrics.DPR <= 3 && metrics.DPR >= 1, `${vp.name} dpr ${metrics.pr} hud ${metrics.DPR}`);
+    assert(metrics.bufW <= 3200 && metrics.bufH <= 3200 && metrics.bufW > 0 && metrics.bufH > 0, `${vp.name} buffer ${metrics.bufW}x${metrics.bufH}`);
     assert(metrics.seed === marked.seed && metrics.coins === 4242, `${vp.name} lost state seed ${metrics.seed} coins ${metrics.coins}`);
     assert(variance > 8, `${vp.name} canvas looks blank (variance ${variance.toFixed(1)})`);
     assert(targets.length > 0 && targets.every((t) => t.w >= 44 && t.h >= 44), `${vp.name} touch target ${JSON.stringify(targets)}`);
@@ -207,8 +207,9 @@ try {
     VE.resize();
   });
   const capped = await page.evaluate(() => VE.metrics());
-  assert(capped.pr <= 2 && capped.pr > 1 && capped.pr < 1.4, `expected long-edge dpr cap below 2, got ${capped.pr}`);
-  assert(capped.bufW <= 2560 && capped.bufH <= 2560, `buffer exceeded cap ${capped.bufW}x${capped.bufH}`);
+  assert(capped.pr <= 2 && capped.pr > 1.3, `expected native-scale long-edge cap, got ${capped.pr}`);
+  assert(capped.bufW <= 3200 && capped.bufH <= 3200, `buffer exceeded cap ${capped.bufW}x${capped.bufH}`);
+  assert(Math.max(capped.bufW, capped.bufH) > 2560, `high quality still used the old soft buffer ${capped.bufW}x${capped.bufH}`);
   assert(Math.abs(capped.bufW / capped.bufH - capped.W / capped.H) < 0.02, "capped buffer aspect drifted");
   assert(capped.seed === marked.seed && capped.coins === 4242, "state lost during dpr resize");
   report.push({ name: "dpr-cap", pr: capped.pr, buf: [capped.bufW, capped.bufH], css: [capped.W, capped.H] });
