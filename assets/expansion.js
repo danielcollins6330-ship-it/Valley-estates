@@ -819,20 +819,23 @@
     const yieldHit = difficultyPct((1 - droughtMul({ techs: {}, buildings: [], difficulty: spec.id })) * 100);
     const coins = Number(spec.coins) || 0;
     const priceText = price < 0
-      ? "Prices " + (-price) + "% less."
+      ? "Buildings and upgrades cost " + (-price) + "% less"
       : price > 0
-        ? "Prices " + price + "% more."
-        : "Prices stay as listed.";
-    const coinText = coins > 0 ? " You start with " + coins + " coins." : " You start with no coins.";
+        ? "Buildings and upgrades cost " + price + "% more"
+        : "Buildings and upgrades cost the listed price";
     const weedText = weeds < 0
-      ? "Weeds spread and clear for " + (-weeds) + "% less."
+      ? "Weeds spread slower and are " + (-weeds) + "% cheaper to clear"
       : weeds > 0
-        ? "Weeds spread and clear for " + weeds + "% more."
-        : "Weeds spread and clear at the usual cost.";
-    const weatherText = droughtOften === 0 && frostOften === 0
-      ? "Drought and frost come at the usual pace."
-      : "Drought " + oftenPhrase(droughtOften) + ", frost " + oftenPhrase(frostOften) + ".";
-    const yieldText = "Yields fall " + yieldHit + "%.";
+        ? "Weeds spread faster and are " + weeds + "% more expensive to clear"
+        : "Weeds spread as usual and cost the usual amount to clear";
+    const weatherPace = droughtOften < 0 && frostOften <= 0
+      ? "Droughts and frosts are rarer"
+      : droughtOften > 0 && frostOften >= 0
+        ? "Droughts and frosts are more common"
+        : "Droughts and frosts come as usual";
+    const weatherText = weatherPace + "; drought cuts harvests by " + yieldHit + "%";
+    const bullets = [priceText, weedText, weatherText];
+    if (coins > 0) bullets[0] += ". You start with " + coins + " coins";
     return {
       id: spec.id,
       name: spec.name,
@@ -849,15 +852,9 @@
       droughtOften: droughtOften,
       frostOften: frostOften,
       yieldHit: yieldHit,
-      bullets: [priceText + coinText, weedText, weatherText + " " + yieldText],
-      live: [priceText, weedText, weatherText + " " + yieldText],
+      bullets: bullets,
+      live: [priceText, weedText, weatherText],
     };
-  }
-
-  function oftenPhrase(pct) {
-    if (pct < 0) return (-pct) + "% less often";
-    if (pct > 0) return pct + "% more often";
-    return "at the usual pace";
   }
 
   function changedPct(from, to) {
@@ -875,9 +872,9 @@
     const to = difficultyFacts(toId);
     if (from.id === to.id) return "This estate is already on " + to.name + ".";
     const yieldLine = to.yieldHit === from.yieldHit
-      ? "Drought still cuts field yields by " + to.yieldHit + "%."
-      : "Drought cuts field yields by " + to.yieldHit + "% instead of " + from.yieldHit + "%.";
-    return "Change from " + from.name + " to " + to.name + "? " + thanNow(changedPct(from.costMul, to.costMul), "Building and study prices will be") + " " + thanNow(changedPct(from.weedMul, to.weedMul), "Weed spread and the cost to clear them will be") + " " + thanNow(changedPct(from.droughtRate, to.droughtRate), "Drought will come") + " " + thanNow(changedPct(from.frostRate, to.frostRate), "Frost will come") + " " + yieldLine + " Coins, buildings and stock stay as they are.";
+      ? "Drought still cuts harvests by " + to.yieldHit + "%."
+      : "Drought cuts harvests by " + to.yieldHit + "% instead of " + from.yieldHit + "%.";
+    return "Change from " + from.name + " to " + to.name + "? " + thanNow(changedPct(from.costMul, to.costMul), "Building and upgrade prices will be") + " " + thanNow(changedPct(from.weedMul, to.weedMul), "Weed spread and the cost to clear them will be") + " " + thanNow(changedPct(from.droughtRate, to.droughtRate), "Drought will come") + " " + thanNow(changedPct(from.frostRate, to.frostRate), "Frost will come") + " " + yieldLine + " Coins, buildings and stock stay as they are.";
   }
 
   function escText(value) {
@@ -905,7 +902,7 @@
 
   function difficultyMenuHtml(id) {
     const card = difficultyFacts(id);
-    return '<p class="diff-badge-row"><span class="diff-badge">' + escText(card.name) + '</span><span class="diff-badge-note">' + escText(card.vibe) + '</span></p><button type="button" class="diff-setting" data-b="difficulty-open" aria-label="Difficulty, ' + escText(card.name) + ", " + escText(card.vibe) + '"><span class="diff-setting-kicker">Difficulty</span><span class="diff-setting-value">' + escText(card.name) + '</span><span class="diff-setting-vibe">' + escText(card.vibe) + "</span></button>";
+    return '<button type="button" class="diff-setting" data-b="difficulty-open" aria-label="Difficulty, ' + escText(card.name) + ", " + escText(card.vibe) + ', Change"><span class="diff-setting-copy"><span class="diff-setting-kicker">Difficulty</span><span class="diff-setting-value">' + escText(card.name) + '</span><span class="diff-setting-vibe">' + escText(card.vibe) + '</span></span><span class="diff-setting-change">Change <span class="diff-setting-chevron" aria-hidden="true">›</span></span></button>';
   }
 
   function difficultyPickerHtml(id) {

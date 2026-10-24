@@ -134,21 +134,21 @@ await page.click('[data-b="entry-start"]');
 await page.waitForFunction(() => window.VE && window.VE.G && window.VE.G.tutorialSeen && window.VE.frames > 2 && !window.VEEntry.isOpen(), { timeout: 120000 });
 await page.click("#bMenu");
 await page.waitForFunction(() => {
-  const badge = document.querySelector(".diff-badge");
   const row = document.querySelector(".diff-setting");
-  return badge && row && row.textContent.includes("Difficulty") && document.getElementById("bar").textContent.indexOf("Difficulty") === -1;
+  const change = document.querySelector(".diff-setting-change");
+  return row && change && change.textContent.includes("Change") && !document.querySelector(".diff-badge") && document.getElementById("bar").textContent.indexOf("Difficulty") === -1;
 });
 const menu = await page.evaluate(() => {
   const box = (el) => {
+    if (!el) return null;
     const r = el.getBoundingClientRect();
-    return { top: Math.round(r.top), bottom: Math.round(r.bottom), h: Math.round(r.height), font: getComputedStyle(el).fontSize, text: (el.textContent || "").replace(/\s+/g, " ").trim().slice(0, 100) };
+    return { top: Math.round(r.top), bottom: Math.round(r.bottom), h: Math.round(r.height), font: getComputedStyle(el).fontSize, text: (el.textContent || "").replace(/\s+/g, " ").trim().slice(0, 120) };
   };
   return {
-    badge: box(document.querySelector(".diff-badge")),
-    note: box(document.querySelector(".diff-badge-note")),
     row: box(document.querySelector(".diff-setting")),
+    change: box(document.querySelector(".diff-setting-change")),
     sheetTop: Math.round(document.getElementById("sheet").getBoundingClientRect().top),
-    hudHasBadge: !!document.querySelector("#bar .diff-badge, #hud .diff-badge, #sub .diff-badge"),
+    hudHasBadge: !!document.querySelector("#bar .diff-badge, #hud .diff-badge, #sub .diff-badge, #bar .diff-setting"),
   };
 });
 console.log(JSON.stringify(menu, null, 2));
@@ -157,14 +157,32 @@ for (const [name, box] of Object.entries(menu)) {
   if (box.top < 0 || box.bottom > 844) throw new Error(name + " clipped " + JSON.stringify(box));
   if (Number.parseFloat(box.font) < 13) throw new Error(name + " font " + box.font);
 }
-if (menu.hudHasBadge) throw new Error("difficulty badge is on the HUD");
+if (menu.hudHasBadge) throw new Error("difficulty control is on the HUD");
 await page.screenshot({ path: "store/screenshots/difficulty-settings-iphone.png" });
+
+await page.click('[data-b="difficulty-open"]');
+await page.waitForSelector('[data-b="diff:hard"]');
+await page.click('[data-b="diff:hard"]');
+await page.waitForFunction(() => {
+  const heading = document.querySelector("#sheet h3");
+  const apply = document.querySelector('[data-b="diff-apply:hard"]');
+  return heading && heading.textContent.includes("Change to Hard") && apply && document.body.textContent.includes("Drought cuts harvests by 73% instead of 50%");
+});
+const confirmBox = await page.evaluate(() => {
+  const sheet = document.getElementById("sheet");
+  const apply = document.querySelector('[data-b="diff-apply:hard"]');
+  const r = apply.getBoundingClientRect();
+  return { top: Math.round(r.top), bottom: Math.round(r.bottom), scroll: sheet.scrollHeight, client: sheet.clientHeight, text: sheet.innerText.replace(/\s+/g, " ").slice(0, 280) };
+});
+console.log(JSON.stringify(confirmBox, null, 2));
+if (confirmBox.top < 0 || confirmBox.bottom > 844) throw new Error("confirm action clipped " + JSON.stringify(confirmBox));
+await page.screenshot({ path: "store/screenshots/difficulty-confirm-iphone.png" });
 
 function pngSize(file) {
   const buf = readFileSync(file);
   return { w: buf.readUInt32BE(16), h: buf.readUInt32BE(20) };
 }
-for (const file of ["store/screenshots/difficulty-newgame-iphone.png", "store/screenshots/difficulty-settings-iphone.png"]) {
+for (const file of ["store/screenshots/difficulty-newgame-iphone.png", "store/screenshots/difficulty-settings-iphone.png", "store/screenshots/difficulty-confirm-iphone.png"]) {
   console.log(file, pngSize(file));
 }
 

@@ -35,9 +35,11 @@ test('new game difficulty step shows painted cards with real effects and a tick'
   assert.match(step,/Relaxed farming/);
   assert.match(step,/A working valley/);
   assert.match(step,/A tough season/);
-  assert.match(step,/You start with no coins/);
-  assert.match(step,/15% less/);
-  assert.match(step,/45% less/);
+  assert.match(step,/You can change this anytime in the menu/);
+  assert.doesNotMatch(step,/no coins|Normal is marked Recommended/);
+  assert.match(step,/Buildings and upgrades cost 15% less/);
+  assert.match(step,/45% cheaper to clear/);
+  assert.match(step,/drought cuts harvests by 32%/);
   assert.match(step,/diff-tick/);
   assert.match(step,/Start on Normal/);
   assert.equal((step.match(/aria-checked="true"/g)||[]).length,1);
