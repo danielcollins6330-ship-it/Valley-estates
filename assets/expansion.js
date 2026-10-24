@@ -795,13 +795,127 @@
   }
 
   const DIFFICULTIES = {
-    easy: { id: "easy", name: "Easy", cost: 0.85, drought: 0.65, weeds: 0.55, events: 0.75 },
-    normal: { id: "normal", name: "Normal", cost: 1, drought: 1, weeds: 1, events: 1 },
-    hard: { id: "hard", name: "Hard", cost: 1.25, drought: 1.45, weeds: 1.5, events: 1.3 },
+    easy: { id: "easy", name: "Easy", vibe: "Relaxed farming", icon: "sun", coins: 0, cost: 0.85, drought: 0.65, weeds: 0.55, events: 0.75 },
+    normal: { id: "normal", name: "Normal", vibe: "A working valley", icon: "home", coins: 0, recommended: true, cost: 1, drought: 1, weeds: 1, events: 1 },
+    hard: { id: "hard", name: "Hard", vibe: "A tough season", icon: "storm", coins: 0, cost: 1.25, drought: 1.45, weeds: 1.5, events: 1.3 },
   };
 
   function difficultySpec(id) {
     return DIFFICULTIES[id] || DIFFICULTIES.normal;
+  }
+
+  function difficultyPct(value) {
+    return Math.round(value);
+  }
+
+  function difficultyFacts(id) {
+    const spec = difficultySpec(id);
+    const price = difficultyPct((spec.cost - 1) * 100);
+    const weeds = difficultyPct((spec.weeds - 1) * 100);
+    // Rolls happen at `events`. A summer drought also needs the roll under 0.5 * events.
+    // Frost stays a 0.6 chance on a winter roll, so only the roll rate moves it.
+    const droughtOften = difficultyPct((spec.events * spec.events - 1) * 100);
+    const frostOften = difficultyPct((spec.events - 1) * 100);
+    const yieldHit = difficultyPct((1 - droughtMul({ techs: {}, buildings: [], difficulty: spec.id })) * 100);
+    const coins = Number(spec.coins) || 0;
+    const priceText = price < 0
+      ? "Prices " + (-price) + "% less."
+      : price > 0
+        ? "Prices " + price + "% more."
+        : "Prices stay as listed.";
+    const coinText = coins > 0 ? " You start with " + coins + " coins." : " You start with no coins.";
+    const weedText = weeds < 0
+      ? "Weeds spread and clear for " + (-weeds) + "% less."
+      : weeds > 0
+        ? "Weeds spread and clear for " + weeds + "% more."
+        : "Weeds spread and clear at the usual cost.";
+    const weatherText = droughtOften === 0 && frostOften === 0
+      ? "Drought and frost come at the usual pace."
+      : "Drought " + oftenPhrase(droughtOften) + ", frost " + oftenPhrase(frostOften) + ".";
+    const yieldText = "Yields fall " + yieldHit + "%.";
+    return {
+      id: spec.id,
+      name: spec.name,
+      vibe: spec.vibe,
+      icon: spec.icon,
+      recommended: !!spec.recommended,
+      coins: coins,
+      price: price,
+      weeds: weeds,
+      costMul: spec.cost,
+      weedMul: spec.weeds,
+      droughtRate: spec.events * spec.events,
+      frostRate: spec.events,
+      droughtOften: droughtOften,
+      frostOften: frostOften,
+      yieldHit: yieldHit,
+      bullets: [priceText + coinText, weedText, weatherText + " " + yieldText],
+      live: [priceText, weedText, weatherText + " " + yieldText],
+    };
+  }
+
+  function oftenPhrase(pct) {
+    if (pct < 0) return (-pct) + "% less often";
+    if (pct > 0) return pct + "% more often";
+    return "at the usual pace";
+  }
+
+  function changedPct(from, to) {
+    return Math.round((to / from - 1) * 100);
+  }
+
+  function thanNow(pct, sentence) {
+    if (pct < 0) return sentence + " " + (-pct) + "% less than now.";
+    if (pct > 0) return sentence + " " + pct + "% more than now.";
+    return sentence + " the same as now.";
+  }
+
+  function difficultyChangeText(fromId, toId) {
+    const from = difficultyFacts(fromId);
+    const to = difficultyFacts(toId);
+    if (from.id === to.id) return "This estate is already on " + to.name + ".";
+    const yieldLine = to.yieldHit === from.yieldHit
+      ? "Drought still cuts field yields by " + to.yieldHit + "%."
+      : "Drought cuts field yields by " + to.yieldHit + "% instead of " + from.yieldHit + "%.";
+    return "Change from " + from.name + " to " + to.name + "? " + thanNow(changedPct(from.costMul, to.costMul), "Building and study prices will be") + " " + thanNow(changedPct(from.weedMul, to.weedMul), "Weed spread and the cost to clear them will be") + " " + thanNow(changedPct(from.droughtRate, to.droughtRate), "Drought will come") + " " + thanNow(changedPct(from.frostRate, to.frostRate), "Frost will come") + " " + yieldLine + " Coins, buildings and stock stay as they are.";
+  }
+
+  function escText(value) {
+    return String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
+  }
+
+  const DIFFICULTY_ICONS = {
+    sun: '<svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="26" r="7" fill="#e2b15a"/><path d="M24 10v6M24 36v6M10 26h6M32 26h6M14 16l4 4M30 32l4 4M34 16l-4 4M18 32l-4 4" stroke="#8a6230" stroke-width="2" stroke-linecap="round"/><path d="M8 40h32" stroke="#3f6b4a" stroke-width="3" stroke-linecap="round"/></svg>',
+    home: '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M8 24 24 12l16 12" fill="none" stroke="#805c43" stroke-width="2.5" stroke-linejoin="round"/><path d="M12 23h24v16H12z" fill="#e6d7b8"/><path d="M21 39V28h6v11" fill="#456353"/><path d="M8 40h32" stroke="#3f6b4a" stroke-width="3" stroke-linecap="round"/></svg>',
+    storm: '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M14 30h18a7 7 0 0 0 1-14 9 9 0 0 0-17-2 6 6 0 0 0-2 16z" fill="#d5ddd4" stroke="#31483c" stroke-width="2"/><path d="M22 28l-4 8h6l-3 8" fill="none" stroke="#a5753c" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/></svg>',
+  };
+
+  function difficultyCardsHtml(selected) {
+    const current = difficultySpec(selected).id;
+    const cards = ["easy", "normal", "hard"].map((id) => {
+      const card = difficultyFacts(id);
+      const on = card.id === current;
+      const bullets = card.bullets.map((line) => "<li>" + escText(line) + "</li>").join("");
+      const rec = card.recommended ? '<span class="diff-rec">Recommended</span>' : "";
+      const icon = DIFFICULTY_ICONS[card.icon] || "";
+      return '<button type="button" class="diff-card' + (on ? " is-on" : "") + '" role="radio" data-b="diff:' + card.id + '" aria-checked="' + (on ? "true" : "false") + '"><span class="diff-icon">' + icon + '</span><span class="diff-copy"><span class="diff-name">' + escText(card.name) + "</span>" + rec + '<span class="diff-vibe">' + escText(card.vibe) + '</span><ul>' + bullets + '</ul></span><span class="diff-tick" aria-hidden="true"><span class="diff-tick-mark">' + (on ? "✓" : "") + "</span></span></button>";
+    }).join("");
+    return '<div class="diff-cards" role="radiogroup" aria-label="Choose your difficulty">' + cards + "</div>";
+  }
+
+  function difficultyMenuHtml(id) {
+    const card = difficultyFacts(id);
+    return '<p class="diff-badge-row"><span class="diff-badge">' + escText(card.name) + '</span><span class="diff-badge-note">' + escText(card.vibe) + '</span></p><button type="button" class="diff-setting" data-b="difficulty-open" aria-label="Difficulty, ' + escText(card.name) + ", " + escText(card.vibe) + '"><span class="diff-setting-kicker">Difficulty</span><span class="diff-setting-value">' + escText(card.name) + '</span><span class="diff-setting-vibe">' + escText(card.vibe) + "</span></button>";
+  }
+
+  function difficultyPickerHtml(id) {
+    return '<h3>Difficulty</h3><p>Choose a pace for this estate. A different pace asks you to confirm before anything changes.</p>' + difficultyCardsHtml(id) + '<button type="button" class="diff-confirm secondary" data-b="menu">Back to menu</button>';
+  }
+
+  function difficultyConfirmHtml(fromId, toId) {
+    const from = difficultyFacts(fromId);
+    const to = difficultyFacts(toId);
+    return '<h3>Change to ' + escText(to.name) + "?</h3><p>" + escText(difficultyChangeText(from.id, to.id)) + '</p><button type="button" class="diff-confirm" data-b="diff-apply:' + to.id + '">Change to ' + escText(to.name) + '</button><button type="button" class="diff-confirm secondary" data-b="difficulty-open">Keep ' + escText(from.name) + "</button>";
   }
 
   function scaleCost(cost, difficulty) {
@@ -1119,6 +1233,12 @@
     stockQuote: stockQuote,
     DIFFICULTIES: DIFFICULTIES,
     difficultySpec: difficultySpec,
+    difficultyFacts: difficultyFacts,
+    difficultyChangeText: difficultyChangeText,
+    difficultyCardsHtml: difficultyCardsHtml,
+    difficultyMenuHtml: difficultyMenuHtml,
+    difficultyPickerHtml: difficultyPickerHtml,
+    difficultyConfirmHtml: difficultyConfirmHtml,
     scaleCost: scaleCost,
     droughtMul: droughtMul,
     workMul: workMul,
