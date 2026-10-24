@@ -235,8 +235,8 @@
           const lum = out[i] * 0.3 + out[i + 1] * 0.59 + out[i + 2] * 0.11;
           const ny = (y - minY) / spanY;
           const h = Math.abs(Math.sin(x * 3.1 + z * 6.4 + s * 2.7) * Math.sin(y * 2.2 + s * 1.3));
-          // The default camera looks down on the back, so the topline stays wide and white.
-          if (ny > 0.58 && Math.abs(z) < 0.48) {
+          // A narrow white spine. A wide back reads as a white capsule from above.
+          if (ny > 0.76 && Math.abs(z) < 0.18) {
             out[i] = 0.98;
             out[i + 1] = 0.97;
             out[i + 2] = 0.93;
@@ -311,7 +311,7 @@
     });
     const cattle = kind === "cattle";
     mat.emissive = new api.Color(cattle ? 0 : 0.012, cattle ? 0 : 0.01, cattle ? 0 : 0.008);
-    mat.envMapIntensity = cattle ? 0.01 : kind === "sheep" ? 0.22 : kind === "cockatoo" ? 0.05 : 0.42;
+    mat.envMapIntensity = cattle ? 0 : kind === "sheep" ? 0.22 : kind === "cockatoo" ? 0.05 : 0.42;
     mat.color = new api.Color(1, 0.985, 0.96);
     if (kind === "sheep") mat.color.setRGB(1, 0.985, 0.95);
     if (kind === "sheep_shorn") mat.color.setRGB(1, 0.96, 0.9);

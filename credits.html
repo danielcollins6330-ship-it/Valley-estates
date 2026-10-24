@@ -66,7 +66,7 @@ Breed colour is vertex colour painted in Blender, with a soft light-from-above s
 | `assets/animals/coat.webp` | Tileable hair normal, 128×128 WebP. | CC0. Original, painted for this game. |
 | `assets/animals/wool.webp` | Tileable wool-clump normal, 128×128 WebP. | CC0. Original, painted for this game. |
 
-Materials stay rough. Cattle have no emissive lift and almost no environment reflection, so the black coat is not lifted to grey. Other coats keep a small warm emissive. The scene exposure is unchanged. Skinned meshes do not cast shadows. The instanced cattle stay vertex-coloured: a near-black coat, a white topline, and larger white speckles, with no coat map and no environment reflection, so they stay black and white from the default camera.
+Materials stay rough. Cattle have no emissive lift and no environment reflection, so the black coat is not lifted to grey. Other coats keep a small warm emissive. The scene exposure is unchanged. Skinned meshes do not cast shadows. The instanced cattle stay vertex-coloured: a near-black coat, a narrow white topline, white speckles and a white face, with head and legs drawn even from the default camera. There is no coat map.
 
 ## Compression and the decoder
 
@@ -82,7 +82,7 @@ The game loads the compressed models, the two WebP normals, the decoder, and `as
 
 | File | What it is | Licence |
 | --- | --- | --- |
-| `assets/buildings/*.glb` | Homestead, winery, cellar door, Valley Villa, shearing shed, machinery shed, and sale yard. Weatherboard or stone, corrugated iron, verandahs. Each file has a near mesh and a far mesh. | CC0. Original, Blender 4.0.2. No third-party geometry. |
+| `assets/buildings/*.glb` | Homestead, winery, cellar door, Valley Villa, shearing shed, machinery shed, and sale yard. Weatherboard or stone, corrugated iron, verandahs, chimneys. Each file has a near mesh and a far mesh. `assets/buildings.js` adds gutters, darker eaves, verandah posts and round corrugated tanks on top. | CC0. Original, Blender 4.0.2, plus procedural detail in `buildings.js`. No third-party geometry. |
 
 `tools/build-buildings.py` rebuilds them. The game loads the files through `assets/buildings.js`. Low graphics, and anything far from the camera, uses the far mesh.
 
