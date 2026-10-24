@@ -14,7 +14,7 @@ Apple requires a real recording of the candidate app on a physical device runnin
 Aim for approximately 3 to 5 minutes, longer if needed to show the normal flow clearly. Do not splice simulator footage into it.
 
 1. Begin on the device Home Screen and launch the installed Valley Estates app.
-2. Show the initial instructions or normal saved-estate loading. If using a progressed estate, explain that it is an existing local save.
+2. Show the new welcome and Start your estate action, or normal automatic saved-estate loading. How to play is optional and can be reopened from Menu. If using a progressed estate, explain that it is an existing local save.
 3. Select a farmhand and assign resource gathering. Pan and zoom the estate.
 4. Open Build, choose an affordable building, place it and assign construction work.
 5. Open the homestead or farmhands/research panel. Show the available features, an affordable study, and its progress. Show that tapping an active study does not spend the cost twice.

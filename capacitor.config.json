@@ -2,7 +2,7 @@
   "appId": "com.littleridgeestate.valleyestates",
   "appName": "Valley Estates",
   "webDir": "www",
-  "backgroundColor": "#1d140b",
+  "backgroundColor": "#f4f1e8",
   "android": {
     "allowMixedContent": false
   },
@@ -19,8 +19,8 @@
   "plugins": {
     "SplashScreen": {
       "launchAutoHide": true,
-      "launchShowDuration": 800,
-      "backgroundColor": "#1d140b",
+      "launchShowDuration": 0,
+      "backgroundColor": "#f4f1e8",
       "showSpinner": false,
       "androidScaleType": "CENTER_CROP",
       "splashFullScreen": true,
