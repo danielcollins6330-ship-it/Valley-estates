@@ -45,7 +45,7 @@ The game loads the compressed models, the two WebP normals, the decoder, and `as
 
 | File | What it is | Licence |
 | --- | --- | --- |
-| `assets/buildings/*.glb` | Homestead, winery, cellar door, Valley Villa, shearing shed, machinery shed, and sale yard. Weatherboard or stone, corrugated iron, verandahs, chimneys. Each file has a near mesh and a far mesh. `assets/buildings.js` adds gutters, darker eaves, verandah posts and round corrugated tanks on top. | CC0. Original, Blender 4.0.2, plus procedural detail in `buildings.js`. No third-party geometry. |
+| `assets/buildings/*.glb` | Unused on-screen. The estate draws the v1.0.12 procedural buildings (hipped iron roofs, verandahs, chimneys, round tanks). These glTF files are the later Blender models and stay in the tree for reference. | CC0. Original, Blender 4.0.2. No third-party geometry. |
 
 `tools/build-buildings.py` rebuilds them. The game loads the files through `assets/buildings.js`. Low graphics, and anything far from the camera, uses the far mesh.
 
