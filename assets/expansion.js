@@ -33,7 +33,8 @@
     if (type === "paddock") return { health: 86, condition: 72, fleece: 0, breedT: 0 };
     if (type === "cellardoor") return { guests: 0, visitT: 0 };
     if (type === "valleyvilla") return { guests: 0, stayT: 0 };
-    if (type === "vineyard") return { pruned: 0, care: 0 };
+    if (type === "vineyard") return { pruned: 0, care: 0, weeds: 0 };
+    if (type === "field") return { weeds: 0 };
     if (type === "olive") return { olives: 0 };
     return {};
   }
@@ -78,6 +79,7 @@
       if (game.achievements.valleyvilla == null) game.achievements.valleyvilla = game.achievements.villa;
       delete game.achievements.villa;
     }
+    if (!game.gear || typeof game.gear !== "object") game.gear = {};
     game.order = game.order && typeof game.order === "object" && game.order.good ? game.order : null;
     if (game.nextOrder == null) game.nextOrder = 40;
     (game.units || []).forEach((unit, index) => decorateHand(unit, index));
@@ -542,10 +544,12 @@
       });
     }
     if (health > 68) building.vetWarned = 0;
+    if (ctx.mower) condition = clamp(condition + 0.45 * dt, 0, 100);
     if (building.kind === "sheep") {
       const grow = (ctx.season === 3 ? 0.1 : ctx.season === 0 ? 0.48 : 0.32) * (ctx.shed ? 1.45 : 1) * dt;
       building.fleece = clamp((building.fleece || 0) + grow, 0, 100);
     }
+    if (ctx.mower && (building.count || 0) > 0) building.hay = (building.hay || 0) + dt * 0.08 * building.count;
     if (building.count >= 2 && building.count < 8 && health > 55 && condition > 45) {
       const genePace = typeof ctx.genes === "number" ? ctx.genes : ctx.genes ? geneMul({ genes: 1 }) : 1;
       const pace = (ctx.breedTech ? 1.4 : 1) * (ctx.season === 0 ? 1.35 : ctx.season === 3 ? 0.3 : 1) * genePace;
@@ -571,9 +575,10 @@
     return Math.max(6, Math.round(base * factor));
   }
 
-  function shearBales(fleece, count) {
+  function shearBales(fleece, count, baler) {
     if (fleece < 50 || count < 1) return 0;
-    return Math.max(1, Math.round(fleece / 50) * count);
+    const bales = Math.max(1, Math.round(fleece / 50) * count);
+    return baler ? Math.max(bales + 1, Math.round(bales * 1.5)) : bales;
   }
 
   const MARKET_BASE = { wine: 32, wool: 3, cattle: 46, lamb: 24 };
@@ -794,6 +799,67 @@
     return built(game, "tractorshed") ? 1.45 : 1;
   }
 
+  const GEAR = [
+    { id: "sprayer", name: "Sprayer", age: 1, cost: { coins: 90 }, effect: "Weeds spread slower and cost less to spray off." },
+    { id: "mower", name: "Hay mower", age: 1, cost: { coins: 110 }, effect: "Paddocks hold condition and drop a little hay." },
+    { id: "baler", name: "Baler", age: 1, cost: { coins: 120, wood: 40 }, effect: "Shearing turns fleece into more wool." },
+    { id: "seeder", name: "Seeder", age: 1, cost: { coins: 100, wood: 30 }, effect: "Wheat harvests faster and replants for less wood." },
+  ];
+
+  function gearById(id) {
+    return GEAR.find((item) => item.id === id) || null;
+  }
+
+  function ownsGear(game, id) {
+    return !!(game && game.gear && game.gear[id]);
+  }
+
+  function buyGear(game, id) {
+    const item = gearById(id);
+    if (!item) return { ok: false, text: "That attachment is not in the shed." };
+    if (!built(game, "tractorshed")) return { ok: false, text: "Build the Tractor Shed first." };
+    if ((game.age || 0) < item.age) return { ok: false, text: "A later age unlocks that." };
+    if (ownsGear(game, id)) return { ok: false, text: item.name + " is already fitted." };
+    if (!game.gear || typeof game.gear !== "object") game.gear = {};
+    game.gear[id] = 1;
+    return { ok: true, cost: item.cost, text: item.name + " fitted. " + item.effect };
+  }
+
+  function tickWeeds(plot, dt, ctx) {
+    const pressure = ctx && ctx.pressure != null ? ctx.pressure : 1;
+    const grow = (ctx && ctx.sprayer ? 0.3 : 1) * (ctx && ctx.tended ? 0.7 : 1) * pressure * 0.9;
+    plot.weeds = clamp((Number(plot.weeds) || 0) + grow * dt, 0, 100);
+    return plot.weeds;
+  }
+
+  function weedYield(weeds) {
+    const level = clamp(Number(weeds) || 0, 0, 100);
+    if (level < 18) return 1;
+    return clamp(1 - (level - 18) / 150, 0.48, 1);
+  }
+
+  function weedClearCost(plot, sprayer) {
+    const level = Number(plot && plot.weeds) || 0;
+    if (level < 12) return 0;
+    return Math.max(6, Math.round(level * 0.4 * (sprayer ? 0.4 : 1)));
+  }
+
+  function clearWeeds(plot, sprayer) {
+    const cost = weedClearCost(plot, sprayer);
+    if (!cost) return 0;
+    plot.weeds = sprayer ? 0 : Math.max(0, (plot.weeds || 0) * 0.2);
+    return cost;
+  }
+
+  function fieldMul(game) {
+    return ownsGear(game, "seeder") ? 1.28 : 1;
+  }
+
+  function seedWood(game, drill) {
+    if (ownsGear(game, "seeder")) return drill ? 8 : 12;
+    return drill ? 20 : 30;
+  }
+
   function oliveRate(season, drought) {
     if (season === 3) return 0.02;
     let rate = season === 2 ? 0.11 : season === 0 ? 0.07 : 0.05;
@@ -1007,6 +1073,16 @@
     droughtMul: droughtMul,
     workMul: workMul,
     tractorMul: tractorMul,
+    GEAR: GEAR,
+    gearById: gearById,
+    ownsGear: ownsGear,
+    buyGear: buyGear,
+    tickWeeds: tickWeeds,
+    weedYield: weedYield,
+    weedClearCost: weedClearCost,
+    clearWeeds: clearWeeds,
+    fieldMul: fieldMul,
+    seedWood: seedWood,
     oliveRate: oliveRate,
     tickCare: tickCare,
     rollChoice: rollChoice,

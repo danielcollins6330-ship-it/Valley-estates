@@ -169,6 +169,35 @@ assert.ok(expansion.tractorMul({ buildings: [{ type: "tractorshed", built: true 
 assert.ok(expansion.tractorMul({ buildings: [{ type: "tractorshed", built: true }] }, "vineyard") > 1.4);
 assert.equal(expansion.tractorMul({ buildings: [{ type: "tractorshed", built: true }] }, "paddock"), 1);
 assert.equal(expansion.tractorMul({ buildings: [{ type: "tractorshed", built: false }] }, "olive"), 1);
+
+const shedGame = { age: 1, buildings: [{ type: "tractorshed", built: true }], gear: {} };
+assert.equal(expansion.buyGear(shedGame, "sprayer").ok, true);
+assert.equal(expansion.ownsGear(shedGame, "sprayer"), true);
+assert.equal(expansion.buyGear(shedGame, "sprayer").ok, false);
+assert.equal(expansion.buyGear({ age: 1, buildings: [], gear: {} }, "mower").ok, false);
+const weedy = { weeds: 0 };
+expansion.tickWeeds(weedy, 40, { sprayer: false, tended: false });
+const sprayed = { weeds: 0 };
+expansion.tickWeeds(sprayed, 40, { sprayer: true, tended: false });
+assert.ok(sprayed.weeds < weedy.weeds);
+assert.ok(expansion.weedYield(80) < expansion.weedYield(0));
+assert.ok(expansion.weedClearCost({ weeds: 80 }, true) < expansion.weedClearCost({ weeds: 80 }, false));
+const bare = { weeds: 80 };
+assert.ok(expansion.clearWeeds(bare, false) > 0);
+assert.ok(bare.weeds > 0 && bare.weeds < 80);
+const clean = { weeds: 80 };
+expansion.clearWeeds(clean, true);
+assert.equal(clean.weeds, 0);
+const mown = { kind: "sheep", count: 3, health: 80, condition: 50, breedT: 0, fleece: 10, hay: 0 };
+expansion.tickPaddock(mown, 10, { tended: false, drought: false, season: 0, food: 0, mower: true });
+const rough = { kind: "sheep", count: 3, health: 80, condition: 50, breedT: 0, fleece: 10, hay: 0 };
+expansion.tickPaddock(rough, 10, { tended: false, drought: false, season: 0, food: 0, mower: false });
+assert.ok(mown.condition > rough.condition);
+assert.ok(mown.hay > 0);
+assert.ok(expansion.shearBales(80, 4, true) > expansion.shearBales(80, 4, false));
+assert.ok(expansion.fieldMul({ gear: { seeder: 1 } }) > 1);
+assert.equal(expansion.seedWood({ gear: { seeder: 1 } }, false), 12);
+assert.equal(expansion.seedWood({ gear: {} }, true), 20);
 assert.ok(expansion.oliveRate(2, false) > expansion.oliveRate(2, true));
 assert.ok(expansion.oliveRate(3, false) < expansion.oliveRate(0, false));
 
