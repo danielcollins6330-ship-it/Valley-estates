@@ -1,216 +1,28 @@
-name: iOS TestFlight
-
+name: Apple launch diagnostic (read-only)
 on:
   workflow_dispatch:
-  push:
-    tags:
-      - "v*"
-
 permissions:
   contents: read
-
 jobs:
-  register-bundle-id:
-    name: Register bundle ID
-    uses: ./.github/workflows/ios-register-bundle-id.yml
-    secrets: inherit
-
-  testflight:
-    name: Archive and upload to TestFlight
-    needs: register-bundle-id
-    runs-on: macos-latest
-    timeout-minutes: 90
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Require App Store Connect secrets
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Read Valley Estates status from Apple
         env:
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
-        run: |
-          set -euo pipefail
-          # Pasted secrets often include a trailing newline. Xcode then looks for a team
-          # whose id contains that line break and reports "No Account for Team".
-          trim() { printf '%s' "$1" | tr -d '[:space:]'; }
-          issuer="$(trim "${ASC_ISSUER_ID}")"
-          key_id="$(trim "${ASC_KEY_ID}")"
-          team_id="$(trim "${APPLE_TEAM_ID}")"
-          missing=()
-          [ -z "${issuer}" ] && missing+=("ASC_ISSUER_ID")
-          [ -z "${key_id}" ] && missing+=("ASC_KEY_ID")
-          [ -z "${team_id}" ] && missing+=("APPLE_TEAM_ID")
-          [ -z "${ASC_API_KEY_P8}" ] && missing+=("ASC_API_KEY_P8")
-          if [ "${#missing[@]}" -gt 0 ]; then
-            echo "Missing GitHub Actions secret(s): ${missing[*]}"
-            echo "Add them under Settings → Secrets and variables → Actions."
-            echo "ASC_API_KEY_P8 must be the full .p8 text, including the BEGIN and END lines."
-            echo "Create the App Store Connect app record for com.littleridgeestate.valleyestates before uploading."
-            exit 1
-          fi
-          if ! printf '%s' "${issuer}" | grep -Eq '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'; then
-            echo "ASC_ISSUER_ID must be the Issuer ID UUID from App Store Connect → Users and Access → Integrations."
-            echo "Spaces and line breaks were removed, and the value still does not match."
-            exit 1
-          fi
-          if ! printf '%s' "${key_id}" | grep -Eq '^[A-Za-z0-9]{10}$'; then
-            echo "ASC_KEY_ID must be the 10-character Key ID from App Store Connect, with no extra characters."
-            exit 1
-          fi
-          if ! printf '%s' "${team_id}" | grep -Eq '^[A-Za-z0-9]{10}$'; then
-            echo "APPLE_TEAM_ID must be the 10-character Team ID from Apple Developer → Membership details."
-            echo "Spaces and line breaks were removed, and the value still does not match."
-            exit 1
-          fi
-          {
-            echo "ASC_ISSUER_ID=${issuer}"
-            echo "ASC_KEY_ID=${key_id}"
-            echo "APPLE_TEAM_ID=${team_id}"
-          } >> "${GITHUB_ENV}"
-          echo "App Store Connect secrets are present. The API key will not be printed."
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Bundle the game and sync iOS
-        run: npm run www && npx cap sync ios
-
-      - name: Write the App Store Connect API key
-        env:
-          ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
-        run: |
-          set -euo pipefail
-          umask 077
-          mkdir -p "${HOME}/.private_keys"
-          key_file="${HOME}/.private_keys/AuthKey_${ASC_KEY_ID}.p8"
-          printf '%s' "${ASC_API_KEY_P8}" > "${key_file}"
-          if [ -n "$(tail -c 1 "${key_file}")" ]; then
-            printf '\n' >> "${key_file}"
-          fi
-          chmod 600 "${key_file}"
-          if ! grep -q "PRIVATE KEY" "${key_file}"; then
-            echo "ASC_API_KEY_P8 does not look like a .p8 private key. Paste the full file, including the BEGIN and END lines."
-            exit 1
-          fi
-          echo "KEY_FILE=${key_file}" >> "${GITHUB_ENV}"
-          echo "Stored the API key in a private temp file. It is not printed."
-
-      - name: Prepare App Store signing
-        env:
-          ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
-        run: node scripts/prepare-ios-app-store-signing.mjs
-
-      - name: Archive the iOS app
-        run: |
-          set -euo pipefail
-          if [ "${GITHUB_RUN_NUMBER}" -le 12 ]; then
-            echo "Refusing build number ${GITHUB_RUN_NUMBER}. App Store Connect already has build 12 of this app."
-            exit 1
-          fi
-          echo "Marketing version comes from the Xcode project (1.0.12). Build number ${GITHUB_RUN_NUMBER}."
-          # The committed project stays automatic for the simulator workflow.
-          # This job switches the checkout to the App Store profile created above.
-          # An App Store profile does not need a registered device.
-          # CODE_SIGN_ENTITLEMENTS is also set here so the archive keeps Game Center
-          # even if a later sync edits the project file.
-          security unlock-keychain -p "$(cat "${KEYCHAIN_PASSWORD_FILE}")" "${KEYCHAIN_PATH}"
-          sed -i '' \
-            -e 's/CODE_SIGN_STYLE = Automatic;/CODE_SIGN_STYLE = Manual;/' \
-            -e 's/CODE_SIGN_IDENTITY = "iPhone Developer";/CODE_SIGN_IDENTITY = "Apple Distribution";/' \
-            ios/App/App.xcodeproj/project.pbxproj
-          xcodebuild \
-            -project ios/App/App.xcodeproj \
-            -scheme App \
-            -configuration Release \
-            -destination 'generic/platform=iOS' \
-            -archivePath "${RUNNER_TEMP}/ValleyEstates.xcarchive" \
-            DEVELOPMENT_TEAM="${APPLE_TEAM_ID}" \
-            CODE_SIGN_STYLE=Manual \
-            CODE_SIGN_IDENTITY="$(cat "${SIGNING_IDENTITY_FILE}")" \
-            PROVISIONING_PROFILE_SPECIFIER="${PROFILE_NAME}" \
-            OTHER_CODE_SIGN_FLAGS="--keychain ${KEYCHAIN_PATH}" \
-            CODE_SIGN_ENTITLEMENTS="App/App.entitlements" \
-            MARKETING_VERSION=1.0.12 \
-            CURRENT_PROJECT_VERSION="${GITHUB_RUN_NUMBER}" \
-            archive
-
-      - name: Export the App Store IPA
-        run: |
-          set -euo pipefail
-          security unlock-keychain -p "$(cat "${KEYCHAIN_PASSWORD_FILE}")" "${KEYCHAIN_PATH}"
-          python3 -c 'import os, pathlib; team=os.environ["APPLE_TEAM_ID"].strip(); profile=os.environ["PROFILE_NAME"]; identity=pathlib.Path(os.environ["SIGNING_IDENTITY_FILE"]).read_text().strip(); esc=lambda value: value.replace("&","&amp;").replace("<","&lt;").replace(">","&gt;"); pathlib.Path(os.environ["RUNNER_TEMP"], "ExportOptions.plist").write_text("""<?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-            <key>method</key>
-            <string>app-store</string>
-            <key>signingStyle</key>
-            <string>manual</string>
-            <key>teamID</key>
-            <string>%s</string>
-            <key>signingCertificate</key>
-            <string>%s</string>
-            <key>provisioningProfiles</key>
-            <dict>
-              <key>com.littleridgeestate.valleyestates</key>
-              <string>%s</string>
-            </dict>
-            <key>destination</key>
-            <string>export</string>
-            <key>uploadSymbols</key>
-            <true/>
-            <key>manageAppVersionAndBuildNumber</key>
-            <false/>
-          </dict>
-          </plist>
-          """ % (esc(team), esc(identity), esc(profile)))'
-          xcodebuild \
-            -exportArchive \
-            -archivePath "${RUNNER_TEMP}/ValleyEstates.xcarchive" \
-            -exportPath "${RUNNER_TEMP}/ipa" \
-            -exportOptionsPlist "${RUNNER_TEMP}/ExportOptions.plist"
-          ipa="$(find "${RUNNER_TEMP}/ipa" -name '*.ipa' -print -quit)"
-          if [ -z "${ipa}" ]; then
-            echo "Export did not produce an IPA."
-            exit 1
-          fi
-          echo "IPA_PATH=${ipa}" >> "${GITHUB_ENV}"
-          echo "Exported $(basename "${ipa}")."
-
-      - name: Upload the IPA artifact
+        run: node scripts/apple-launch-status.mjs
+      - name: Keep non-secret diagnostic report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: valley-estates-ios-ipa
-          path: ${{ env.IPA_PATH }}
-          if-no-files-found: error
-
-      - name: Upload to TestFlight
-        run: |
-          set -euo pipefail
-          # Delivers the build to TestFlight only. This does not submit the app for App Store review.
-          xcrun altool --upload-app \
-            --type ios \
-            --file "${IPA_PATH}" \
-            --apiKey "${ASC_KEY_ID}" \
-            --apiIssuer "${ASC_ISSUER_ID}"
-          echo "Upload finished. The build still has to finish processing in App Store Connect before it can be installed from TestFlight."
-
-      - name: Remove the API key
-        if: always()
-        run: |
-          set -euo pipefail
-          rm -f "${KEY_FILE:-}"
-          rm -f "${HOME}/.private_keys"/AuthKey_*.p8
-          if [ -n "${KEYCHAIN_PATH:-}" ]; then
-            security delete-keychain "${KEYCHAIN_PATH}" || true
-          fi
-          rm -rf "${SIGNING_DIR:-}"
-          echo "Removed the API key and signing keychain."
+          name: apple-launch-status
+          path: apple-launch-status.json
+          if-no-files-found: warn
+          retention-days: 7
