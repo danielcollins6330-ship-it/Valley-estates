@@ -30,10 +30,11 @@
   }
 
   function freshExtras(type) {
-    if (type === "paddock") return { health: 86, condition: 72, fleece: 0, breedT: 0 };
+    if (type === "paddock" || type === "broadacre") return { health: 86, condition: 72, fleece: 0, breedT: 0 };
     if (type === "cellardoor") return { guests: 0, visitT: 0 };
     if (type === "valleyvilla") return { guests: 0, stayT: 0 };
-    if (type === "vineyard") return { pruned: 0, care: 0 };
+    if (type === "vineyard") return { pruned: 0, care: 0, weeds: 0 };
+    if (type === "field") return { weeds: 0 };
     if (type === "olive") return { olives: 0 };
     return {};
   }
@@ -43,7 +44,7 @@
     for (const key of Object.keys(extra)) {
       if (building[key] == null) building[key] = extra[key];
     }
-    if (building.type === "paddock") {
+    if (building.type === "paddock" || building.type === "broadacre") {
       building.health = clamp(Number(building.health) || 0, 0, 100);
       building.condition = clamp(Number(building.condition) || 0, 0, 100);
       building.fleece = clamp(Number(building.fleece) || 0, 0, 100);
@@ -78,6 +79,8 @@
       if (game.achievements.valleyvilla == null) game.achievements.valleyvilla = game.achievements.villa;
       delete game.achievements.villa;
     }
+    if (!game.gear || typeof game.gear !== "object") game.gear = {};
+    game.difficulty = difficultySpec(game.difficulty).id;
     game.order = game.order && typeof game.order === "object" && game.order.good ? game.order : null;
     if (game.nextOrder == null) game.nextOrder = 40;
     (game.units || []).forEach((unit, index) => decorateHand(unit, index));
@@ -308,7 +311,7 @@
       return { type: "farm", bid: target.id, res: target.type === "olive" ? "olives" : "grapes" };
     }
     if (focus === "stock") {
-      const pads = buildings.filter((building) => building && building.built && building.type === "paddock" && building.kind && (building.count || 0) > 0);
+      const pads = buildings.filter((building) => building && building.built && (building.type === "paddock" || building.type === "broadacre") && building.kind && (building.count || 0) > 0);
       const target = nearestOpen(unit, pads, busy);
       if (!target) return null;
       return { type: "farm", bid: target.id, res: target.kind === "sheep" ? "wool" : "food" };
@@ -542,11 +545,13 @@
       });
     }
     if (health > 68) building.vetWarned = 0;
+    if (ctx.mower) condition = clamp(condition + 0.45 * dt, 0, 100);
     if (building.kind === "sheep") {
       const grow = (ctx.season === 3 ? 0.1 : ctx.season === 0 ? 0.48 : 0.32) * (ctx.shed ? 1.45 : 1) * dt;
       building.fleece = clamp((building.fleece || 0) + grow, 0, 100);
     }
-    if (building.count >= 2 && building.count < 8 && health > 55 && condition > 45) {
+    if (ctx.mower && (building.count || 0) > 0) building.hay = (building.hay || 0) + dt * 0.08 * building.count;
+    if (building.count >= 2 && building.count < stockCap(building) && health > 55 && condition > 45) {
       const genePace = typeof ctx.genes === "number" ? ctx.genes : ctx.genes ? geneMul({ genes: 1 }) : 1;
       const pace = (ctx.breedTech ? 1.4 : 1) * (ctx.season === 0 ? 1.35 : ctx.season === 3 ? 0.3 : 1) * genePace;
       building.breedT = (building.breedT || 0) + dt * pace;
@@ -571,9 +576,10 @@
     return Math.max(6, Math.round(base * factor));
   }
 
-  function shearBales(fleece, count) {
+  function shearBales(fleece, count, baler) {
     if (fleece < 50 || count < 1) return 0;
-    return Math.max(1, Math.round(fleece / 50) * count);
+    const bales = Math.max(1, Math.round(fleece / 50) * count);
+    return baler ? Math.max(bales + 1, Math.round(bales * 1.5)) : bales;
   }
 
   const MARKET_BASE = { wine: 32, wool: 3, cattle: 46, lamb: 24 };
@@ -682,6 +688,19 @@
     return market[good];
   }
 
+  function seasonPriceMul(good, season) {
+    const table = {
+      wine: [1, 0.95, 1.18, 1.05],
+      wool: [0.95, 0.9, 1.05, 1.2],
+      cattle: [1.05, 0.9, 1.1, 1],
+      lamb: [1.15, 1, 0.95, 0.9],
+    };
+    const row = table[good];
+    if (!row) return 1;
+    const index = ((Number(season) % 4) + 4) % 4;
+    return row[index];
+  }
+
   function chartHtml(market, good) {
     ensureMarket(market);
     const values = market.hist[good] || [market[good]];
@@ -775,18 +794,117 @@
     return Math.max(6, Math.round(salePrice(kind, health, condition) * (listed / base)));
   }
 
+  const DIFFICULTIES = {
+    easy: { id: "easy", name: "Easy", cost: 0.85, drought: 0.65, weeds: 0.55, events: 0.75 },
+    normal: { id: "normal", name: "Normal", cost: 1, drought: 1, weeds: 1, events: 1 },
+    hard: { id: "hard", name: "Hard", cost: 1.25, drought: 1.45, weeds: 1.5, events: 1.3 },
+  };
+
+  function difficultySpec(id) {
+    return DIFFICULTIES[id] || DIFFICULTIES.normal;
+  }
+
+  function scaleCost(cost, difficulty) {
+    const mul = difficultySpec(difficulty).cost;
+    const out = {};
+    for (const key of Object.keys(cost || {})) {
+      const value = Number(cost[key]) || 0;
+      if (value <= 0) {
+        out[key] = 0;
+        continue;
+      }
+      out[key] = Math.max(1, Math.round(value * mul));
+    }
+    return out;
+  }
+
   function droughtMul(game) {
     if (game.techs && game.techs.irrig) return 1;
     let mul = 0.5;
     if (built(game, "dam")) mul = 0.72;
     if (built(game, "tank")) mul = Math.min(0.94, mul + 0.22);
-    return mul;
+    const pressure = difficultySpec(game && game.difficulty).drought;
+    return clamp(1 - (1 - mul) * pressure, 0.22, 1);
   }
 
   function workMul(game) {
     let mul = built(game, "machine") ? 1.22 : 1;
     if (game.events && game.events.borrow && game.time < game.events.borrow) mul *= 0.85;
     return mul;
+  }
+
+  function tractorMul(game, source) {
+    if (source !== "field" && source !== "vineyard" && source !== "olive") return 1;
+    return built(game, "tractorshed") ? 1.45 : 1;
+  }
+
+  const GEAR = [
+    { id: "sprayer", name: "Sprayer", age: 1, cost: { coins: 90 }, effect: "Weeds spread slower and cost less to spray off." },
+    { id: "mower", name: "Hay mower", age: 1, cost: { coins: 110 }, effect: "Paddocks hold condition and drop a little hay." },
+    { id: "baler", name: "Baler", age: 1, cost: { coins: 120, wood: 40 }, effect: "Shearing turns fleece into more wool." },
+    { id: "seeder", name: "Seeder", age: 1, cost: { coins: 100, wood: 30 }, effect: "Wheat harvests faster and replants for less wood." },
+    { id: "combine", name: "Combine harvester", age: 2, cost: { coins: 280, wood: 80, stone: 40 }, effect: "Grain comes off the wheat much faster. The Valley Empire then opens a larger paddock." },
+  ];
+
+  function gearById(id) {
+    return GEAR.find((item) => item.id === id) || null;
+  }
+
+  function ownsGear(game, id) {
+    return !!(game && game.gear && game.gear[id]);
+  }
+
+  function buyGear(game, id) {
+    const item = gearById(id);
+    if (!item) return { ok: false, text: "That attachment is not in the shed." };
+    if (!built(game, "tractorshed")) return { ok: false, text: "Build the Tractor Shed first." };
+    if ((game.age || 0) < item.age) return { ok: false, text: "A later age unlocks that." };
+    if (ownsGear(game, id)) return { ok: false, text: item.name + " is already fitted." };
+    if (!game.gear || typeof game.gear !== "object") game.gear = {};
+    game.gear[id] = 1;
+    return { ok: true, cost: item.cost, text: item.name + " fitted. " + item.effect };
+  }
+
+  function tickWeeds(plot, dt, ctx) {
+    const pressure = ctx && ctx.pressure != null ? ctx.pressure : 1;
+    const grow = (ctx && ctx.sprayer ? 0.3 : 1) * (ctx && ctx.tended ? 0.7 : 1) * pressure * 0.9;
+    plot.weeds = clamp((Number(plot.weeds) || 0) + grow * dt, 0, 100);
+    return plot.weeds;
+  }
+
+  function weedYield(weeds) {
+    const level = clamp(Number(weeds) || 0, 0, 100);
+    if (level < 18) return 1;
+    return clamp(1 - (level - 18) / 150, 0.48, 1);
+  }
+
+  function weedClearCost(plot, sprayer, difficulty) {
+    const level = Number(plot && plot.weeds) || 0;
+    if (level < 12) return 0;
+    const weeds = difficultySpec(difficulty).weeds;
+    return Math.max(6, Math.round(level * 0.4 * (sprayer ? 0.4 : 1) * weeds));
+  }
+
+  function clearWeeds(plot, sprayer) {
+    const cost = weedClearCost(plot, sprayer);
+    if (!cost) return 0;
+    plot.weeds = sprayer ? 0 : Math.max(0, (plot.weeds || 0) * 0.2);
+    return cost;
+  }
+
+  function fieldMul(game) {
+    let mul = ownsGear(game, "seeder") ? 1.28 : 1;
+    if (ownsGear(game, "combine")) mul *= 1.85;
+    return mul;
+  }
+
+  function stockCap(building) {
+    return building && building.type === "broadacre" ? 14 : 8;
+  }
+
+  function seedWood(game, drill) {
+    if (ownsGear(game, "seeder")) return drill ? 8 : 12;
+    return drill ? 20 : 30;
   }
 
   function oliveRate(season, drought) {
@@ -832,7 +950,7 @@
     }
     if (patch.wine) spendWine(game, -patch.wine, "low");
     if (patch.sheep) {
-      const paddock = (game.buildings || []).find((building) => building.type === "paddock" && building.kind === "sheep" && building.count > 0);
+      const paddock = (game.buildings || []).find((building) => (building.type === "paddock" || building.type === "broadacre") && building.kind === "sheep" && building.count > 0);
       if (paddock) paddock.count = Math.max(0, paddock.count + patch.sheep);
     }
     if (patch.grapeLoss) {
@@ -855,7 +973,7 @@
       return sum + (building.guests || 0);
     }, 0);
     const cellar = (game.buildings || []).some((building) => building.type === "cellardoor" && building.built) ? 1 : 0;
-    const sheep = (game.buildings || []).some((building) => building.type === "paddock" && building.kind === "sheep" && building.count > 0);
+    const sheep = (game.buildings || []).some((building) => (building.type === "paddock" || building.type === "broadacre") && building.kind === "sheep" && building.count > 0);
     const groves = (game.buildings || []).filter((building) => building.type === "olive" && building.built).length;
     const perMin = guests * 0.05 + cellar * 0.1 + (sheep ? 0.04 : 0) + groves * 0.05;
     const coins = Math.min(160, Math.round((seconds / 60) * perMin));
@@ -904,7 +1022,7 @@
 
   function cattleTotal(game) {
     return (game.buildings || []).reduce((sum, building) => {
-      if (building.type !== "paddock" || building.kind !== "cattle") return sum;
+      if ((building.type !== "paddock" && building.type !== "broadacre") || building.kind !== "cattle") return sum;
       return sum + (building.count || 0);
     }, 0);
   }
@@ -999,8 +1117,23 @@
     spendTier: spendTier,
     wineSellPrice: wineSellPrice,
     stockQuote: stockQuote,
+    DIFFICULTIES: DIFFICULTIES,
+    difficultySpec: difficultySpec,
+    scaleCost: scaleCost,
     droughtMul: droughtMul,
     workMul: workMul,
+    tractorMul: tractorMul,
+    GEAR: GEAR,
+    gearById: gearById,
+    ownsGear: ownsGear,
+    buyGear: buyGear,
+    tickWeeds: tickWeeds,
+    weedYield: weedYield,
+    weedClearCost: weedClearCost,
+    clearWeeds: clearWeeds,
+    fieldMul: fieldMul,
+    stockCap: stockCap,
+    seedWood: seedWood,
     oliveRate: oliveRate,
     tickCare: tickCare,
     rollChoice: rollChoice,
@@ -1039,6 +1172,7 @@
     tickFestival: tickFestival,
     birdBite: birdBite,
     isDusk: isDusk,
+    seasonPriceMul: seasonPriceMul,
     rollOrder: rollOrder,
     orderHave: orderHave,
     orderReady: orderReady,

@@ -235,11 +235,23 @@
           const lum = out[i] * 0.3 + out[i + 1] * 0.59 + out[i + 2] * 0.11;
           const ny = (y - minY) / spanY;
           const h = Math.abs(Math.sin(x * 3.1 + z * 6.4 + s * 2.7) * Math.sin(y * 2.2 + s * 1.3));
-          // Extra underline speckles stay off the legs and the shoulders.
-          if (lum < 0.2 && ny > 0.18 && ny < 0.4 && Math.abs(z) < 0.5 && h > 0.72) {
-            out[i] = 0.95;
-            out[i + 1] = 0.94;
-            out[i + 2] = 0.9;
+          // A narrow white spine. A wide back reads as a white capsule from above.
+          if (ny > 0.76 && Math.abs(z) < 0.18) {
+            out[i] = 0.98;
+            out[i + 1] = 0.97;
+            out[i + 2] = 0.93;
+            return;
+          }
+          if (lum < 0.55 && ny > 0.2 && ny < 0.62 && Math.abs(z) < 0.62 && h > 0.52) {
+            out[i] = 0.97;
+            out[i + 1] = 0.96;
+            out[i + 2] = 0.92;
+            return;
+          }
+          if (lum < 0.45 && lum > 0.12) {
+            out[i] = 0.04;
+            out[i + 1] = 0.035;
+            out[i + 2] = 0.03;
           }
         });
         base["s" + s] = geoFrom(parsed.pos, parsed.nrm, col, parsed.jointsAttr, parsed.weights, parsed.indices);
@@ -299,7 +311,7 @@
     });
     const cattle = kind === "cattle";
     mat.emissive = new api.Color(cattle ? 0 : 0.012, cattle ? 0 : 0.01, cattle ? 0 : 0.008);
-    mat.envMapIntensity = cattle ? 0.01 : kind === "sheep" ? 0.22 : kind === "cockatoo" ? 0.05 : 0.42;
+    mat.envMapIntensity = cattle ? 0 : kind === "sheep" ? 0.22 : kind === "cockatoo" ? 0.05 : 0.42;
     mat.color = new api.Color(1, 0.985, 0.96);
     if (kind === "sheep") mat.color.setRGB(1, 0.985, 0.95);
     if (kind === "sheep_shorn") mat.color.setRGB(1, 0.96, 0.9);
@@ -530,27 +542,46 @@
     return map;
   }
 
+  function rigJob(id) {
+    const key = "rig:" + id;
+    return {
+      start() { if (window.VELoad) VELoad.track(key); },
+      end() { if (window.VELoad) VELoad.settle(key); },
+    };
+  }
+
   async function boot(next) {
     api = next;
+    const jobs = ["decoder", "coat", "wool", ...Object.keys(KINDS).map((kind) => "glb:" + kind)];
+    const steps = Object.fromEntries(jobs.map((id) => [id, rigJob(id)]));
+    for (const step of Object.values(steps)) step.start();
     try {
       const mod = await import(new URL("animals/meshopt_decoder.js", BASE));
       decoder = mod.MeshoptDecoder;
       await decoder.ready;
+      steps.decoder.end();
       const coatUrl = new URL("animals/coat.webp", BASE).href;
       const woolUrl = new URL("animals/wool.webp", BASE).href;
       const [coatImg, woolImg] = await Promise.all([loadImage(coatUrl), loadImage(woolUrl)]);
       if (!coatImg || !woolImg) throw new Error("fur texture missing");
       tex.coat = imageTexture(coatImg);
       tex.wool = imageTexture(woolImg);
+      steps.coat.end();
+      steps.wool.end();
       await Promise.all(Object.keys(KINDS).map(async (kind) => {
-        const res = await fetch(new URL("animals/" + KINDS[kind].file, BASE));
-        const buf = await res.arrayBuffer();
-        bytes += buf.byteLength;
-        models[kind] = prepare(kind, parseGLB(buf));
+        try {
+          const res = await fetch(new URL("animals/" + KINDS[kind].file, BASE));
+          const buf = await res.arrayBuffer();
+          bytes += buf.byteLength;
+          models[kind] = prepare(kind, parseGLB(buf));
+        } finally {
+          steps["glb:" + kind].end();
+        }
       }));
       window.VERig.ready = true;
       window.VERig.bytes = bytes;
     } catch (err) {
+      for (const step of Object.values(steps)) step.end();
       window.VERig.error = String(err && err.message || err);
       console.error("VERig", err);
     }

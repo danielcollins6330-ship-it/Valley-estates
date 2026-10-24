@@ -50,6 +50,7 @@
     audio.loop = !!loop;
     audio.preload = "auto";
     audio.volume = 0;
+    audio.playsInline = true;
     return audio;
   }
 
@@ -57,9 +58,11 @@
     return unlocked && !paused && !settings.mute;
   }
 
-  function setAmbientSession() {
+  function setPlaybackSession() {
     try {
-      if (navigator.audioSession) navigator.audioSession.type = "ambient";
+      // playback keeps a game audible when the iPhone silent switch is on.
+      // ambient is silenced by that switch, which is why 1.0.11 and 1.0.12 stayed quiet.
+      if (navigator.audioSession) navigator.audioSession.type = "playback";
     } catch (error) {
       /* older WebKit */
     }
@@ -89,18 +92,25 @@
 
   function unlock() {
     if (unlocked) return;
-    setAmbientSession();
-    for (const name of LOOP_NAMES) loops[name] = make(name, true);
-    for (const audio of Object.values(loops)) {
-      audio.muted = true;
+    setPlaybackSession();
+    let waiting = 0;
+    let failed = 0;
+    for (const name of LOOP_NAMES) {
+      const audio = loops[name] || make(name, true);
+      loops[name] = audio;
+      audio.muted = false;
+      audio.volume = 0;
+      waiting += 1;
       const pending = audio.play();
-      const release = function () {
-        audio.pause();
-        audio.currentTime = 0;
-        audio.muted = false;
+      const finish = function (error) {
+        waiting -= 1;
+        if (error) failed += 1;
+        // A gesture play() that is later paused cannot be started again on iOS.
+        // If every loop rejects, allow the next tap to try the unlock again.
+        if (waiting === 0 && failed === LOOP_NAMES.length) unlocked = false;
       };
-      if (pending && pending.then) pending.then(release).catch(release);
-      else release();
+      if (pending && pending.then) pending.then(function () { finish(); }).catch(function () { finish(true); });
+      else finish();
     }
     const now = performance.now();
     for (const name of Object.keys(ANIMAL_EVERY)) nextAnimal[name] = now + 4000 + Math.random() * 8000;
@@ -246,8 +256,9 @@
     return settings.mute;
   }
 
-  setAmbientSession();
+  setPlaybackSession();
   addEventListener("pointerdown", function () { unlock(); }, true);
+  addEventListener("touchend", function () { unlock(); }, true);
   document.addEventListener("visibilitychange", function () {
     paused = document.hidden;
     if (paused) pauseAll();
@@ -258,9 +269,19 @@
   });
   addEventListener("pageshow", function () {
     paused = document.hidden;
-    setAmbientSession();
+    setPlaybackSession();
     if (paused) pauseAll();
   });
+
+  const PRELOAD = ["alert", "birds", "build", "chicken", "coins", "cow", "crickets", "dog", "harvest", "kookaburra", "magpie", "plant", "rain", "sheep", "sheep-babydoll", "tractor", "wind", "voice/autumn-0", "voice/autumn-1", "voice/bus-0", "voice/cattle-0", "voice/cattle-1", "voice/cattle-2", "voice/dog-0", "voice/frost-0", "voice/frost-1", "voice/frost-2", "voice/hail-0", "voice/harvest-0", "voice/harvest-1", "voice/harvest-2", "voice/market-0", "voice/market-1", "voice/market-2", "voice/medal-0", "voice/neighbour-0", "voice/rain-0", "voice/rain-1", "voice/rain-2", "voice/spring-0", "voice/spring-1", "voice/storm-0", "voice/storm-1", "voice/storm-2", "voice/summer-0", "voice/summer-1", "voice/winter-0", "voice/winter-1"];
+  if (typeof fetch === "function") {
+    for (const name of PRELOAD) {
+      const id = "audio:" + name;
+      if (window.VELoad) VELoad.track(id);
+      fetch(src(name)).then(function (res) { return res.arrayBuffer(); }).catch(function () {}).then(function () { if (window.VELoad) VELoad.settle(id); });
+    }
+  }
+  if (window.VELoad) VELoad.seal();
 
   window.VEAudio = {
     unlock: unlock,

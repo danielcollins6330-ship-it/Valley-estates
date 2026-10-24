@@ -1,6 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync, statSync } from "node:fs";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import vm from "node:vm";
 
 function harness() {
@@ -18,12 +20,13 @@ function harness() {
   const storage = new Map([["valleyEstatesV4", "estate-save-must-not-change"]]);
   const add = (map) => (name, fn) => { if (!map.has(name)) map.set(name, []); map.get(name).push(fn); };
   const document = { hidden: false, addEventListener: add(documentHandlers) };
-  const context = vm.createContext({ Audio: FakeAudio, navigator: {}, performance: { now: () => 100000 }, localStorage: { getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value) }, document, addEventListener: add(handlers), Math, Set, Map, WeakMap, console, setTimeout, clearTimeout });
+  const audioSession = { type: "auto" };
+  const context = vm.createContext({ Audio: FakeAudio, navigator: { audioSession }, performance: { now: () => 100000 }, localStorage: { getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value) }, document, addEventListener: add(handlers), Math, Set, Map, WeakMap, console, setTimeout, clearTimeout });
   context.window = context;
   for (const file of ["../assets/audio-policy.js", "../assets/audio.js"]) vm.runInContext(readFileSync(new URL(file, import.meta.url), "utf8"), context);
   const dispatch = (name) => { for (const handler of handlers.get(name) || []) handler({ type: name }); };
   const visibility = (hidden) => { document.hidden = hidden; for (const handler of documentHandlers.get("visibilitychange") || []) handler({ type: "visibilitychange" }); };
-  return { audio: context.VEAudio, media, storage, dispatch, visibility };
+  return { audio: context.VEAudio, media, storage, dispatch, visibility, audioSession };
 }
 const settle = () => new Promise(resolve => setImmediate(resolve));
 
@@ -71,6 +74,47 @@ test("visibility and master mute immediately pause active audio", async () => {
   h.audio.sfx("coins");
   h.audio.toggleMute();
   assert.ok(h.media.every(item => item.paused));
+});
+
+test("playback session stays active and the unlock gesture does not pause the loops", async () => {
+  const h = harness();
+  assert.equal(h.audioSession.type, "playback");
+  h.audio.unlock();
+  h.audio.sync({ night: 0, p: 0.1 });
+  await settle();
+  await settle();
+  const wind = h.media.find((item) => item.src.endsWith("/wind.m4a"));
+  assert.ok(wind, "wind loop is created on the first tap");
+  assert.equal(wind.paused, false);
+  assert.ok(wind.volume > 0, "ambience is audible after the gesture promise resolves");
+  assert.equal(h.audioSession.type, "playback");
+  assert.equal(h.audio.debug().settings.mute, false);
+});
+
+test("shipped cues are m4a and present for the iOS bundle", () => {
+  const root = fileURLToPath(new URL("../assets/audio/", import.meta.url));
+  const files = [];
+  const walk = (dir, prefix) => {
+    for (const name of readdirSync(dir)) {
+      const path = join(dir, name);
+      if (statSync(path).isDirectory()) walk(path, prefix + name + "/");
+      else files.push({ name: prefix + name, path });
+    }
+  };
+  walk(root, "");
+  assert.ok(files.length >= 40);
+  assert.equal(files.some((file) => file.name.endsWith(".ogg") || file.name.endsWith(".mp3")), false);
+  for (const file of files) {
+    assert.match(file.name, /\.m4a$/);
+    const bytes = readFileSync(file.path);
+    assert.ok(bytes.length > 200, file.name);
+    assert.equal(bytes.subarray(4, 8).toString("ascii"), "ftyp", file.name);
+  }
+  const player = readFileSync(new URL("../assets/audio.js", import.meta.url), "utf8");
+  assert.match(player, /audioSession\.type = "playback"/);
+  assert.doesNotMatch(player, /audioSession\.type = "ambient"/);
+  assert.match(player, /\.m4a"/);
+  assert.doesNotMatch(player, /\.ogg/);
 });
 
 test("sound settings never overwrite the estate save", async () => {

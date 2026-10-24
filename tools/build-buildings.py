@@ -13,6 +13,8 @@ CREAM = (0.86, 0.78, 0.66, 1)
 CREAM_GAP = (0.72, 0.64, 0.52, 1)
 STONE = (0.74, 0.66, 0.54, 1)
 STONE_DARK = (0.58, 0.5, 0.42, 1)
+# These two stay as masks. assets/buildings.js tints grey iron to galvanised
+# or a Colorbond colour, and cream shed walls to corrugated iron.
 IRON = (0.62, 0.66, 0.68, 1)
 IRON_RED = (0.55, 0.2, 0.14, 1)
 WOOD = (0.38, 0.26, 0.16, 1)

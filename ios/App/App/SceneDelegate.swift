@@ -1,5 +1,18 @@
 import UIKit
 import Capacitor
+import AVFoundation
+
+enum ValleyAudioSession {
+    static func activate() {
+        let session = AVAudioSession.sharedInstance()
+        do {
+            try session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
+            try session.setActive(true)
+        } catch {
+            NSLog("Valley Estates audio session: \(error.localizedDescription)")
+        }
+    }
+}
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     var window: UIWindow?
@@ -11,7 +24,12 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window?.rootViewController = CAPBridgeViewController()
         window?.makeKeyAndVisible()
 
+        ValleyAudioSession.activate()
         SceneDelegateProxy.shared.scene(scene, willConnectTo: session, options: connectionOptions)
+    }
+
+    func sceneDidBecomeActive(_ scene: UIScene) {
+        ValleyAudioSession.activate()
     }
 
     func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
