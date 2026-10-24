@@ -12,11 +12,10 @@
     sheep_shorn: { file: "sheep_shorn.glb", scale: 0.0605, broad: 1.12, long: 1.02, rough: 0.72, fur: "coat", repeat: 7, amt: 0.12 },
     dog: { file: "dog.glb", scale: 0.0543, rough: 0.72, fur: "coat", repeat: 7, amt: 0.16 },
     chicken: { file: "chicken.glb", scale: 0.0102, rough: 0.62, fur: "coat", repeat: 5, amt: 0.1 },
-    kangaroo: { file: "kangaroo.glb", scale: 0.469, rough: 0.76, fur: "coat", repeat: 6.5, amt: 0.36 },
     cockatoo: { file: "cockatoo.glb", scale: 0.674, rough: 0.82, fur: "coat", repeat: 3.5, amt: 0.04 },
   };
-  const POSE_CLIP = { walk: "Walk", graze: "Graze", idle: "Idle", lie: "Lie", run: "Run", hop: "Hop" };
-  const POSE_RATE = { walk: 1, graze: 0.42, idle: 0.32, lie: 0.22, run: 1.45, hop: 1.2 };
+  const POSE_CLIP = { walk: "Walk", graze: "Graze", idle: "Idle", lie: "Lie", run: "Run" };
+  const POSE_RATE = { walk: 1, graze: 0.42, idle: 0.32, lie: 0.22, run: 1.45 };
   const COMPS = { SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4, MAT4: 16 };
   const CSIZE = { 5120: 1, 5121: 1, 5122: 2, 5123: 2, 5125: 4, 5126: 4 };
 

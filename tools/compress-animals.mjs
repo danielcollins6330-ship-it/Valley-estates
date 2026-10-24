@@ -5,7 +5,7 @@ import { MeshoptEncoder, MeshoptDecoder } from "meshoptimizer";
 
 const SRC = "/workspace/assets/animals/src";
 const OUT = "/workspace/assets/animals";
-const NAMES = ["cattle", "sheep", "sheep_shorn", "dog", "chicken", "kangaroo", "cockatoo"];
+const NAMES = ["cattle", "sheep", "sheep_shorn", "dog", "chicken", "cockatoo"];
 const COMPS = { SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4, MAT2: 4, MAT3: 9, MAT4: 16 };
 const CSIZE = { 5120: 1, 5121: 1, 5122: 2, 5123: 2, 5125: 4, 5126: 4 };
 
