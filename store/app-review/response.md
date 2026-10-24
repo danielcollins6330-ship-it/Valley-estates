@@ -50,6 +50,7 @@ The game includes original work and third-party code/assets with source and lice
 * ASSET_CREDITS.md: CC0 animal models, original models/buildings, modifications and the MIT-licensed model decoder.
 * AUDIO_CREDITS.md: individual sound sources and CC0/public-domain/CC BY/CC BY-SA terms, plus the pre-generated voice-model attribution.
 * THIRD_PARTY_LICENSES.txt: bundled MIT software licence notices.
+* compliance.html and assets/licenses/: full CC BY-SA 3.0/4.0 legal texts, source attribution, transformation notices, reusable adapted recordings and checksums. These attachments do not themselves establish EULA/DRM compatibility.
 
 Reviewer access: Menu > Credits and licences. Public copies are available in the Valley-estates repository and on the support website after the release changes are deployed. These manifests provide source/licence evidence, not a blanket legal warranty. Do not claim permissions or documentation beyond that evidence.
 
@@ -64,4 +65,6 @@ Before sending this text in App Store Connect and copying the completed six-part
 * Verify the recording URL is accessible without requesting permission or requiring reviewer sign-in.
 * Preserve existing reviewer contact information and any relevant pre-existing notes when updating App Store Connect.
 * Reply to the existing rejection thread and add the same completed information to review notes. Do not claim that changing review notes alone is a reply to the thread.
+* Assess the ShareAlike synchronization clauses for sound recordings/phonograms in both the app presentation and demonstration video. They are not limited to music. Do not assume only the standalone clips can be affected.
+* Verify actual distribution terms and any technical restrictions on the covered CC BY-SA audio. Do not assume a separate download automatically cures a conflicting EULA or DRM restriction. Obtain separate rights or replace the audio if compatibility cannot be established.
 * Resubmit only after every requested item and the physical QA evidence are present.

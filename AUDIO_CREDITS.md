@@ -70,3 +70,9 @@ Weather and stock events have three variants. Each season has two. Playback wait
 - Stray dog: “A stray dog is in the sheep paddock.”
 - Hail: “Hail is coming over the ridge.”
 - Neighbour: “The neighbour wants to borrow the tractor.”
+
+## Bundled ShareAlike compliance attachment
+
+The dog adaptation remains CC BY-SA 3.0 Unported and the magpie adaptation remains CC BY-SA 4.0 International. Full, unmodified English legal texts, asset-specific notices, adapted-file hashes and unrestricted download links are available offline in [Audio compliance and full terms](compliance.html) and `assets/licenses/`. Crickets is CC BY 3.0, not ShareAlike.
+
+Attaching these terms is not a legal clearance of App Store EULA/DRM compatibility. The release checklist retains that separate review item. See [SHAREALIKE-NOTICE.md](assets/licenses/SHAREALIKE-NOTICE.md) for the scope and limits.

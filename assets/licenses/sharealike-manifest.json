@@ -1,0 +1,38 @@
+{
+  "scope": "Individual adapted dog and magpie sound recordings, not a blanket licence for all game material.",
+  "legal_clearance": "Not established. Actual App Store terms and technical restrictions require a separate compatibility assessment.",
+  "assets": [
+    {
+      "path": "assets/audio/dog.m4a",
+      "title": "Barking of a dog 2",
+      "author": "Amada44",
+      "original": "https://commons.wikimedia.org/wiki/File:Barking_of_a_dog_2.ogg",
+      "licence": "CC BY-SA 3.0 Unported",
+      "licence_url": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "legalcode_source": "https://creativecommons.org/licenses/by-sa/3.0/legalcode.txt",
+      "legalcode": "assets/licenses/CC-BY-SA-3.0.txt",
+      "modifications": "Trimmed and transcoded to mono AAC/M4A; audio pipeline documents fades. See AUDIO_CREDITS.md.",
+      "sha256": "737a2f01a477ace96d085d9859fbab64c915b0e3eb2ba4c31dbe4251ec3ed29a",
+      "bytes": 17055,
+      "legalcode_sha256": "3f941b3b89cf7b8370ceb83cc76d2120d471b58735d8ca60238a751a48d7f72f",
+      "legalcode_bytes": 22240,
+      "unrestricted_copy": "https://raw.githubusercontent.com/danielcollins6330-ship-it/Valley-estates/main/assets/audio/dog.m4a"
+    },
+    {
+      "path": "assets/audio/magpie.m4a",
+      "title": "Magpiesong",
+      "author": "Meganesia",
+      "original": "https://commons.wikimedia.org/wiki/File:Magpiesong.ogg",
+      "licence": "CC BY-SA 4.0 International",
+      "licence_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "legalcode_source": "https://creativecommons.org/licenses/by-sa/4.0/legalcode.txt",
+      "legalcode": "assets/licenses/CC-BY-SA-4.0.txt",
+      "modifications": "Trimmed and transcoded to mono AAC/M4A; audio pipeline documents fades. See AUDIO_CREDITS.md.",
+      "sha256": "b94c11746724a669bdb11ec9559379bc46b5871fc4203a7108637afb8ec6ed3d",
+      "bytes": 37917,
+      "legalcode_sha256": "28a9529c7d0bb4dc51f4bf5c116a3d16ef247a052f7591466768ddf563fd1cf5",
+      "legalcode_bytes": 20138,
+      "unrestricted_copy": "https://raw.githubusercontent.com/danielcollins6330-ship-it/Valley-estates/main/assets/audio/magpie.m4a"
+    }
+  ]
+}
