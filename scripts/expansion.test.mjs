@@ -201,6 +201,12 @@ assert.equal(legacyDifficulty.difficulty, "normal");
 const keptDifficulty = { res: {}, buildings: [], units: [], difficulty: "hard" };
 expansion.migrateSave(keptDifficulty);
 assert.equal(keptDifficulty.difficulty, "hard");
+assert.equal(expansion.seasonPriceMul("wine", 2), 1.18);
+assert.ok(expansion.seasonPriceMul("wool", 3) > expansion.seasonPriceMul("wool", 1));
+assert.ok(expansion.seasonPriceMul("lamb", 0) > expansion.seasonPriceMul("lamb", 3));
+assert.ok(expansion.seasonPriceMul("cattle", 2) > expansion.seasonPriceMul("cattle", 1));
+assert.equal(expansion.seasonPriceMul("food", 0), 1);
+assert.equal(expansion.seasonPriceMul("wine", -1), expansion.seasonPriceMul("wine", 3));
 const bare = { weeds: 80 };
 assert.ok(expansion.clearWeeds(bare, false) > 0);
 assert.ok(bare.weeds > 0 && bare.weeds < 80);
@@ -475,7 +481,7 @@ assert.equal(expansion.tickFestival(festGame, 1, 120).notes.length, 0);
 const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
 assert.equal(html.includes("hctx.fillText(text,item.sx"), false);
 assert.ok(html.includes("VEExpansion.activityLabel(u)"));
-for (const needle of ["assets/expansion.js", "assets/haptics.js", "cellardoor", "Valley Villa", "yard", "olive", "sellwine", "migrateSave", "coachAdvance", "claimAchievements", "Erase this estate", "Colour-blind icons", "Farmhands", "bCrew", "Four ages", "Harvest festival", "Wine show", "Tractor Shed", "newgame:easy", "newgame-yes", "diff:"]) {
+for (const needle of ["assets/expansion.js", "assets/haptics.js", "cellardoor", "Valley Villa", "yard", "olive", "sellwine", "migrateSave", "coachAdvance", "claimAchievements", "Erase this estate", "Colour-blind icons", "Farmhands", "bCrew", "Four ages", "Harvest festival", "Wine show", "Tractor Shed", "newgame:easy", "newgame-yes", "diff:", "seasonPriceMul"]) {
   assert.ok(html.includes(needle), "index missing " + needle);
 }
 const bannedNames = ["bru" + "ma", "little " + "ridge"];

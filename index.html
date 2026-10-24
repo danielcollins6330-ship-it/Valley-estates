@@ -536,7 +536,7 @@ const $=id=>document.getElementById(id);
 let panelDirty=true,lastPanel='';
 function toast(t,c){const d=document.createElement('div');d.className='toast '+(c||'');d.textContent=t;const box=$('toasts');box.prepend(d);while(box.children.length>4)box.lastChild.remove();setTimeout(()=>d.remove(),4000);if(c==='warn'&&window.VEAudio)VEAudio.sfx('alert')}
 function btn(act,label,sub,cls,dis){return `<button class="btn ${cls||''} ${dis?'dis':''}" data-act="${act}">${label}${sub?`<small>${sub}</small>`:''}</button>`}
-function listed(good){const n=VEExpansion.quote(G.market,good);return G.events.market&&G.time<G.events.market?Math.round(n*1.15):n}
+function listed(good){const n=Math.round(VEExpansion.quote(G.market,good)*VEExpansion.seasonPriceMul(good,G.season));return G.events.market&&G.time<G.events.market?Math.round(n*1.15):n}
 function resMark(emoji,tag,n){return document.documentElement.classList.contains('cb')?emoji+' '+tag+' '+(n|0):emoji+(n|0)}
 function updateBar(){const r=G.res;$('rF').textContent=resMark('🌾','Fd',r.food);$('rW').textContent=resMark('🪵','Wd',r.wood);$('rS').textContent=resMark('🪨','St',r.stone);$('rC').textContent=resMark('🪙','$',r.coins);$('rG').textContent=resMark('🍇','Gp',r.grapes);$('rV').textContent=resMark('🍷','Wn',r.wine);$('rL').textContent=resMark('🧶','Wl',r.wool);$('rO').textContent=resMark('🫒','Ol',r.olives);$('rP').textContent='👤'+G.units.length+'/'+popCap();
  $('ageL').textContent=AGES[G.age].e+' '+AGES[G.age].n;

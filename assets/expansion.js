@@ -688,6 +688,19 @@
     return market[good];
   }
 
+  function seasonPriceMul(good, season) {
+    const table = {
+      wine: [1, 0.95, 1.18, 1.05],
+      wool: [0.95, 0.9, 1.05, 1.2],
+      cattle: [1.05, 0.9, 1.1, 1],
+      lamb: [1.15, 1, 0.95, 0.9],
+    };
+    const row = table[good];
+    if (!row) return 1;
+    const index = ((Number(season) % 4) + 4) % 4;
+    return row[index];
+  }
+
   function chartHtml(market, good) {
     ensureMarket(market);
     const values = market.hist[good] || [market[good]];
@@ -1159,6 +1172,7 @@
     tickFestival: tickFestival,
     birdBite: birdBite,
     isDusk: isDusk,
+    seasonPriceMul: seasonPriceMul,
     rollOrder: rollOrder,
     orderHave: orderHave,
     orderReady: orderReady,
