@@ -417,25 +417,6 @@ def hen_color(x, y, z):
         return C(0.95, 0.74, 0.14)
     return C(0.72, 0.38, 0.12)
 
-def roo_color(x, y, z):
-    for ey in (0.06, -0.06):
-        if near(x, y, z, 0.46, ey, 1.12, 0.035):
-            return C(0.06, 0.05, 0.04)
-    # dark nose
-    if x > 0.52 and 0.95 < z < 1.12 and abs(y) < 0.04:
-        return C(0.18, 0.12, 0.1)
-    # ear backs a little darker
-    if z > 1.18:
-        return C(0.38, 0.28, 0.2)
-    # thick grey-brown tail
-    if x < -0.4:
-        return C(0.32, 0.24, 0.18)
-    # pale belly
-    if z < 0.82 and -0.1 < x < 0.28 and abs(y) < 0.14:
-        return C(0.82, 0.74, 0.62)
-    n = 0.48 + 0.04 * math.sin(x * 8 + z * 6)
-    return C(n + 0.1, n + 0.02, n - 0.04)
-
 def bird_color(x, y, z):
     # Sulphur fan sitting on the crown, overlapping the white head.
     if z > 0.36 and 0.02 < x < 0.24 and abs(y) < 0.12:
@@ -538,28 +519,6 @@ def hen_balls():
         b.append(ball(0.02, side, 0.02, 0.016))
     return b
 
-def roo_balls():
-    b = [ball(0.05, 0, 0.85, 0.18, (1.1, 0.75, 0.7))]
-    b.append(ball(-0.15, 0, 0.7, 0.2, (0.9, 1.05, 0.85)))
-    b.append(ball(-0.28, 0, 0.45, 0.16, (0.8, 0.9, 1.1)))
-    b.append(ball(0.22, 0, 0.95, 0.08))
-    b.append(ball(0.38, 0, 1.05, 0.09, (1.25, 0.7, 0.7)))
-    b.append(ball(0.52, 0, 1.02, 0.05, (1.3, 0.55, 0.45)))
-    b.append(ball(0.48, 0.055, 1.08, 0.028))
-    b.append(ball(0.48, -0.055, 1.08, 0.028))
-    b.append(ball(0.3, 0.09, 1.38, 0.03, (0.32, 0.26, 2.8)))
-    b.append(ball(0.3, -0.09, 1.38, 0.03, (0.32, 0.26, 2.8)))
-    for side in (0.1, -0.1):
-        b.append(ball(-0.12, side, 0.45, 0.08))
-        b.append(ball(-0.08, side, 0.22, 0.06))
-        b.append(ball(0.0, side, 0.12, 0.07))
-        b.append(ball(0.02, side, 0.04, 0.08, (1.6, 0.55, 0.4)))
-        b.append(ball(0.18, side, 0.5, 0.035))
-    b.append(ball(-0.45, 0, 0.35, 0.07))
-    b.append(ball(-0.7, 0, 0.22, 0.05))
-    b.append(ball(-0.95, 0, 0.12, 0.035))
-    return b
-
 def bird_balls():
     # One fused volume: body, thick neck, head, crest and beak overlap
     # so a side view cannot show the yellow fan floating off the bird.
@@ -584,60 +543,6 @@ def bird_balls():
         b.append(ball(0.02, side, 0.07, 0.024))
         b.append(ball(0.03, side, 0.02, 0.02))
     return b
-
-def clip_roo(arm):
-    # Rest mesh is already upright. Idle only breathes and flicks the ears
-    # so the long ears, belly, and tail stay readable.
-    begin(arm, "Idle")
-    for frame, ear in ((1, 0.04), (16, 0.22), (32, 0.04), (48, 0.04)):
-        pose(arm, frame, {
-            "spine": (-0.08, 0, 0),
-            "neck": (-0.05, 0, 0),
-            "tail": (0.25, 0, 0.12 if frame == 16 else 0.02),
-            "ear.L": (-0.08, 0, ear),
-            "ear.R": (-0.08, 0, -ear),
-            "leg.FL": (0.25, 0, 0.15),
-            "leg.FR": (0.25, 0, -0.15),
-        })
-    finish(arm, "Idle")
-    begin(arm, "Walk")
-    for frame in (1, 7, 13, 19, 25):
-        pose(arm, frame, walk_rots(frame, 24, 0.28, 0.35))
-    finish(arm, "Walk")
-    begin(arm, "Graze")
-    for frame, nod in ((1, 0.55), (20, 0.8), (40, 0.55)):
-        pose(arm, frame, {
-            "neck": (nod, 0, 0), "head": (0.35, 0, 0),
-            "tail": (0.4, 0, 0),
-            "ear.L": (0.2, 0, 0.1), "ear.R": (0.2, 0, -0.1),
-        })
-    finish(arm, "Graze")
-    begin(arm, "Lie")
-    pose(arm, 1, {
-        "spine": (0.35, 0, 0),
-        "leg.BL": (0.8, 0, 0.3), "leg.BR": (0.8, 0, -0.3),
-        "leg.FL": (1.0, 0, 0.4), "leg.FR": (1.0, 0, -0.4),
-        "tail": (0.15, 0, 0.5),
-        "neck": (0.2, 0, 0),
-    }, loc=(0, 0, -0.12))
-    pose(arm, 30, {
-        "spine": (0.3, 0, 0),
-        "tail": (0.2, 0, 0.2),
-    }, loc=(0, 0, -0.1))
-    finish(arm, "Lie")
-    begin(arm, "Hop")
-    keys = [(1, 0.0, 0.55), (8, 0.28, -0.15), (16, 0.0, 0.6)]
-    for frame, height, tuck in keys:
-        pose(arm, frame, {
-            "spine": (-0.35 - height, 0, 0),
-            "leg.BL": (tuck, 0, 0.12), "leg.BR": (tuck, 0, -0.12),
-            "shin.BL": (0.9 if height < 0.08 else 0.15, 0, 0),
-            "shin.BR": (0.9 if height < 0.08 else 0.15, 0, 0),
-            "leg.FL": (0.45, 0, 0.2), "leg.FR": (0.45, 0, -0.2),
-            "tail": (0.85 - height, 0, 0),
-            "ear.L": (-0.25, 0, 0.08), "ear.R": (-0.25, 0, -0.08),
-        }, loc=(0, 0, height))
-    finish(arm, "Hop")
 
 def dog_run(arm):
     begin(arm, "Run")
@@ -725,22 +630,6 @@ def main():
             ((0.16, -0.055, 0.3), 0.016, None),
             ((0.16, 0, 0.24), 0.018, (0.55, 0.7, 0.55)),
         ],
-    )
-    build(
-        "kangaroo",
-        roo_balls(),
-        quad_bones(0.7, 0.25, ((0.2, 0, 0.95), (0.36, 0, 1.08)), ((0.36, 0, 1.05), (0.55, 0, 1.02)), ((-0.4, 0, 0.4), (-1.0, 0, 0.08)), 0.1, 0.16, -0.12, 0.55, 0.25),
-        roo_color,
-        0.04,
-        0.8,
-        bits=[
-            ((0.42, 0.05, 1.05), 0.03, None),
-            ((0.42, -0.05, 1.05), 0.03, None),
-            ((0.55, 0, 1.0), 0.055, (1.3, 0.6, 0.55)),
-            ((0.3, 0.08, 1.28), 0.03, (0.35, 0.3, 2.6)),
-            ((0.3, -0.08, 1.28), 0.03, (0.35, 0.3, 2.6)),
-        ],
-        clips=clip_roo,
     )
     # Bird uses the same quadruped clip set; wing bones are the front legs, renamed by the flap in Walk.
     build(
