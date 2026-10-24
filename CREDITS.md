@@ -1,6 +1,6 @@
 # Valley Estates v4 — Credits & Licences
 
-The textures below are CC0 1.0 (public domain). Code dependencies use MIT licences and retain their required notices. Sound files use a mix of CC0, CC BY and CC BY-SA. Every clip, its source and its licence are in [AUDIO_CREDITS.md](AUDIO_CREDITS.md).
+The textures below are CC0 1.0 (public domain). Code dependencies use MIT licences and retain their required notices. Current sound files use a mix of public domain, CC0 and CC BY. The dog and magpie recordings are now CC0 replacements; earlier ShareAlike recordings are not bundled. Every clip, its source and its licence are in [AUDIO_CREDITS.md](AUDIO_CREDITS.md).
 
 ## Textures — Poly Haven (CC0 1.0, https://polyhaven.com/license)
 Downloaded at 1K (diffuse + OpenGL normal), converted to WebP (diffuse 1024², normals 512²) and embedded as data URIs in `assets/textures.js` (needed so WebGL can use them when opened from `file://`).

@@ -44,12 +44,13 @@ The same gameplay and content are provided in every region where the app is dist
 
 This is an entertainment game, not a service in a regulated industry. Its farming, wine production and market systems are fictional. No real-world alcohol ordering, gambling, financial trading or health services are provided.
 
-The game includes original work and third-party code/assets with source and licence information documented in the bundled credits. Do not describe all assets as original or all licences as CC0: some sound files are CC BY or CC BY-SA and require their notices. The following manifests identify the authors, source links, applicable licences and modifications:
+The game includes original work and third-party code/assets with source and licence information documented in the bundled credits. Do not describe all assets as original or all licences as CC0: some sound files are CC BY and require their notices. The former ShareAlike dog and magpie recordings have been replaced with verified-source CC0 clips for this candidate. The following manifests identify the authors, source links, applicable licences and modifications:
 
 * CREDITS.md: code and texture sources, plus links to the detailed manifests.
 * ASSET_CREDITS.md: CC0 animal models, original models/buildings, modifications and the MIT-licensed model decoder.
-* AUDIO_CREDITS.md: individual sound sources and CC0/public-domain/CC BY/CC BY-SA terms, plus the pre-generated voice-model attribution.
+* AUDIO_CREDITS.md: individual sound sources and CC0/public-domain/CC BY terms, plus the pre-generated voice-model attribution.
 * THIRD_PARTY_LICENSES.txt: bundled MIT software licence notices.
+* compliance.html and assets/licenses/: complete CC0 legal code, replacement-source attribution, transformation notices and current audio-file checksums. Earlier ShareAlike notices are retained only in store/compliance/history/pre-cc0 for previous versions, not in the runtime bundle.
 
 Reviewer access: Menu > Credits and licences. Public copies are available in the Valley-estates repository and on the support website after the release changes are deployed. These manifests provide source/licence evidence, not a blanket legal warranty. Do not claim permissions or documentation beyond that evidence.
 
@@ -64,4 +65,6 @@ Before sending this text in App Store Connect and copying the completed six-part
 * Verify the recording URL is accessible without requesting permission or requiring reviewer sign-in.
 * Preserve existing reviewer contact information and any relevant pre-existing notes when updating App Store Connect.
 * Reply to the existing rejection thread and add the same completed information to review notes. Do not claim that changing review notes alone is a reply to the thread.
+* Verify the candidate uses the new CC0 dog/magpie files and contains neither historical ShareAlike recording. The replacement manifest and automated hash tests provide this evidence.
+* Preserve and provide the attributions required by other CC BY sounds and the voice provenance, including in a reviewer-accessible video description/notes where appropriate. The two replacements are not a whole-app legal certification.
 * Resubmit only after every requested item and the physical QA evidence are present.
