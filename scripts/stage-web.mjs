@@ -3,7 +3,7 @@ import { resolve, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = fileURLToPath(new URL("../", import.meta.url));
-const REQUIRED = ["index.html", "game3d.js", "privacy.html", "support.html", "CREDITS.md", "favicon.ico", "favicon-16.png", "favicon-32.png", "apple-touch-icon.png"];
+const REQUIRED = ["index.html", "game3d.js", "privacy.html", "support.html", "CREDITS.md", "credits.html", "THIRD_PARTY_LICENSES.txt", "favicon.ico", "favicon-16.png", "favicon-32.png", "apple-touch-icon.png"];
 const DOCUMENTS = ["README.md", ".nojekyll", "AUDIO_CREDITS.md", "ASSET_CREDITS.md"];
 
 function assetFiles(directory, prefix = "assets") {
