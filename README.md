@@ -20,6 +20,8 @@ Sound is ambience that follows the time of day and the rain, animal calls, actio
 npm ci
 npm run assets   # regenerate icons and splash screens
 npm run sync     # copy the game into android/ and ios/
+npm test         # deterministic gameplay, sound, signing and packaging regressions
+npm run web:stage # stage and verify the same runtime assets for GitHub Pages
 ```
 
 Release builds run in GitHub Actions. Android signing still uses the keystore secrets in `.github/workflows/android.yml`. See `STORE_LISTING.md` for the store listing. iOS TestFlight is below.
@@ -40,3 +42,9 @@ Add these repository secrets (Settings → Secrets and variables → Actions):
 - `ASC_API_KEY_P8` — the full `.p8` file, including the `BEGIN` and `END` lines
 
 The workflow stops immediately if any of those secrets is missing. It writes the `.p8` to a private temp file for `xcodebuild` and `altool`, and it does not print the key. The TestFlight build number is the GitHub Actions run number. The marketing version stays the `1.0` set in the Xcode project.
+
+## Web and native asset integrity
+
+GitHub Pages and the Capacitor web bundle use `scripts/stage-web.mjs` as their shared staging path. It copies the complete `assets/` tree, including audio, voice, building and animal models, textures and loaders. Both staging paths verify each copied file against its source before succeeding. Do not return to a hand-maintained list of individual assets: missing audio scripts cause the Sound controls to disappear, and missing model loaders silently remove expansion visuals.
+
+The Node audio tests use controlled media-element stubs to reproduce lifecycle and volume-control bugs. They do not prove that a physical iPhone or Android device plays audio. Before releasing, test a real tap, sound controls, background/foreground recovery and the iPhone silent switch on-device. The game's ambient audio session deliberately respects the iPhone silent switch.

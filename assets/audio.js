@@ -12,6 +12,7 @@
   const shown = {};
   const nextAnimal = {};
   const active = new Set();
+  const buses = new WeakMap();
   const played = [];
   let currentVoice = null;
 
@@ -64,9 +65,15 @@
     }
   }
 
-  function track(audio) {
+  function track(audio, bus, gain) {
     active.add(audio);
-    audio.addEventListener("ended", function () { active.delete(audio); }, { once: true });
+    buses.set(audio, { bus: bus, gain: gain });
+    const release = function () {
+      active.delete(audio);
+      if (currentVoice === audio) currentVoice = null;
+    };
+    audio.addEventListener("ended", release, { once: true });
+    audio.addEventListener("error", release, { once: true });
   }
 
   function pauseAll() {
@@ -76,6 +83,8 @@
     }
     if (currentVoice) currentVoice.pause();
     for (const audio of active) audio.pause();
+    active.clear();
+    currentVoice = null;
   }
 
   function unlock() {
@@ -120,18 +129,21 @@
     if (!audible() || settings.effects <= 0) return;
     const audio = make(name, false);
     audio.volume = clamp((gain == null ? 0.8 : gain) * settings.effects, 0, 1);
-    track(audio);
+    track(audio, "effects", gain == null ? 0.8 : gain);
     note(name);
     const pending = audio.play();
     if (pending && pending.catch) pending.catch(function () {});
   }
 
   function playVoice(play) {
-    if (currentVoice) currentVoice.pause();
+    if (currentVoice) {
+      currentVoice.pause();
+      active.delete(currentVoice);
+    }
     const audio = make("voice/" + play.id + "-" + play.index, false);
     audio.volume = clamp(settings.voice, 0, 1);
     currentVoice = audio;
-    track(audio);
+    track(audio, "voice", 1);
     note("voice:" + play.id + "-" + play.index);
     const pending = audio.play();
     if (pending && pending.catch) pending.catch(function () {});
@@ -151,7 +163,7 @@
       if (!audible() || settings.music <= 0) return;
       const audio = make(file, false);
       audio.volume = clamp(0.75 * settings.music, 0, 1);
-      track(audio);
+      track(audio, "music", 0.75);
       note(file);
       const pending = audio.play();
       if (pending && pending.catch) pending.catch(function () {});
@@ -200,8 +212,30 @@
 
   function setLevel(key, percentValue) {
     if (key !== "music" && key !== "effects" && key !== "voice") return;
-    settings[key] = clamp(Number(percentValue) / 100, 0, 1);
+    const value = Number(percentValue);
+    if (!Number.isFinite(value)) return;
+    const previous = settings[key];
+    settings[key] = clamp(value / 100, 0, 1);
     writeStore();
+    for (const audio of active) {
+      const entry = buses.get(audio);
+      if (!entry || entry.bus !== key) continue;
+      audio.volume = clamp(entry.gain * settings[key], 0, 1);
+      if (settings[key] === 0) {
+        audio.pause();
+        active.delete(audio);
+        if (currentVoice === audio) currentVoice = null;
+      }
+    }
+    for (const name of LOOP_NAMES) {
+      const audio = loops[name];
+      const bus = name === "tractor" ? "effects" : "music";
+      if (!audio || bus !== key) continue;
+      const next = previous > 0 ? clamp(audio.volume * settings[key] / previous, 0, 1) : 0;
+      audio.volume = next;
+      shown[name] = next;
+      if (settings[key] === 0) audio.pause();
+    }
     if (!audible()) pauseAll();
   }
 
@@ -221,6 +255,11 @@
   addEventListener("pagehide", function () {
     paused = true;
     pauseAll();
+  });
+  addEventListener("pageshow", function () {
+    paused = document.hidden;
+    setAmbientSession();
+    if (paused) pauseAll();
   });
 
   window.VEAudio = {
