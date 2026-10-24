@@ -720,6 +720,7 @@ function handleSaveRecovery(action){if(action==='recovery-export'){exportDamaged
 // ===================== LOOP =====================
 let last=performance.now(),acc=0,uiT=0,saveT=0,fogT=0,frames=0;
 function frame(now){const real=Math.min(0.1,(now-last)/1000);last=now;
+ if(window.VEEntry&&VEEntry.isOpen()){requestAnimationFrame(frame);return}
  const dt=saveBlocked?0:real*speed;if(dt>0){let r=dt;while(r>0){const s=Math.min(r,0.05);tick(s);r-=s}}
  if((G.coach|0)<4){G.coachTime=(G.coachTime||0)+real;const next=VEExpansion.coachAdvance(G,G.coachTime);if(next!==G.coach){G.coach=next;panelDirty=true;if(next===4)toast('✅ You know your way around the valley.','good')}}
  floats.forEach(f=>{f.a-=real});floats=floats.filter(f=>f.a>0);if(G.ping){G.ping.t-=real*1.2;if(G.ping.t<=0)G.ping=null}

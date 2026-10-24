@@ -32,3 +32,11 @@ test('returning players retain automatic state restoration and recovery remains 
 test('launch surface matches the welcome without a branded native splash', () => { const storyboard=read('ios/App/App/Base.lproj/LaunchScreen.storyboard'); assert.doesNotMatch(storyboard,/imageView|image="Splash"|<label/); assert.match(storyboard,/red="0.9568627451"/); assert.equal(JSON.parse(read('capacitor.config.json')).backgroundColor,'#f4f1e8'); });
 test('entry supports safe areas, motion preference, readable scaling and minimum hit targets', () => { const css=read('assets/entry.css'); assert.match(css,/safe-area-inset-top/); assert.match(css,/safe-area-inset-bottom/); assert.match(css,/prefers-reduced-motion:reduce/); assert.match(css,/font:-apple-system-body/); assert.match(css,/min-height:52px/); assert.match(css,/min-height:44px/); assert.match(css,/overflow-y:auto/); assert.doesNotMatch(html,/user-scalable=no/); });
 test('small-text and button colours meet WCAG AA contrast thresholds', () => { const rgb=hex=>hex.match(/../g).map(v=>parseInt(v,16)/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4); const lum=hex=>rgb(hex).reduce((sum,v,i)=>sum+v*[.2126,.7152,.0722][i],0); const ratio=(a,b)=>(Math.max(lum(a),lum(b))+.05)/(Math.min(lum(a),lum(b))+.05); assert.ok(ratio('193b30','f4f1e8')>=4.5); assert.ok(ratio('57685e','f4f1e8')>=4.5); assert.ok(ratio('ffffff','193b30')>=4.5); });
+
+test('hidden game world is not rendered or advanced during the entry flow', () => {
+  const start=html.indexOf('function frame(now)');
+  const frame=html.slice(start,html.indexOf("addEventListener('resize'",start));
+  const ctx=vm.createContext({performance:{now:()=>0},last:0,VEEntry:{isOpen:()=>true},requestAnimationFrame(){ctx.requested=(ctx.requested||0)+1;},requested:0});ctx.window=ctx;
+  vm.runInContext(frame+';frame(1000)',ctx);
+  assert.equal(ctx.requested,1);assert.equal(ctx.last,1000);
+});

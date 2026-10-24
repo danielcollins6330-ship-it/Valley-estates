@@ -14,7 +14,7 @@ The native launch is a simple warm-paper UIView. The former oversized branded la
 
 The first-time welcome uses an original inline vineyard illustration, the existing Red Gum Interactive identity, restrained forest/cream colours, system-font body copy, a serif game title and one clear Start your estate action. How to play is a separate, optional short explanation. There are no emoji logos, fake percentage loaders, decorative time delays, sign-up barriers or new external services. The illustration is onboarding artwork, not a gameplay screenshot, and must not be used as App Store gameplay evidence.
 
-Returning players with completed onboarding resume their saved estate automatically. A legacy estate that has not completed onboarding can continue from the welcome without resetting. The simulation pauses while welcome/help is open and restores its previous speed, including an intentional pause, afterward. Menu reopens help. Save recovery remains higher priority than every entry action, and no entry module code reads, overwrites or deletes local estate storage.
+Returning players with completed onboarding resume their saved estate automatically. A legacy estate that has not completed onboarding can continue from the welcome without resetting. The simulation pauses and the hidden 3D scene is not drawn while welcome/help is open and restores its previous speed, including an intentional pause, afterward. Menu reopens help. Save recovery remains higher priority than every entry action, and no entry module code reads, overwrites or deletes local estate storage.
 
 ## Accessibility implementation and limits
 
