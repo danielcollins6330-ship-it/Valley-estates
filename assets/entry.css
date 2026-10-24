@@ -22,9 +22,38 @@ body.entry-active>#cv,body.entry-active>#hud,body.entry-active>#bar,body.entry-a
 #sheet .entry-eyebrow{font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--entry-muted);font-weight:650;margin:0 0 12px}
 #sheet .entry-title{font-family:ui-serif,Georgia,serif;font-size:clamp(2.45rem,11vw,3.75rem);line-height:1.02;font-weight:500;letter-spacing:-.045em;margin:0 0 18px;color:var(--entry-ink);outline:none}
 #sheet .entry-description{font-size:1rem;line-height:1.55;color:var(--entry-muted);margin:0;max-width:33ch}
-.entry-pace{display:flex;gap:8px;margin-top:18px}
-.entry-pace .entry-button{min-height:44px;padding:10px 8px;border:1px solid var(--entry-line)}
-.entry-pace .entry-button[aria-pressed="true"]{background:var(--entry-ink);color:#fff}
+#sheet .entry-shell.difficulty .entry-title{font-size:1.75rem;line-height:1.15;margin:0 0 6px}
+#sheet .entry-shell.difficulty .entry-eyebrow,#sheet .entry-shell.difficulty .entry-brand{font-size:13px;margin-bottom:4px}
+.entry-shell.difficulty{padding-top:calc(10px + env(safe-area-inset-top,0px));padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))}
+.entry-shell.difficulty .entry-description{font-size:15px;line-height:1.3;margin-bottom:6px}
+.entry-shell.difficulty .entry-layout{align-items:start;padding-top:0;gap:6px}
+.entry-shell.difficulty .entry-actions{margin-top:4px;gap:4px}
+.entry-shell.difficulty .entry-button{min-height:48px;padding:12px 16px}
+.diff-cards{display:flex;flex-direction:column;gap:4px}
+.diff-card{display:grid;grid-template-columns:36px 1fr 24px;gap:8px;align-items:start;width:100%;text-align:left;padding:8px 10px;border-radius:16px;border:2px solid var(--entry-line);background:#fffdf8;color:var(--entry-ink);font:500 15px/1.35 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;box-shadow:inset 0 0 0 1px #f3ead8}
+.diff-card.is-on{border-color:var(--entry-ink);background:#fff6e4;box-shadow:0 0 0 3px var(--entry-accent)}
+.diff-icon{width:36px;height:36px;border-radius:12px;background:#efe4cc;display:grid;place-items:center}
+.diff-icon svg{width:28px;height:28px;display:block}
+.diff-copy{min-width:0;display:flex;flex-direction:column;gap:1px}
+.diff-name{font-size:18px;font-weight:700;line-height:1.2}
+.diff-rec{align-self:flex-start;margin:1px 0;padding:1px 8px;border-radius:999px;border:1px solid var(--entry-ink);font-size:13px;font-weight:700;letter-spacing:.02em}
+.diff-vibe{font-size:15px;color:var(--entry-ink)}
+.diff-card ul{margin:2px 0 0;padding-left:16px;font-size:14px;line-height:1.25}
+.diff-card li{margin:0}
+.diff-tick{width:24px;height:24px;border:2px solid var(--entry-ink);border-radius:50%;display:grid;place-items:center;margin-top:2px}
+.diff-tick-mark{font-size:15px;font-weight:700;line-height:1;color:#fff}
+.diff-card.is-on .diff-tick{background:var(--entry-ink)}
+.diff-card:focus-visible{outline:3px solid var(--entry-accent);outline-offset:3px}
+.diff-setting{display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:12px;width:100%;margin:0 0 12px;padding:12px 12px 12px 14px;min-height:44px;text-align:left;border-radius:14px;border:2px solid #193b30;background:#fffdf8;color:#193b30;font:600 16px/1.3 -apple-system,BlinkMacSystemFont,system-ui,sans-serif}
+.diff-setting-copy{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0}
+.diff-setting-kicker{font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.diff-setting-value{font-size:18px}
+.diff-setting-vibe{font-size:15px;font-weight:500}
+.diff-setting-change{display:inline-flex;align-items:center;gap:4px;flex:0 0 auto;min-height:36px;padding:6px 12px;border-radius:999px;background:#193b30;color:#fff;font-size:15px;font-weight:700}
+.diff-setting-chevron{font-size:20px;line-height:1}
+.diff-confirm{width:100%;min-height:48px;margin:0 0 8px;padding:12px 14px;border:0;border-radius:14px;background:#193b30;color:#fff;font:600 16px/1.3 -apple-system,BlinkMacSystemFont,system-ui,sans-serif}
+.diff-confirm.secondary{background:transparent;color:#193b30;border:2px solid #193b30}
+@media(prefers-reduced-motion:reduce){.diff-card,.diff-setting,.diff-confirm{transition:none}}
 .entry-actions{display:flex;flex-direction:column;gap:8px;margin-top:24px}
 .entry-button{width:100%;min-height:52px;border:0;border-radius:14px;background:var(--entry-ink);color:#fff;font:600 1rem/1.35 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;padding:15px 20px;cursor:pointer;box-shadow:none}
 .entry-button.secondary{background:transparent;color:var(--entry-ink);font-weight:550}
