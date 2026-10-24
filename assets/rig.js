@@ -235,11 +235,23 @@
           const lum = out[i] * 0.3 + out[i + 1] * 0.59 + out[i + 2] * 0.11;
           const ny = (y - minY) / spanY;
           const h = Math.abs(Math.sin(x * 3.1 + z * 6.4 + s * 2.7) * Math.sin(y * 2.2 + s * 1.3));
-          // Extra underline speckles stay off the legs and the shoulders.
-          if (lum < 0.2 && ny > 0.18 && ny < 0.4 && Math.abs(z) < 0.5 && h > 0.72) {
-            out[i] = 0.95;
-            out[i + 1] = 0.94;
-            out[i + 2] = 0.9;
+          // The default camera looks down on the back, so the topline stays wide and white.
+          if (ny > 0.58 && Math.abs(z) < 0.48) {
+            out[i] = 0.98;
+            out[i + 1] = 0.97;
+            out[i + 2] = 0.93;
+            return;
+          }
+          if (lum < 0.55 && ny > 0.2 && ny < 0.62 && Math.abs(z) < 0.62 && h > 0.52) {
+            out[i] = 0.97;
+            out[i + 1] = 0.96;
+            out[i + 2] = 0.92;
+            return;
+          }
+          if (lum < 0.45 && lum > 0.12) {
+            out[i] = 0.04;
+            out[i + 1] = 0.035;
+            out[i + 2] = 0.03;
           }
         });
         base["s" + s] = geoFrom(parsed.pos, parsed.nrm, col, parsed.jointsAttr, parsed.weights, parsed.indices);

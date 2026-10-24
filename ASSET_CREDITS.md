@@ -29,7 +29,7 @@ Breed colour is vertex colour painted in Blender, with a soft light-from-above s
 | `assets/animals/coat.webp` | Tileable hair normal, 128×128 WebP. | CC0. Original, painted for this game. |
 | `assets/animals/wool.webp` | Tileable wool-clump normal, 128×128 WebP. | CC0. Original, painted for this game. |
 
-Materials stay rough. Cattle have no emissive lift and almost no environment reflection, so the black coat is not lifted to grey. Other coats keep a small warm emissive. The scene exposure is unchanged. Skinned meshes do not cast shadows. The painted cattle speckles are still in the instanced bodies: near-black and off-white, multiplied by the coat noise.
+Materials stay rough. Cattle have no emissive lift and almost no environment reflection, so the black coat is not lifted to grey. Other coats keep a small warm emissive. The scene exposure is unchanged. Skinned meshes do not cast shadows. The instanced cattle stay vertex-coloured: a near-black coat, a white topline, and larger white speckles, with no coat map and no environment reflection, so they stay black and white from the default camera.
 
 ## Compression and the decoder
 

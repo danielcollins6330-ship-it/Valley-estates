@@ -11,6 +11,100 @@
   const cache = {};
   let bytes = 0;
 
+  // Vertex colours in the meshes are masks. Grey iron and red iron are roofs
+  // (including verandahs). Cream boards on a shed become corrugated walls.
+  // Tints are galvanised zinc plus Colorbond-style Pale Eucalypt, Manor Red
+  // and Woodland Grey. The Poly Haven corrugated_iron map supplies the grain.
+  const IRON_LOOK = {
+    homestead: { roof: [0.8, 0.82, 0.8], mix: 0.22 },
+    valleyvilla: { roof: [0.5, 0.54, 0.44], mix: 0.78 },
+    winery: { roof: [0.3, 0.31, 0.27], mix: 0.84 },
+    cellardoor: { roof: [0.5, 0.16, 0.13], mix: 0.8 },
+    shed: { roof: [0.5, 0.16, 0.13], mix: 0.8, wall: [0.78, 0.8, 0.78], wallMix: 0.28 },
+    machine: { roof: [0.3, 0.31, 0.27], mix: 0.84, wall: [0.5, 0.54, 0.44], wallMix: 0.76 },
+    yard: { roof: [0.5, 0.16, 0.13], mix: 0.8 },
+  };
+
+  function ironMaterial(type) {
+    const look = IRON_LOOK[type] || IRON_LOOK.homestead;
+    const Color = api.Color;
+    const mat = new api.Mat({ vertexColors: true, roughness: 0.84, metalness: 0.04 });
+    const iron = window.VEIron;
+    if (!iron || !iron.map || !Color) return mat;
+    const roof = new Color(look.roof[0], look.roof[1], look.roof[2]);
+    const wall = new Color(look.wall ? look.wall[0] : 0, look.wall ? look.wall[1] : 0, look.wall ? look.wall[2] : 0);
+    mat.onBeforeCompile = (shader) => {
+      shader.uniforms.tIron = { value: iron.map };
+      shader.uniforms.tIronN = { value: iron.normalMap };
+      shader.uniforms.uRoof = { value: roof };
+      shader.uniforms.uWall = { value: wall };
+      shader.uniforms.uRoofMix = { value: look.mix };
+      shader.uniforms.uWallMix = { value: look.wallMix == null ? 0.4 : look.wallMix };
+      shader.uniforms.uWallOn = { value: look.wall ? 1 : 0 };
+      shader.vertexShader = "varying vec3 vBldP;varying vec3 vBldN;\n" + shader.vertexShader.replace(
+        "#include <project_vertex>",
+        "vBldP=transformed;vBldN=objectNormal;\n#include <project_vertex>"
+      );
+      const head = `uniform sampler2D tIron;uniform sampler2D tIronN;uniform vec3 uRoof;uniform vec3 uWall;uniform float uRoofMix;uniform float uWallMix;uniform float uWallOn;varying vec3 vBldP;varying vec3 vBldN;
+float veIronRoof(vec3 c){
+  float mx=max(c.r,max(c.g,c.b));
+  float mn=min(c.r,min(c.g,c.b));
+  float sat=mx-mn;
+  float grey=step(0.50,c.r)*step(c.r,0.80)*step(sat,0.14)*step(c.g,c.r+0.12)*step(c.b,c.r+0.14)*step(c.r-0.02,c.b);
+  float red=step(0.45,c.r)*step(c.g,0.23)*step(c.b,0.20)*step(0.22,c.r-c.g);
+  return clamp(grey+red,0.0,1.0);
+}
+float veIronWall(vec3 c){
+  float mx=max(c.r,max(c.g,c.b));
+  float mn=min(c.r,min(c.g,c.b));
+  float sat=mx-mn;
+  return uWallOn*step(0.12,sat)*step(0.64,c.r)*step(c.r,0.92)*step(0.50,c.g)*step(c.b+0.04,c.r)*(1.0-veIronRoof(c));
+}
+float veIronMask(vec3 c){return clamp(veIronRoof(c)+veIronWall(c),0.0,1.0);}
+vec2 veIronUv(vec3 p,vec3 n){
+  vec3 bn=abs(normalize(n));
+  vec2 uv=bn.y>=bn.x&&bn.y>=bn.z?p.xz:(bn.x>=bn.z?p.zy:p.xy);
+  return uv*1.35;
+}
+`;
+      shader.fragmentShader = head + shader.fragmentShader
+        .replace("#include <color_fragment>", `#include <color_fragment>
+{
+  float mask=veIronMask(vColor);
+  if(mask>0.5){
+    vec3 n=normalize(vBldN);
+    float along=abs(n.y)>0.55?vBldP.x:(abs(n.x)>abs(n.z)?vBldP.z:vBldP.x);
+    float rib=0.62+0.46*sin(along*34.0);
+    vec3 sampleIron=texture2D(tIron,veIronUv(vBldP,n)).rgb;
+    float roof=veIronRoof(vColor);
+    vec3 tint=roof>0.5?uRoof:uWall;
+    float amt=roof>0.5?uRoofMix:uWallMix;
+    diffuseColor.rgb=mix(sampleIron,tint,amt)*rib;
+  }
+}`)
+        .replace("#include <metalnessmap_fragment>", `#include <metalnessmap_fragment>
+metalnessFactor=mix(metalnessFactor,0.62,veIronMask(vColor));`)
+        .replace("#include <roughnessmap_fragment>", `#include <roughnessmap_fragment>
+roughnessFactor=mix(roughnessFactor,0.4,veIronMask(vColor));`)
+        .replace("#include <normal_fragment_begin>", `#include <normal_fragment_begin>
+{
+  float mask=veIronMask(vColor);
+  if(mask>0.5){
+    vec3 bn=normalize(vBldN);
+    float along=abs(bn.y)>0.55?vBldP.x:(abs(bn.x)>abs(bn.z)?vBldP.z:vBldP.x);
+    float slope=cos(along*34.0);
+    vec3 side=normalize(cross(normal,abs(bn.y)>0.55?vec3(0.0,0.0,1.0):vec3(0.0,1.0,0.0)));
+    normal=normalize(normal+side*slope*1.35);
+    vec3 tn=texture2D(tIronN,veIronUv(vBldP,bn)).xyz*2.0-1.0;
+    vec3 B=normalize(cross(normal,side));
+    normal=normalize(side*tn.x*0.45+B*tn.y*0.45+normal*tn.z);
+  }
+}`);
+    };
+    mat.customProgramCacheKey = () => "ve-iron-" + type;
+    return mat;
+  }
+
   function readGLB(buffer) {
     const view = new DataView(buffer);
     const jsonLen = view.getUint32(12, true);
@@ -92,7 +186,7 @@
   function clone(type) {
     const src = cache[type];
     if (!src) return null;
-    const mat = new api.Mat({ vertexColors: true, roughness: 0.82, metalness: 0.04 });
+    const mat = ironMaterial(type);
     const group = new api.Group();
     const add = (geos, shown) => {
       const sub = new api.Group();
