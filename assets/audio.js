@@ -50,6 +50,7 @@
     audio.loop = !!loop;
     audio.preload = "auto";
     audio.volume = 0;
+    audio.playsInline = true;
     return audio;
   }
 
@@ -57,9 +58,11 @@
     return unlocked && !paused && !settings.mute;
   }
 
-  function setAmbientSession() {
+  function setPlaybackSession() {
     try {
-      if (navigator.audioSession) navigator.audioSession.type = "ambient";
+      // playback keeps a game audible when the iPhone silent switch is on.
+      // ambient is silenced by that switch, which is why 1.0.11 and 1.0.12 stayed quiet.
+      if (navigator.audioSession) navigator.audioSession.type = "playback";
     } catch (error) {
       /* older WebKit */
     }
@@ -89,18 +92,25 @@
 
   function unlock() {
     if (unlocked) return;
-    setAmbientSession();
-    for (const name of LOOP_NAMES) loops[name] = make(name, true);
-    for (const audio of Object.values(loops)) {
-      audio.muted = true;
+    setPlaybackSession();
+    let waiting = 0;
+    let failed = 0;
+    for (const name of LOOP_NAMES) {
+      const audio = loops[name] || make(name, true);
+      loops[name] = audio;
+      audio.muted = false;
+      audio.volume = 0;
+      waiting += 1;
       const pending = audio.play();
-      const release = function () {
-        audio.pause();
-        audio.currentTime = 0;
-        audio.muted = false;
+      const finish = function (error) {
+        waiting -= 1;
+        if (error) failed += 1;
+        // A gesture play() that is later paused cannot be started again on iOS.
+        // If every loop rejects, allow the next tap to try the unlock again.
+        if (waiting === 0 && failed === LOOP_NAMES.length) unlocked = false;
       };
-      if (pending && pending.then) pending.then(release).catch(release);
-      else release();
+      if (pending && pending.then) pending.then(function () { finish(); }).catch(function () { finish(true); });
+      else finish();
     }
     const now = performance.now();
     for (const name of Object.keys(ANIMAL_EVERY)) nextAnimal[name] = now + 4000 + Math.random() * 8000;
@@ -246,8 +256,9 @@
     return settings.mute;
   }
 
-  setAmbientSession();
+  setPlaybackSession();
   addEventListener("pointerdown", function () { unlock(); }, true);
+  addEventListener("touchend", function () { unlock(); }, true);
   document.addEventListener("visibilitychange", function () {
     paused = document.hidden;
     if (paused) pauseAll();
@@ -258,7 +269,7 @@
   });
   addEventListener("pageshow", function () {
     paused = document.hidden;
-    setAmbientSession();
+    setPlaybackSession();
     if (paused) pauseAll();
   });
 
