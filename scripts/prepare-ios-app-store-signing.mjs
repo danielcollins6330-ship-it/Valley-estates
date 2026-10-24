@@ -9,7 +9,9 @@ import { makeAppStoreToken } from "./register-ios-bundle-id.mjs";
 const BUNDLE_ID = "com.littleridgeestate.valleyestates";
 const CERT_API = "https://api.appstoreconnect.apple.com/v1/certificates";
 const BUNDLE_API = "https://api.appstoreconnect.apple.com/v1/bundleIds";
+const CAPABILITY_API = "https://api.appstoreconnect.apple.com/v1/bundleIdCapabilities";
 const PROFILE_API = "https://api.appstoreconnect.apple.com/v1/profiles";
+export const GAME_CENTER_CAPABILITY = "GAME_CENTER";
 
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, { encoding: "utf8", ...options });
@@ -32,15 +34,28 @@ function publicError(body) {
 }
 
 // Private keys for these CI certificates were deleted with the runner.
+// Oldest first. Revoking one does not affect an IPA that is already uploaded.
 // F87GD5XVS2 never signed an upload. 4G8BZ8MGKN signed an IPA that Apple
-// rejected before an app record existed, so it is not in use either.
-export const UNUSED_CI_DISTRIBUTION_CERTIFICATES = ["F87GD5XVS2", "4G8BZ8MGKN"];
+// rejected before an app record existed. 38798V9TFT signed the v1.0.10 upload
+// and was revoked for the v1.0.12 run. ADJS9GQYHR signed the v1.0.11 upload.
+// U86P563X6Z signed the v1.0.12 upload. None of these private keys were kept.
+export const UNUSED_CI_DISTRIBUTION_CERTIFICATES = [
+  "F87GD5XVS2",
+  "4G8BZ8MGKN",
+  "38798V9TFT",
+  "ADJS9GQYHR",
+  "U86P563X6Z",
+];
 
 export function isCertificateLimit(status, body) {
   if (status !== 409) return false;
   const errors = Array.isArray(body?.errors) ? body.errors : [];
   const text = errors.map((error) => `${error.title || ""} ${error.detail || ""}`).join(" ");
   return /maximum number of certificates|already have the maximum|already have a current iOS Distribution certificate|pending certificate request/i.test(text);
+}
+
+export function gameCenterCapabilityEnabled(capabilities) {
+  return (capabilities || []).some((item) => item?.attributes?.capabilityType === GAME_CENTER_CAPABILITY);
 }
 
 export function chooseCertificateToRevoke(certificates) {
@@ -79,6 +94,82 @@ async function importAppleIntermediates(keychainPath) {
       console.log(`Imported ${path.basename(url)}.`);
     }
   }
+}
+
+async function listBundleCapabilities(token, bundleResourceId) {
+  // This relationship rejects filter and limit. Follow links.next instead.
+  const collected = [];
+  let url = `${BUNDLE_API}/${bundleResourceId}/bundleIdCapabilities`;
+  let status = 0;
+  let body = {};
+  while (url) {
+    const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+    status = response.status;
+    body = await readJson(response);
+    if (!response.ok) return { status, ok: false, body };
+    if (Array.isArray(body.data)) collected.push(...body.data);
+    url = typeof body.links?.next === "string" ? body.links.next : "";
+  }
+  return { status, ok: true, body: { data: collected } };
+}
+
+async function enableGameCenterCapability(token, bundleResourceId) {
+  const response = await fetch(CAPABILITY_API, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      data: {
+        type: "bundleIdCapabilities",
+        attributes: { capabilityType: GAME_CENTER_CAPABILITY },
+        relationships: {
+          bundleId: { data: { type: "bundleIds", id: bundleResourceId } },
+        },
+      },
+    }),
+  });
+  return { status: response.status, body: await readJson(response) };
+}
+
+// The App Store profile only contains entitlements enabled on the App ID.
+// The signed app asks for com.apple.developer.game-center, so this must run
+// before the profile is created or codesign rejects the archive.
+async function ensureGameCenterCapability(token, bundleResourceId) {
+  const listed = await listBundleCapabilities(token, bundleResourceId);
+  if (!listed.ok) {
+    console.error(`Could not read App ID capabilities (HTTP ${listed.status}).`);
+    console.error(publicError(listed.body));
+    process.exit(1);
+  }
+  if (gameCenterCapabilityEnabled(listed.body.data)) {
+    console.log("Game Center is already enabled on the App ID. The App Store profile will include com.apple.developer.game-center.");
+    return;
+  }
+
+  const created = await enableGameCenterCapability(token, bundleResourceId);
+  if (created.status === 201 || created.status === 200) {
+    console.log("Enabled Game Center on the App ID so the App Store profile includes com.apple.developer.game-center.");
+    return;
+  }
+
+  const confirmed = await listBundleCapabilities(token, bundleResourceId);
+  if (confirmed.ok && gameCenterCapabilityEnabled(confirmed.body.data)) {
+    console.log("Game Center is enabled on the App ID. The App Store profile will include com.apple.developer.game-center.");
+    return;
+  }
+
+  console.error(`Could not enable Game Center on ${BUNDLE_ID} (HTTP ${created.status}).`);
+  console.error(publicError(created.body));
+  if (!confirmed.ok) {
+    console.error(`Could not re-read App ID capabilities (HTTP ${confirmed.status}).`);
+    console.error(publicError(confirmed.body));
+  }
+  console.error("Enable it by hand, then rerun this workflow:");
+  console.error("Apple Developer → Certificates, Identifiers & Profiles → Identifiers → com.littleridgeestate.valleyestates → Game Center.");
+  console.error("Until that capability is on, the App Store profile omits com.apple.developer.game-center and codesign rejects the entitlement.");
+  process.exit(1);
 }
 
 function appendEnv(name, value) {
@@ -132,6 +223,18 @@ async function main() {
     "-subj", "/CN=Valley Estates CI/O=Valley Estates",
   ]);
   chmodSync(keyPath, 0o600);
+
+  const bundleUrl = new URL(BUNDLE_API);
+  bundleUrl.searchParams.set("filter[identifier]", BUNDLE_ID);
+  const bundleResponse = await fetch(bundleUrl, { headers: { Authorization: `Bearer ${token}` } });
+  const bundleBody = await readJson(bundleResponse);
+  const bundle = (bundleBody.data || []).find((item) => item.attributes?.identifier === BUNDLE_ID);
+  if (!bundleResponse.ok || !bundle) {
+    console.error(`The bundle ID ${BUNDLE_ID} was not readable (HTTP ${bundleResponse.status}).`);
+    console.error(publicError(bundleBody));
+    process.exit(1);
+  }
+  await ensureGameCenterCapability(token, bundle.id);
 
   const csr = readFileSync(csrPath, "utf8");
   const requestDistributionCertificate = async () => {
@@ -212,17 +315,6 @@ async function main() {
   }
   writeFileSync(cerPath, Buffer.from(certificateContent, "base64"));
   console.log(`Created Apple Distribution certificate ${certificateId}.`);
-
-  const bundleUrl = new URL(BUNDLE_API);
-  bundleUrl.searchParams.set("filter[identifier]", BUNDLE_ID);
-  const bundleResponse = await fetch(bundleUrl, { headers: { Authorization: `Bearer ${token}` } });
-  const bundleBody = await readJson(bundleResponse);
-  const bundle = (bundleBody.data || []).find((item) => item.attributes?.identifier === BUNDLE_ID);
-  if (!bundleResponse.ok || !bundle) {
-    console.error(`The bundle ID ${BUNDLE_ID} was not readable (HTTP ${bundleResponse.status}).`);
-    console.error(publicError(bundleBody));
-    process.exit(1);
-  }
 
   const profileName = `Valley Estates App Store ${process.env.GITHUB_RUN_NUMBER || "local"}`;
   const profileResponse = await fetch(PROFILE_API, {
