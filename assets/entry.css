@@ -1,10 +1,11 @@
-/* Entry and the loading title. Native launch uses this same warm paper, so the first web frame does not flash white. */
-:root{--entry-paper:#f4f1e8;--entry-ink:#193b30;--entry-muted:#57685e;--entry-line:#d4d8cb;--entry-accent:#a5753c}
+/* Entry, and the loading title. The boot ground matches the painted valley and the iOS launch colour. */
+:root{--entry-paper:#f4f1e8;--entry-ink:#193b30;--entry-muted:#57685e;--entry-line:#d4d8cb;--entry-accent:#a5753c;--boot-ground:#827231}
 html{font-size:17px;font:-apple-system-body}
 html,body{background:var(--entry-paper)}
+body.app-booting{background:var(--boot-ground)}
 html.entry-active,body.entry-active,#modal.entry-modal,#modal.entry-modal #sheet{touch-action:pan-y pinch-zoom}
 body.app-booting>#cv,body.app-booting>#hud,body.app-booting>#bar,body.app-booting>#sub,body.app-booting>#goal,body.app-booting>#mini,body.app-booting>#side,body.app-booting>#rside,body.app-booting>#panel,body.app-booting>#toasts{visibility:hidden}
-#entry-boot{position:fixed;inset:0;z-index:30;background:var(--entry-paper);color:var(--entry-muted);display:grid;place-content:center;gap:16px;text-align:center;font-size:1rem;padding:calc(24px + env(safe-area-inset-top,0px)) 24px calc(24px + env(safe-area-inset-bottom,0px));line-height:1.5}
+#entry-boot{position:fixed;inset:0;z-index:30;background:var(--boot-ground) center/cover no-repeat;background-image:url("boot-valley.webp");color:#fff6e4;display:grid;place-content:center;gap:16px;text-align:center;font-size:1rem;padding:calc(24px + env(safe-area-inset-top,0px)) 24px calc(24px + env(safe-area-inset-bottom,0px));line-height:1.5}
 #entry-boot[hidden]{display:none}
 .entry-progress{width:24px;height:24px;border:2px solid var(--entry-line);border-top-color:var(--entry-ink);border-radius:50%;margin:auto;animation:entry-spin .9s linear infinite}
 @keyframes entry-spin{to{transform:rotate(360deg)}}
@@ -43,13 +44,14 @@ body.entry-active>#cv,body.entry-active>#hud,body.entry-active>#bar,body.entry-a
 .entry-shell.help .entry-layout{padding-top:28px;align-content:center}
 @media(min-width:760px){.entry-shell{padding-left:48px;padding-right:48px}.entry-layout{grid-template-columns:1.1fr 1fr;gap:56px;padding:40px 0}.entry-art{max-height:560px;min-height:360px;height:58dvh}.entry-copy{padding:12px 0}.entry-title{font-size:64px}.entry-shell.help .entry-layout{grid-template-columns:1fr;max-width:560px;width:100%;margin:auto}.entry-footer{margin-top:0}}
 @media(max-height:680px) and (max-width:759px){.entry-shell{padding-top:calc(16px + env(safe-area-inset-top,0px))}.entry-art{max-height:20dvh;min-height:76px}.entry-layout{gap:18px}.entry-actions{margin-top:16px}.entry-footer{padding-top:12px;margin-top:12px}}
-.boot-card{width:min(420px,100%);display:flex;flex-direction:column;align-items:center;text-align:center;color:var(--entry-ink)}
-.boot-mark{width:128px;height:72px;display:block}
-.boot-title{font-family:ui-serif,Georgia,serif;font-size:clamp(2.5rem,11vw,3.5rem);line-height:1.02;font-weight:500;letter-spacing:-.04em;margin:18px 0 0}
-.boot-credit{margin:10px 0 0;font-size:.8rem;font-weight:650;letter-spacing:.16em;text-transform:uppercase;color:var(--entry-muted)}
-.boot-bar{width:min(240px,68vw);height:6px;margin:28px 0 0;border-radius:999px;background:var(--entry-line);overflow:hidden}
-.boot-bar span{display:block;height:100%;width:0;background:var(--entry-ink);border-radius:inherit}
-.boot-tips{position:relative;width:min(320px,100%);height:3.2em;margin:22px 0 0;font-size:.95rem;line-height:1.45;color:var(--entry-muted)}
+.boot-card{width:min(440px,100%);display:flex;flex-direction:column;align-items:center;text-align:center;color:#fff6e4}
+.boot-icon{width:30vw;max-width:220px;height:auto;border-radius:22%;box-shadow:0 14px 32px rgba(28,16,6,.5);display:block}
+.boot-title{font-family:ui-serif,Georgia,serif;font-size:clamp(2.5rem,11vw,3.5rem);line-height:1.02;font-weight:500;letter-spacing:-.04em;margin:18px 0 0;color:#fff6e4;text-shadow:0 2px 10px rgba(42,24,8,.55)}
+.boot-credit{margin:10px 0 0;font-size:.8rem;font-weight:650;letter-spacing:.16em;text-transform:uppercase;color:#f3e2c4;text-shadow:0 1px 6px rgba(42,24,8,.5)}
+.boot-panel{width:min(300px,84vw);margin-top:22px;padding:14px 16px 12px;border-radius:16px;background:rgba(36,24,12,.46)}
+.boot-bar{width:100%;height:8px;margin:0;border-radius:999px;background:rgba(255,246,228,.28);overflow:hidden}
+.boot-bar span{display:block;height:100%;width:0;border-radius:inherit;background:linear-gradient(90deg,#2f6b45,#e2b15a)}
+.boot-tips{position:relative;width:100%;height:3.2em;margin:12px 0 0;font-size:.95rem;line-height:1.45;color:#f6edd8}
 .boot-tips span{position:absolute;left:0;right:0;top:0;opacity:0;animation:boot-tip 18s infinite}
 .boot-tips span:nth-child(2){animation-delay:4.5s}
 .boot-tips span:nth-child(3){animation-delay:9s}
