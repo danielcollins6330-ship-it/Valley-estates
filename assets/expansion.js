@@ -789,6 +789,11 @@
     return mul;
   }
 
+  function tractorMul(game, source) {
+    if (source !== "field" && source !== "vineyard" && source !== "olive") return 1;
+    return built(game, "tractorshed") ? 1.45 : 1;
+  }
+
   function oliveRate(season, drought) {
     if (season === 3) return 0.02;
     let rate = season === 2 ? 0.11 : season === 0 ? 0.07 : 0.05;
@@ -1001,6 +1006,7 @@
     stockQuote: stockQuote,
     droughtMul: droughtMul,
     workMul: workMul,
+    tractorMul: tractorMul,
     oliveRate: oliveRate,
     tickCare: tickCare,
     rollChoice: rollChoice,

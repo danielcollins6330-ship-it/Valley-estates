@@ -164,6 +164,11 @@ assert.ok(expansion.droughtMul(dry) < expansion.droughtMul({ techs: {}, building
 assert.ok(expansion.droughtMul({ techs: {}, buildings: [{ type: "dam", built: true }, { type: "tank", built: true }] }) > 0.85);
 assert.equal(expansion.droughtMul({ techs: { irrig: 1 }, buildings: [] }), 1);
 assert.ok(expansion.workMul({ buildings: [{ type: "machine", built: true }], time: 0, events: {} }) > 1);
+assert.equal(expansion.tractorMul({ buildings: [] }, "vineyard"), 1);
+assert.ok(expansion.tractorMul({ buildings: [{ type: "tractorshed", built: true }] }, "field") > 1.4);
+assert.ok(expansion.tractorMul({ buildings: [{ type: "tractorshed", built: true }] }, "vineyard") > 1.4);
+assert.equal(expansion.tractorMul({ buildings: [{ type: "tractorshed", built: true }] }, "paddock"), 1);
+assert.equal(expansion.tractorMul({ buildings: [{ type: "tractorshed", built: false }] }, "olive"), 1);
 assert.ok(expansion.oliveRate(2, false) > expansion.oliveRate(2, true));
 assert.ok(expansion.oliveRate(3, false) < expansion.oliveRate(0, false));
 
@@ -412,7 +417,9 @@ assert.equal(judged.notes[0].coins, 30);
 assert.equal(expansion.tickFestival(festGame, 1, 120).notes.length, 0);
 
 const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
-for (const needle of ["assets/expansion.js", "assets/haptics.js", "cellardoor", "Valley Villa", "yard", "olive", "sellwine", "migrateSave", "coachAdvance", "claimAchievements", "Erase this estate", "Colour-blind icons", "Farmhands", "bCrew", "Four ages", "Harvest festival", "Wine show"]) {
+assert.equal(html.includes("hctx.fillText(text,item.sx"), false);
+assert.ok(html.includes("VEExpansion.activityLabel(u)"));
+for (const needle of ["assets/expansion.js", "assets/haptics.js", "cellardoor", "Valley Villa", "yard", "olive", "sellwine", "migrateSave", "coachAdvance", "claimAchievements", "Erase this estate", "Colour-blind icons", "Farmhands", "bCrew", "Four ages", "Harvest festival", "Wine show", "Tractor Shed"]) {
   assert.ok(html.includes(needle), "index missing " + needle);
 }
 const bannedNames = ["bru" + "ma", "little " + "ridge"];
