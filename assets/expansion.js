@@ -115,11 +115,24 @@
     return RESEARCH.filter((node) => node.at === type);
   }
 
+  function researchProgress(game, id) {
+    const host = ((game && game.buildings) || []).find((building) => building && building.research && building.research.id === id);
+    if (!host) return null;
+    const study = host.research;
+    const node = researchById(id);
+    const duration = Number(study.total);
+    const total = Number.isFinite(duration) && duration > 0 ? duration : (node ? node.time : 1);
+    const elapsed = clamp(Number(study.t) || 0, 0, total);
+    return { hostId: host.id, total: total, elapsed: elapsed, progress: elapsed / total, remaining: Math.ceil(total - elapsed) };
+  }
+
   function researchState(game, id) {
     const node = researchById(id);
     if (!node) return { ok: false, reason: "Unknown study" };
     const known = game && game.techs ? game.techs : {};
     if (known[id]) return { ok: false, reason: "Already known" };
+    const active = researchProgress(game, id);
+    if (active) return { ok: false, reason: "Researching: " + active.remaining + "s remaining", researching: true, progress: active.progress, remaining: active.remaining };
     for (const req of node.requires) {
       if (!known[req]) {
         const prior = researchById(req);
@@ -143,6 +156,9 @@
         time: node.time,
         benefit: node.benefit,
         known: !!(game && game.techs && game.techs[node.id]),
+        researching: !!state.researching,
+        progress: state.progress || 0,
+        remaining: state.remaining || 0,
         ok: state.ok,
         reason: state.reason,
       };
@@ -997,6 +1013,7 @@
     RESEARCH: RESEARCH,
     researchById: researchById,
     researchAt: researchAt,
+    researchProgress: researchProgress,
     researchState: researchState,
     researchRows: researchRows,
     pressTimeMul: pressTimeMul,

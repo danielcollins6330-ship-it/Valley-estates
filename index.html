@@ -132,6 +132,7 @@ html.layout-wide.lefty #rside{left:calc(var(--hud-left) + 8px + var(--safe-l))}
 <script src="assets/rig.js"></script>
 <script src="assets/buildings.js"></script>
 <script src="game3d.js"></script>
+<script src="assets/save-store.js"></script>
 <script src="assets/audio-policy.js"></script>
 <script src="assets/audio.js"></script>
 <script src="assets/expansion.js"></script>
@@ -577,8 +578,8 @@ function panelHTML(){
    h+=btn('sell:wool:10:'+wool,'🧶 Sell 10 wool','+'+wool+'🪙','',G.res.wool<10)+btn('sell:olives:8:'+olive,'🫒 Sell 8 olives','+'+olive+'🪙','',G.res.olives<8)+btn('sell:food:100:'+marketPrice(30),'Sell 100🌾','+'+marketPrice(30)+'🪙','',G.res.food<100)+btn('sell:wood:100:'+marketPrice(30),'Sell 100🪵','+'+marketPrice(30)+'🪙','',G.res.wood<100)+btn('sell:stone:100:'+marketPrice(45),'Sell 100🪨','+'+marketPrice(45)+'🪙','',G.res.stone<100)+btn('buy:food:100:60','Buy 100🌾','-60🪙','alt',G.res.coins<60)+btn('buy:stone:100:80','Buy 100🪨','-80🪙','alt',G.res.coins<80)}
   if(!b.research){for(const node of VEExpansion.researchAt(b.type)){if(G.techs[node.id])continue;const state=VEExpansion.researchState(G,node.id);
     h+=btn('tech:'+node.id,'🔬 '+node.name,state.ok?costStr(node.cost)+' · '+node.benefit:'🔒 '+state.reason,'alt',!state.ok||!canAfford(node.cost))}
-   for(const[id,tc]of Object.entries(TECH)){if(VEExpansion.researchById(id)||tc.at!==b.type||G.techs[id])continue;const lock=G.age<tc.age;
-    h+=btn('tech:'+id,'🔬 '+tc.n,lock?'🔒 '+AGES[tc.age].n:costStr(tc.cost)+' · '+tc.desc,'alt',lock||!canAfford(tc.cost))}}
+   for(const[id,tc]of Object.entries(TECH)){if(VEExpansion.researchById(id)||tc.at!==b.type||G.techs[id])continue;const lock=G.age<tc.age,active=VEExpansion.researchProgress(G,id);
+    h+=btn('tech:'+id,'🔬 '+tc.n,active?'Researching: '+active.remaining+'s remaining':lock?'🔒 '+AGES[tc.age].n:costStr(tc.cost)+' · '+tc.desc,'alt',!!active||lock||!canAfford(tc.cost))}}
   h+=btn('deselect','✖ Close','','red')+'</div>';return h}
  return `<h4><img class="logo" src="assets/logo.png" alt=""> Valley Estates</h4><div class="d">Ferguson Valley, WA. Drag to pan, pinch to zoom. Tap a farmhand then tap where to work. Tap 🔨 to build. Seasons bring drought, frost, foxes and bushfires!</div><div class="btns">${btn('build','🔨 Build','')}${btn('selidle','👥 Select idle','')}${btn('tc','🏠 Homestead','','alt')}</div>`}
 function renderPanel(){const h=panelHTML();if(h!==lastPanel){$('panel').innerHTML=h;lastPanel=h}}
@@ -591,8 +592,8 @@ function act(a){if(window.VEHaptics)VEHaptics.tap('light');const b=G.buildings.f
  case'selidle':selectIdle();break;case'tc':{const t=G.buildings.find(b=>b.type==='homestead');if(t){G.selB=t.id;centerOn(t.x+1.5,t.y+1.5)}break}
  case'train':if(b&&b.queue.length<5&&pay({food:50}))b.queue.push(1);break;
  case'crew':openCrew();break;case'study':showResearch();break;
- case'age':{const a2=AGES[G.age+1];if(b&&!b.research&&pay(a2.cost)){b.research={id:'age'+(G.age+1),t:0,total:a2.time};toast('⬆️ Researching '+a2.n)}break}
- case'tech':{const node=VEExpansion.researchById(p[1]);const tc=node||TECH[p[1]];const state=node?VEExpansion.researchState(G,p[1]):{ok:!!tc&&G.age>=tc.age};if(b&&tc&&!b.research&&state.ok&&pay(node?node.cost:tc.cost)){b.research={id:p[1],t:0,total:node?node.time:tc.time}}break}
+ case'age':{const a2=AGES[G.age+1];if(a2&&b&&b.built&&b.type==='homestead'&&!b.research&&!VEExpansion.researchProgress(G,'age'+(G.age+1))&&pay(a2.cost)){b.research={id:'age'+(G.age+1),t:0,total:a2.time};toast('⬆️ Researching '+a2.n)}break}
+ case'tech':{const node=VEExpansion.researchById(p[1]);const tc=node||TECH[p[1]];const state=node?VEExpansion.researchState(G,p[1]):{ok:!!tc&&G.age>=tc.age};if(b&&b.built&&tc&&b.type===tc.at&&!b.research&&!G.techs[p[1]]&&!VEExpansion.researchProgress(G,p[1])&&state.ok&&pay(tc.cost)){b.research={id:p[1],t:0,total:tc.time}}break}
  case'skillset':{const hand=selUnits()[0];if(hand&&VEExpansion.setSkill(hand,p[1]))toast(hand.name+' now specialises in '+VEExpansion.skillLabel(p[1]));break}
  case'prio':{const hand=selUnits()[0];if(hand&&VEExpansion.setPriority(hand,p[1]))toast(hand.name+' will take '+VEExpansion.priorityLabel(p[1]).toLowerCase()+' work');break}
  case'dog':if(b&&b.type==='vineyard'){G.events.dogScare=G.time+50;delete G.events.birds;toast('🐕 The dog is in the vines. The cockatoos lift off.','good')}break;
@@ -620,7 +621,8 @@ function openBuild(){let h='<h3>🔨 Build</h3><div class="grid">';
 $('sheet').addEventListener('input',e=>{const el=e.target.closest('[data-audio]');if(!el||el.type!=='range'||!window.VEAudio)return;VEAudio.setLevel(el.dataset.audio,Number(el.value))});
 $('sheet').addEventListener('click',e=>{const mute=e.target.closest('[data-audio="mute"]');if(mute&&window.VEAudio){VEAudio.toggleMute();const on=VEAudio.settings().mute;mute.textContent=on?'Unmute':'Mute';mute.classList.toggle('red',on)}});
 $('sheet').addEventListener('click',e=>{const c=e.target.closest('[data-b]');if(!c)return;const k=c.dataset.b;
- if(k==='x'||k==='newgame-no'){closeModal();if(G.choice){G.choice=null;G.nextChoice=70}return}if(k==='newgame-yes'){localStorage.removeItem(SAVE_KEY);newGame();closeModal();toast('🌱 New estate founded!');return}
+ if(k.startsWith('recovery-')){handleSaveRecovery(k);return}if(saveBlocked&&k!=='newgame-yes'){showSaveRecovery();return}
+ if(k==='x'||k==='newgame-no'){closeModal();if(G.choice){G.choice=null;G.nextChoice=70}return}if(k==='newgame-yes'){resetEstate();return}
  if(k.startsWith('choice:')){const parts=k.split(':');const result=VEExpansion.applyChoice(G,parts[1],parts[2]);G.choice=null;G.nextChoice=80;closeModal();toast(result?result.text:'Okay',result&&result.ok?'good':'warn');if(result&&result.ok&&window.VEHaptics)VEHaptics.tap('heavy');return}
  if(k==='resume'){closeModal();return}if(k.startsWith('q-')){const q=k.slice(2);VE3D.setQuality(q);try{localStorage.setItem('valleyEstatesGraphics',q)}catch(err){}toast(q==='low'?'Low graphics on — easier on older phones':'Graphics: '+q);closeModal();return}
  if(k==='reset-ask'){showReset();return}if(k==='hands'){showHands();return}if(k==='research'){showResearch();return}if(k==='orders'){showOrders();return}
@@ -633,7 +635,7 @@ $('sheet').addEventListener('click',e=>{const c=e.target.closest('[data-b]');if(
  if(!B[k])return;const d=B[k];if(G.age<d.age){toast('Requires '+AGES[d.age].n,'warn');return}if(!canAfford(d.cost)){toast('Need '+costStr(d.cost),'warn');return}
  const [cx,cy]=s2w(W/2,(H-140)/2);placing={type:k,x:Math.floor(cx-d.w/2),y:Math.floor(cy-d.h/2)};closeModal();panelDirty=true;toast('Tap the map to move the ghost, then ✔ Confirm')});
 $('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal()});
-function closeModal(){$('modal').style.display='none'}
+function closeModal(){if(saveBlocked){showSaveRecovery();return}$('modal').style.display='none'}
 function openCrew(){let h='<h3>📋 Farm desk</h3><p>Hire hands, study the ages, or fill a buyer’s order.</p>';
  h+='<button class="btn" data-b="hands" style="width:100%;margin-bottom:8px">🧢 Farmhands<small style="display:block">Names, skills, hire</small></button>';
  h+='<button class="btn" data-b="research" style="width:100%;margin-bottom:8px">🔬 Research<small style="display:block">Presses, water, pasture, genetics</small></button>';
@@ -648,13 +650,16 @@ function btnPrio(u,priority){return `<button class="btn ${(u.priority||'auto')==
 function hireBtn(skill,label){return `<button class="btn" data-b="hire:${skill}">${label}<small>🌾50</small></button>`}
 function hireSkill(skill){if(G.units.length>=popCap()){toast('Need another Cottage before hiring.','warn');return}if(!pay({food:50})){toast('Need 50 food to hire.','warn');return}
  const home=G.buildings.find(b=>b.type==='homestead');const hand=VEExpansion.nextHand(G.units,skill);const u=spawnUnit(home?home.x+1.5:20,home?home.y+home.h+.4:24,skill);u.name=hand.name;u.skill=hand.skill;G.stats.trained++;toast(u.name+' joined to work '+VEExpansion.skillLabel(skill),'good');showHands()}
+function studyDetail(row){return row.known?'Already known':row.researching?'Researching · '+row.remaining+'s remaining · '+Math.floor(row.progress*100)+'%':row.ok?costStr(row.cost)+' · '+row.time+'s · '+row.benefit:'🔒 '+row.reason}
 function showResearch(){const ages=['Homestead Age','Settler Age','Estate Age','Valley Empire Age'];
- let h='<h3>🔬 Research</h3><p>Four ages. Each study lists its cost and what you gain. Later studies wait on the one before them.</p>';
+ let h='<h3>🔬 Research</h3><p>Four ages. Each study lists its cost and what you gain. Later studies wait on the one before them. Studies already running cannot be bought twice.</p>';
  const rows=VEExpansion.researchRows(G);
  for(let a=0;a<4;a++){const mine=rows.filter(r=>r.age===a);if(!mine.length)continue;h+=`<p><b>${ages[a]}</b></p>`;let branch='';
-  for(const row of mine){if(row.branch!==branch){branch=row.branch;h+=`<p>${branch}</p>`}const sub=row.known?'Already known':row.ok?costStr(row.cost)+' · '+row.time+'s · '+row.benefit:'🔒 '+row.reason;
-   h+=`<button class="btn ${row.known?'dis':row.ok?'':'alt'}" data-b="study:${row.id}" style="width:100%;margin-bottom:6px">${row.name}<small style="display:block">${sub}</small></button>`}}
+  for(const row of mine){if(row.branch!==branch){branch=row.branch;h+=`<p>${branch}</p>`}
+   h+=`<button class="btn ${row.known||row.researching?'dis':row.ok?'':'alt'}" data-b="study:${row.id}" data-study-id="${row.id}" style="width:100%;margin-bottom:6px" ${row.ok?'':'disabled'}>${row.name}<small data-study-detail style="display:block">${studyDetail(row)}</small><span data-study-progress class="pb" style="display:${row.researching?'block':'none'}" aria-hidden="true"><i style="width:${row.progress*100}%"></i></span></button>`}}
  h+='<button class="close" data-b="x">Close</button>';$('sheet').innerHTML=h;$('modal').style.display='flex'}
+function updateResearchSheet(){if($('modal').style.display!=='flex')return;const rows=VEExpansion.researchRows(G);
+ for(const button of $('sheet').querySelectorAll('[data-study-id]')){const row=rows.find(r=>r.id===button.dataset.studyId);if(!row)continue;button.disabled=!row.ok;button.classList.toggle('dis',row.known||row.researching);button.classList.toggle('alt',!row.known&&!row.researching&&!row.ok);button.querySelector('[data-study-detail]').textContent=studyDetail(row);const bar=button.querySelector('[data-study-progress]');bar.style.display=row.researching?'block':'none';bar.firstElementChild.style.width=row.progress*100+'%'}}
 function startStudy(id){const node=VEExpansion.researchById(id);if(!node)return;const state=VEExpansion.researchState(G,id);if(!state.ok){toast(state.reason,'warn');return}if(!canAfford(node.cost)){toast('Need '+costStr(node.cost),'warn');return}
  const host=G.buildings.find(b=>b.built&&!b.research&&b.type===node.at)||G.buildings.find(b=>b.built&&b.type==='homestead'&&!b.research);if(!host){toast('Finish the current study first.','warn');return}
  if(!has(G,node.at)&&node.at!=='homestead'){toast('Build the '+B[node.at].n+' first.','warn');return}
@@ -663,7 +668,7 @@ function showOrders(){const order=G.order;let h='<h3>📋 Orders</h3>';
  if(!order)h+='<p>No buyer is waiting. A new order appears once the estate is past the Homestead Age.</p>';
  else h+=`<p><b>${order.qty} ${order.label}</b> before ${Math.max(0,Math.ceil(order.until-G.time))}s. Reward +${order.reward}🪙. You have ${VEExpansion.orderHave(G,order)}.</p><button class="btn ${VEExpansion.orderReady(G,order)?'':'dis'}" data-b="deliver-order" style="width:100%">Deliver</button>`;
  h+='<button class="close" data-b="x">Close</button>';$('sheet').innerHTML=h;$('modal').style.display='flex'}
-function showReset(){$('sheet').innerHTML='<h3>Erase this estate?</h3><p>This deletes the save on this device. It cannot be undone.</p><button class="btn red" data-b="newgame-yes" style="width:100%;margin-bottom:8px">Erase save</button><button class="close" data-b="newgame-no">Keep playing</button>';$('modal').style.display='flex'}
+function showReset(){const cancel=saveBlocked?'recovery-back':'newgame-no';$('sheet').innerHTML='<h3>Erase this estate and its backup?</h3><p>This deletes saved estate data on this device, including recovery copies. It cannot be undone. Export any damaged data first.</p><button class="btn red" data-b="newgame-yes" style="width:100%;margin-bottom:8px">Erase save and backup</button><button class="close" data-b="'+cancel+'">Keep estate</button>';$('modal').style.display='flex'}
 const A11Y_KEY='valleyEstatesA11y';
 function readA11y(){try{return Object.assign({text:'medium',cb:false,lefty:false},JSON.parse(localStorage.getItem(A11Y_KEY)||'{}'))}catch(e){return {text:'medium',cb:false,lefty:false}}}
 function applyA11y(opts){const root=document.documentElement;root.classList.remove('text-lg','text-sm','cb','lefty');for(const name of VEExpansion.a11yClasses(opts))root.classList.add(name)}
@@ -679,26 +684,39 @@ function showWin(){$('sheet').innerHTML=`<h3>🏆 Ferguson Valley's Top Estate!<
 function showIntro(){$('sheet').innerHTML=`<h3><img class="logo lg" src="assets/logo.png" alt="">Welcome to Valley Estates</h3><p>Your little homestead sits in the Ferguson Valley, WA. Grow it into the region's top wine estate!</p><p>👆 <b>Tap</b> a farmhand, then tap a tree, rock, berry bush or building to work.<br>✋ <b>Drag</b> to pan · 🤏 <b>pinch</b> to zoom.<br>🔨 Build · 🧑‍🌾 find idle workers · ⬚ drag-select.</p><p>Follow the 🎯 goals at top-left.</p><button class="close" data-b="x">Let's farm!</button>`;$('modal').style.display='flex';G.tutorialSeen=true}
 
 // ===================== SAVE =====================
-function save(){try{G.lastSeen=Date.now();const s={...G,ter:Array.from(G.ter),amt:Array.from(G.amt),var:Array.from(G.var),explored:Array.from(G.explored),units:G.units.map(u=>({...u,path:null,phase:u.task?'go':null})),uid,cam:{x:cam.x,y:cam.y,zoom:cam.zoom},view:{w:W,h:H}};localStorage.setItem(SAVE_KEY,JSON.stringify(s))}catch(e){console.warn('save failed',e)}}
-function load(){try{const s=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');if(!s||!s.ter)return false;
- G={...s,ter:Uint8Array.from(s.ter),amt:Int16Array.from(s.amt),var:Uint8Array.from(s.var),explored:Uint8Array.from(s.explored)};VEExpansion.migrateSave(G);uid=s.uid;Object.assign(cam,s.cam);
+let saveBlocked=false,recoveryState=null,saveWarningShown=false;
+function showSaveRecovery(){if(!recoveryState)return;$('sheet').innerHTML=VESaveStore.buildRecoveryModalHTML(recoveryState);$('modal').style.display='flex'}
+function pauseForRecovery(){speed=0;$('bPause').textContent='▶️';showSaveRecovery()}
+function save(){if(saveBlocked)return false;try{const stamp=Date.now();const s={...G,lastSeen:stamp,ter:Array.from(G.ter),amt:Array.from(G.amt),var:Array.from(G.var),explored:Array.from(G.explored),units:G.units.map(u=>({...u,path:null,phase:u.task?'go':null})),uid,cam:{x:cam.x,y:cam.y,zoom:cam.zoom},view:{w:W,h:H}};const result=VESaveStore.save(s,undefined,SAVE_KEY);
+ if(!result.success){if(result.reason==='recovery_required'){recoveryState=VESaveStore.load(undefined,SAVE_KEY);saveBlocked=true;pauseForRecovery()}else if(!saveWarningShown){toast('Saving failed. Your previous saved estate has been kept. Check device storage.','warn');saveWarningShown=true}return false}
+ G.lastSeen=stamp;if(result.warning&&!saveWarningShown){toast('Estate saved, but backup storage is full. Free device space.','warn');saveWarningShown=true}else if(!result.warning)saveWarningShown=false;return true}catch(e){if(!saveWarningShown){toast('Saving failed. Check device storage before leaving.','warn');saveWarningShown=true}console.warn('save failed');return false}}
+function restoreEstate(s){G={...s,ter:Uint8Array.from(s.ter),amt:Int16Array.from(s.amt),var:Uint8Array.from(s.var),explored:Uint8Array.from(s.explored)};VEExpansion.migrateSave(G);uid=s.uid;Object.assign(cam,s.cam);
  const elapsed=G.lastSeen?(Date.now()-G.lastSeen)/1000:0;const grant=VEExpansion.offlineGrant(G,elapsed);
  if(grant){VEExpansion.applyOffline(G,grant);G.offlineNote=VEExpansion.offlineText(grant)}
  const today=new Date(),yest=new Date(today.getTime()-86400000);const bonus=VEExpansion.dailyReward(G,dayKey(today),dayKey(yest));
- if(bonus)G.dailyNote='Day '+bonus.streak+' gift: +'+bonus.coins+'🪙 +'+bonus.food+'🌾';
- G.lastSeen=Date.now();
+ if(bonus)G.dailyNote='Day '+bonus.streak+' gift: +'+bonus.coins+'🪙 +'+bonus.food+'🌾';G.lastSeen=Date.now();
  if(s.view&&s.view.w&&s.view.h&&(s.view.w!==W||s.view.h!==H)){const cx=(cam.x+s.view.w/2/cam.zoom)/TS,cy=(cam.y+s.view.h/2/cam.zoom)/TS;centerOn(cx,cy)}else clampCam();
- markOcc();renderMap();renderFog();
- G.units.forEach(u=>{if(u.task)setTask(u,u.task)});return true}catch(e){console.warn('load failed',e);return false}}
+ markOcc();renderMap();renderFog();G.units.forEach(u=>{if(u.task)setTask(u,u.task)})}
+function load(backupAttempt){const result=VESaveStore.load(undefined,SAVE_KEY);
+ if(result.status==='empty'){saveBlocked=false;recoveryState=null;return false}
+ if(result.choiceRequired){saveBlocked=true;recoveryState=result;return 'recovery'}
+ try{restoreEstate(result.data);saveBlocked=false;recoveryState=null;return true}catch(e){saveBlocked=true;recoveryState=VESaveStore.load(undefined,SAVE_KEY,true);if(backupAttempt)recoveryState.backupData=null;console.warn('Estate could not be loaded; original data retained.');return 'recovery'}}
+function resetEstate(){const result=VESaveStore.resetSave(undefined,SAVE_KEY);if(!result.success){toast('Could not erase saved data. Nothing new has been started. Check device storage.','warn');return false}
+ saveBlocked=false;recoveryState=null;saveWarningShown=false;newGame();speed=lastSpeed||1;$('bPause').textContent='⏸';closeModal();save();toast('🌱 New estate founded!');return true}
+function exportDamagedSave(){const raw=recoveryState&&recoveryState.damagedRaw!=null?recoveryState.damagedRaw:VESaveStore.getDamagedSave(undefined,SAVE_KEY);if(raw==null){toast('No original save data is available to export.','warn');return}
+ try{const url=URL.createObjectURL(new Blob([raw],{type:'text/plain'})),link=document.createElement('a');link.href=url;link.download='valley-estates-recovery.txt';document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000)}catch(e){if(navigator.clipboard)navigator.clipboard.writeText(raw).then(()=>toast('Original save data copied.')).catch(()=>toast('Export unavailable on this device. Original data remains stored.','warn'));else toast('Export unavailable on this device. Original data remains stored.','warn')}}
+function handleSaveRecovery(action){if(action==='recovery-export'){exportDamagedSave();return}if(action==='recovery-newgame'){showReset();return}if(action==='recovery-back'){showSaveRecovery();return}
+ if(action==='recovery-restore'){const result=VESaveStore.restoreBackup(undefined,SAVE_KEY);if(!result.success){toast('Backup could not be restored. Original data has been kept. Check device storage.','warn');return}if(load(true)===true){speed=lastSpeed||1;$('bPause').textContent='⏸';closeModal();save();toast('Backup estate restored.','good')}else{newGame();pauseForRecovery()}return}
+ if(action==='recovery-retry'){const result=load();if(result===true){speed=lastSpeed||1;$('bPause').textContent='⏸';closeModal();save();toast('Saved estate loaded.','good')}else if(result===false){newGame();speed=lastSpeed||1;$('bPause').textContent='⏸';closeModal();save();showIntro()}else{newGame();pauseForRecovery()}}}
 
 // ===================== LOOP =====================
 let last=performance.now(),acc=0,uiT=0,saveT=0,fogT=0,frames=0;
 function frame(now){const real=Math.min(0.1,(now-last)/1000);last=now;
- const dt=real*speed;if(dt>0){let r=dt;while(r>0){const s=Math.min(r,0.05);tick(s);r-=s}}
+ const dt=saveBlocked?0:real*speed;if(dt>0){let r=dt;while(r>0){const s=Math.min(r,0.05);tick(s);r-=s}}
  if((G.coach|0)<4){G.coachTime=(G.coachTime||0)+real;const next=VEExpansion.coachAdvance(G,G.coachTime);if(next!==G.coach){G.coach=next;panelDirty=true;if(next===4)toast('✅ You know your way around the valley.','good')}}
  floats.forEach(f=>{f.a-=real});floats=floats.filter(f=>f.a>0);if(G.ping){G.ping.t-=real*1.2;if(G.ping.t<=0)G.ping=null}
  fogT+=real;if(fogT>0.25){fogT=0;for(const u of G.units)revealAround(u.x,u.y,4.5)}
- uiT+=real;if(uiT>0.25||panelDirty){uiT=0;panelDirty=false;updateBar();renderPanel()}
+ uiT+=real;if(uiT>0.25||panelDirty){uiT=0;panelDirty=false;updateBar();renderPanel();updateResearchSheet()}
  miniT+=real;if(miniT>0.5){miniT=0;drawMini()}
  saveT+=real;if(saveT>10){saveT=0;save()}
  if(window.VEAudio){const info=VE3D.dayInfo(G);VEAudio.sync({night:info.night,dusk:info.dusk,p:info.p,raining:!!(VE3D.raining&&VE3D.raining(G))||!!G.events.storm,storm:!!G.events.storm,cattle:G.buildings.some(b=>b.built&&b.type==='paddock'&&b.kind==='cattle'&&b.count>0),sheep:G.buildings.some(b=>b.built&&b.type==='paddock'&&b.kind==='sheep'&&b.count>0),farming:G.units.some(u=>{if(!u.task||u.task.type!=='farm'||u.task.res!=='food')return false;const b=G.buildings.find(x=>x.id===u.task.bid);return !!(b&&b.type==='field')})})}
@@ -709,9 +727,11 @@ if(window.visualViewport){visualViewport.addEventListener('resize',scheduleResiz
 if(window.ResizeObserver)new ResizeObserver(scheduleResize).observe(document.documentElement);
 if(window.viewport&&window.viewport.addEventListener){window.viewport.addEventListener('segments',scheduleResize);window.viewport.addEventListener('change',scheduleResize)}
 addEventListener('visibilitychange',()=>{if(document.hidden)save();else scheduleResize()});
-resize();if(!load()){newGame();const today=new Date(),bonus=VEExpansion.dailyReward(G,dayKey(today),dayKey(new Date(today.getTime()-86400000)));if(bonus)G.dailyNote='Day '+bonus.streak+' gift: +'+bonus.coins+'🪙 +'+bonus.food+'🌾'}else clampCam();try{const q=localStorage.getItem('valleyEstatesGraphics');if(q)VE3D.setQuality(q)}catch(err){}applyA11y(readA11y());
-if(!G.tutorialSeen)showIntro();else if(G.offlineNote){showOffline(G.offlineNote);G.offlineNote=''}
-if(G.dailyNote){toast(G.dailyNote,'good');G.dailyNote=''}
+addEventListener('pagehide',save);
+resize();const initialLoad=load();if(initialLoad!==true){newGame();if(initialLoad==='recovery')pauseForRecovery();else{const today=new Date(),bonus=VEExpansion.dailyReward(G,dayKey(today),dayKey(new Date(today.getTime()-86400000)));if(bonus)G.dailyNote='Day '+bonus.streak+' gift: +'+bonus.coins+'🪙 +'+bonus.food+'🌾'}}else clampCam();try{const q=localStorage.getItem('valleyEstatesGraphics');if(q)VE3D.setQuality(q)}catch(err){}applyA11y(readA11y());
+if(!saveBlocked&&!G.tutorialSeen)showIntro();else if(!saveBlocked&&G.offlineNote){showOffline(G.offlineNote);G.offlineNote=''}
+if(!saveBlocked&&G.dailyNote){toast(G.dailyNote,'good');G.dailyNote=''}
+if(!saveBlocked)save();
 requestAnimationFrame(frame);
 // test hooks
 window.VE={camCenter,unitScreen:u=>w2s(u.x,u.y,0.3),get G(){return G},tick,updateBar,command,w2s,s2w,centerOn,cam,act,confirmPlace,setPlacing:(t,x,y)=>{placing={type:t,x,y};panelDirty=true},validPlace,B,save,findNear,T,N,popCap,setSpeed:v=>speed=v,resize,scanCues,marketPrice,get frames(){return frames},setViewportSegments:rects=>{window.__veSegments=rects&&rects.length?rects:null;resize()},metrics(){const r=VE3D._dbg().renderer,el=r.domElement,panel=$('panel').getBoundingClientRect(),bar=$('bar').getBoundingClientRect(),miniR=$('mini').getBoundingClientRect();return {W,H,DPR,bufW:el.width,bufH:el.height,pr:r.getPixelRatio(),clientW:el.clientWidth,clientH:el.clientHeight,cls:document.documentElement.className,panel:{left:panel.left,top:panel.top,right:panel.right,bottom:panel.bottom,width:panel.width,height:panel.height},bar:{left:bar.left,right:bar.right,top:bar.top,width:bar.width},mini:{left:miniR.left,right:miniR.right,top:miniR.top,width:miniR.width,height:miniR.height},seed:G.seed,coins:G.res.coins,frames}}}

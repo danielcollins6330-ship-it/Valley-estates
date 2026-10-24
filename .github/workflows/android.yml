@@ -29,6 +29,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Test game state and recovery regressions
+        run: npm test
+
       - name: Bundle the game into the native project
         run: npm run sync
 
