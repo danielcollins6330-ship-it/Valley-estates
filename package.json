@@ -9,7 +9,10 @@
     "assets": "node scripts/generate-brand.mjs",
     "android:aab": "npm run sync && cd android && ./gradlew bundleRelease",
     "screenshots": "node scripts/capture-screenshots.mjs",
-    "foldable": "node scripts/capture-foldable.mjs"
+    "foldable": "node scripts/capture-foldable.mjs",
+    "test": "node --test scripts/*.test.mjs",
+    "test:audio": "node --test scripts/audio*.test.mjs",
+    "web:stage": "node scripts/stage-web.mjs _site"
   },
   "dependencies": {
     "@capacitor/android": "8.5.3",

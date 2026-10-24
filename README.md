@@ -20,6 +20,8 @@ Sound is ambience that follows the time of day and the rain, animal calls, actio
 npm ci
 npm run assets   # regenerate icons and splash screens
 npm run sync     # copy the game into android/ and ios/
+npm test         # deterministic gameplay, sound, signing and packaging regressions
+npm run web:stage # stage and verify the same runtime assets for GitHub Pages
 ```
 
 Release builds run in GitHub Actions. Android signing still uses the keystore secrets in `.github/workflows/android.yml`. See `STORE_LISTING.md` for the store listing. iOS TestFlight is below.
@@ -30,7 +32,7 @@ Release builds run in GitHub Actions. Android signing still uses the keystore se
 
 After that id exists, create the app yourself: App Store Connect → My Apps → + → New App, and choose this bundle id. The TestFlight upload cannot succeed until that app record exists.
 
-`.github/workflows/ios-testflight.yml` runs on a `v*` tag or when someone starts it with `workflow_dispatch`. It registers the bundle id, builds the web bundle, runs `cap sync ios`, creates an Apple Distribution certificate and an App Store profile for that run, archives with that profile, exports an IPA, and uploads that IPA to TestFlight. The upload does not submit the app for App Store review. Apple limits how many distribution certificates a team can hold. When that limit is already reached, this workflow revokes one known unused CI certificate (`F87GD5XVS2`, or `4G8BZ8MGKN` if the first is already gone) and tries once more. Those certificates were created by earlier runs and their private keys were not kept. It does not revoke any other certificate.
+`.github/workflows/ios-testflight.yml` runs on a `v*` tag or when someone starts it with `workflow_dispatch`. It registers the bundle id, builds the web bundle, runs `cap sync ios`, creates an Apple Distribution certificate and an App Store profile for that run, archives with that profile, exports an IPA, and uploads that IPA to TestFlight. Before that profile is created, the workflow enables the Game Center capability on the bundle ID so the profile includes `com.apple.developer.game-center`, matching `ios/App/App/App.entitlements`. The upload does not submit the app for App Store review. Apple limits how many distribution certificates a team can hold. When that limit is already reached, this workflow revokes one known unused CI certificate, oldest first (`F87GD5XVS2`, `4G8BZ8MGKN`, `38798V9TFT`, `ADJS9GQYHR`, then `U86P563X6Z`), and tries once more. Those certificates were created by earlier runs and their private keys were not kept. It does not revoke any other certificate.
 
 Add these repository secrets (Settings → Secrets and variables → Actions):
 
@@ -39,4 +41,19 @@ Add these repository secrets (Settings → Secrets and variables → Actions):
 - `APPLE_TEAM_ID` — the Apple Developer team id
 - `ASC_API_KEY_P8` — the full `.p8` file, including the `BEGIN` and `END` lines
 
-The workflow stops immediately if any of those secrets is missing. It writes the `.p8` to a private temp file for `xcodebuild` and `altool`, and it does not print the key. The TestFlight build number is the GitHub Actions run number. The marketing version stays the `1.0` set in the Xcode project.
+The workflow stops immediately if any of those secrets is missing. It writes the `.p8` to a private temp file for `xcodebuild` and `altool`, and it does not print the key. The TestFlight build number is the GitHub Actions run number. The marketing version is `MARKETING_VERSION` in the Xcode project.
+
+## Web and native asset integrity
+
+GitHub Pages and the Capacitor web bundle use `scripts/stage-web.mjs` as their shared staging path. It copies the complete `assets/` tree, including audio, voice, building and animal models, textures and loaders. Both staging paths verify each copied file against its source before succeeding. Do not return to a hand-maintained list of individual assets: missing audio scripts cause the Sound controls to disappear, and missing model loaders silently remove expansion visuals.
+
+The Node audio tests use controlled media-element stubs to reproduce lifecycle and volume-control bugs. They do not prove that a physical iPhone or Android device plays audio. Before releasing, test a real tap, sound controls, background/foreground recovery and the iPhone silent switch on-device. The game's ambient audio session deliberately respects the iPhone silent switch.
+
+## Research and saved-estate protection
+
+Research already running anywhere on the estate cannot be purchased again from the farm desk or a building. The research sheet shows a live percentage and remaining game seconds without replacing the controls as the timer updates. Legacy upgrades and age advances use the same duplicate protection.
+
+Estate saves keep the `valleyEstatesV4` key. A normal save retains the previous valid snapshot in `valleyEstatesV4_backup`. Damaged raw data is retained in place and, when storage permits, copied to `valleyEstatesV4_corrupt`. Failed validation, failed loading, a missing primary with an existing backup, or unavailable storage opens a recovery screen. Gameplay and autosaving stay paused until recovery succeeds or the player explicitly confirms a reset. Recovery offers backup restoration, retry and an export of the original data. Reset deletes the estate and its recovery keys, not sound or accessibility preferences.
+
+Storage quota failures are reported instead of pretending that a save succeeded. If both snapshots are damaged or storage itself has been cleared, recovery cannot recreate the lost estate. This remains device-local storage, not cloud backup. The deterministic tests cover the recovery state machine and real game save/load function integration with controlled renderer and storage stubs; handset and native file-export behaviour still require device testing before release.
+

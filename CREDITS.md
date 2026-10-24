@@ -1,6 +1,6 @@
 # Valley Estates v4 — Credits & Licences
 
-The textures and code below are **CC0 1.0 (public domain)** or MIT — free for commercial use, no attribution required (credited anyway). Sound files use a mix of CC0, CC BY and CC BY-SA. Every clip, its source and its licence are in [AUDIO_CREDITS.md](AUDIO_CREDITS.md).
+The textures below are CC0 1.0 (public domain). Code dependencies use MIT licences and retain their required notices. Sound files use a mix of CC0, CC BY and CC BY-SA. Every clip, its source and its licence are in [AUDIO_CREDITS.md](AUDIO_CREDITS.md).
 
 ## Textures — Poly Haven (CC0 1.0, https://polyhaven.com/license)
 Downloaded at 1K (diffuse + OpenGL normal), converted to WebP (diffuse 1024², normals 512²) and embedded as data URIs in `assets/textures.js` (needed so WebGL can use them when opened from `file://`).
@@ -30,7 +30,8 @@ Downloaded at 1K (diffuse + OpenGL normal), converted to WebP (diffuse 1024², n
 | three.js r170 (+ EffectComposer, RenderPass, UnrealBloomPass, ShaderPass, OutputPass, BufferGeometryUtils), bundled into `game3d.js` with esbuild | MIT | https://github.com/mrdoob/three.js / https://www.npmjs.com/package/three |
 
 ## 3D models
-No external 3D models were used. All buildings, trees, crops, fences, barrels, hay bales, Speckle Park cattle, Babydoll sheep and farmhands are modelled procedurally from Three.js primitives in `src/main.js`, textured with the Poly Haven photo textures above where applicable. Procedural (code-generated) textures: leaf canopy, grass blades, water normal map, cow speckle, wool, awning stripes, noise.
+
+Current close-up cattle, sheep, dog and hen meshes include CC0 models by Quaternius and Čestmír Dammer. Earlier procedural animal meshes are used for distant animals and low graphics. Buildings and the remaining animal models are original procedural work. See [ASSET_CREDITS.md](ASSET_CREDITS.md) for exact authors, source links, transformations, model licences and the MIT-licensed meshoptimizer decoder.
 
 ## Original work
 Game design, code and procedural art: Valley Estates (Daniel Collins / Grok Bot), 2026.

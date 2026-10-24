@@ -13,3 +13,5 @@ ios/DerivedData/
 *.jks
 .DS_Store
 *.log
+
+_site/
