@@ -23,8 +23,8 @@ Morning also plays the magpie and kookaburra one-shots below. Night plays cricke
 | `sheep.m4a` | [Sheep Baa](https://opengameart.org/content/sheep-baa) by AntumDeluge, from a recording by mikewest. | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
 | `sheep-babydoll.m4a` | Pitch-shifted derivative of the same CC0 sheep recording, used for Babydoll sheep. | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
 | `chicken.m4a` | [Chickens demanding food](https://commons.wikimedia.org/wiki/File:Chickens_demanding_food.ogg) by alys, via PDSounds. Trimmed. | Public domain |
-| `dog.m4a` | [Barking of a dog 2](https://commons.wikimedia.org/wiki/File:Barking_of_a_dog_2.ogg) by Amada44. Trimmed. This encoded file stays under the same licence. | [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/) |
-| `magpie.m4a` | [Magpiesong](https://commons.wikimedia.org/wiki/File:Magpiesong.ogg) by Meganesia. Trimmed. This encoded file stays under the same licence. | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) |
+| `dog.m4a` | [Single Dog Bark](https://freesound.org/people/kwahmah_02/sounds/277058/) by kwahmah_02. Used public HQ MP3 preview, trimmed, filtered, level-adjusted, edge-faded and converted to mono AAC. | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `magpie.m4a` | [Magpie (Western)](https://freesound.org/people/dbache/sounds/536627/) by dbache. Used public HQ MP3 preview, trimmed, filtered, level-adjusted, edge-faded and converted to mono AAC. Australian western magpie recorded in Kings Park, Perth, WA. | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
 | `kookaburra.m4a` | [Laughing kookaburra](https://commons.wikimedia.org/wiki/File:LaughingKookaburra.ogg) by Kuco, recorded in southwest Australia. Trimmed. | Public domain |
 
 Chickens and the dog are homestead calls. Cattle and sheep play only while that paddock has stock. Magpies and kookaburras play in the morning.
@@ -71,8 +71,8 @@ Weather and stock events have three variants. Each season has two. Playback wait
 - Hail: “Hail is coming over the ridge.”
 - Neighbour: “The neighbour wants to borrow the tractor.”
 
-## Bundled ShareAlike compliance attachment
+## Current replacement compliance attachment
 
-The dog adaptation remains CC BY-SA 3.0 Unported and the magpie adaptation remains CC BY-SA 4.0 International. Full, unmodified English legal texts, asset-specific notices, adapted-file hashes and unrestricted download links are available offline in [Audio compliance and full terms](compliance.html) and `assets/licenses/`. Crickets is CC BY 3.0, not ShareAlike.
+The current dog and magpie recordings are CC0 1.0 replacements. Full CC0 legal text, source-page declarations, preview-download provenance, modifications and current-file checksums are bundled at [Audio compliance and licence terms](compliance.html) and `assets/licenses/`. Credits are retained as a courtesy for these CC0 files. Other CC BY attribution requirements, including crickets, tractor and the voice provenance, remain unchanged.
 
-Attaching these terms is not a legal clearance of App Store EULA/DRM compatibility. The release checklist retains that separate review item. See [SHAREALIKE-NOTICE.md](assets/licenses/SHAREALIKE-NOTICE.md) for the scope and limits.
+Neither superseded ShareAlike recording is included in this candidate. Previous terms and exact hashes are retained only in `store/compliance/history/pre-cc0/` for older versions. These historical records are not copied into native/web runtime bundles. Source declarations and file checks are not a blanket warranty of third-party rights or whole-app legal compliance.

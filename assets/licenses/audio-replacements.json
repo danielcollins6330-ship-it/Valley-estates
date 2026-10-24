@@ -1,0 +1,36 @@
+{
+  "assets": [
+    {
+      "path": "assets/audio/dog.m4a",
+      "title": "Single Dog Bark",
+      "author": "kwahmah_02",
+      "original": "https://freesound.org/people/kwahmah_02/sounds/277058/",
+      "licence": "CC0 1.0 Universal",
+      "licence_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "licence_evidence": "Creative Commons 0. You can copy, modify, distribute and perform the sound, even for commercial purposes, all without the need of asking permission to the author.",
+      "licence_verified_at": "2026-10-24T06:40:27.542119+00:00",
+      "source_download": "https://cdn.freesound.org/previews/277/277058_4486188-hq.mp3",
+      "source_download_kind": "Creator sound public high-quality MP3 preview from Freesound, not the original WAV download",
+      "source_sha256": "af621c68568e6c5178d38e2a464eddd21be8b5822475b29f5ebfe10f5feb1a25",
+      "source_page_sha256": "ea95b59ae683e1c1eb0841afc608f02e12d13f75da1bf58135b84ca075ee452a",
+      "modifications": "Used first 0.389 seconds of public HQ MP3 preview; high-pass 70 Hz and low-pass 9000 Hz; peak gain -1.700 dB toward -3 dBFS; short edge fades; mono AAC/M4A, 44.1 kHz, 64 kbps."
+    },
+    {
+      "path": "assets/audio/magpie.m4a",
+      "title": "Magpie (Western)",
+      "author": "dbache",
+      "original": "https://freesound.org/people/dbache/sounds/536627/",
+      "licence": "CC0 1.0 Universal",
+      "licence_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "licence_evidence": "Creative Commons 0. You can copy, modify, distribute and perform the sound, even for commercial purposes, all without the need of asking permission to the author.",
+      "licence_verified_at": "2026-10-24T06:40:36.772074+00:00",
+      "source_download": "https://cdn.freesound.org/previews/536/536627_2290525-hq.mp3",
+      "source_download_kind": "Creator sound public high-quality MP3 preview from Freesound, not the original WAV download",
+      "source_sha256": "60dde1bbc81c57abd3332083cd0ce5f5d0f81cad2e655ac951439133696980d3",
+      "source_page_sha256": "e84f874894bed22aa0bb32b6daa21616b2c61cb1bb6c8dc3e0c2dc04e6f83306",
+      "modifications": "Used first 8 seconds of public HQ MP3 preview; high-pass 150 Hz and low-pass 9000 Hz; peak gain -3.000 dB toward -3 dBFS; short edge fades; mono AAC/M4A, 44.1 kHz, 64 kbps.",
+      "location": "Kings Park, Perth, Western Australia",
+      "taxon": "Gymnorhina tibicen dorsalis"
+    }
+  ]
+}

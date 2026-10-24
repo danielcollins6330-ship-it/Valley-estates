@@ -38,4 +38,4 @@ The recording can be hosted at a reviewer-accessible link after it is checked. V
 
 Apple's instructions: https://support.apple.com/en-au/102653 . If game audio does not appear in the captured video, report it and test the recording settings; do not add a replacement soundtrack or call that a passing audio test. Keep the original video. The recording is still owner-supplied physical evidence, not something the agent can generate remotely.
 
-Before publishing a reviewer-accessible recording containing third-party audio, review its own distribution/licensing implications as well as the app's. Attaching ShareAlike terms does not itself establish that the app or recording is cleared.
+Record only the candidate containing the verified-source CC0 dog/magpie replacements. Keep a link to this candidate's complete audio credits with any reviewer-accessible video, because other sounds still have CC BY attribution requirements. The archived ShareAlike terms concern earlier versions, not the replacement clips.
