@@ -43,7 +43,7 @@ Add these repository secrets (Settings → Secrets and variables → Actions):
 - `APPLE_TEAM_ID` — the Apple Developer team id
 - `ASC_API_KEY_P8` — the full `.p8` file, including the `BEGIN` and `END` lines
 
-The workflow stops immediately if any of those secrets is missing. It writes the `.p8` to a private temp file for `xcodebuild` and `altool`, and it does not print the key. The marketing version archived for TestFlight is 1.1.0, and the build number is 18. App Store Connect already accepted 1.0.12 (17).
+The workflow stops immediately if any of those secrets is missing. It writes the `.p8` to a private temp file for `xcodebuild` and `altool`, and it does not print the key. The marketing version archived for TestFlight is 1.1.0, and the build number is 19. App Store Connect already accepted 1.1.0 (18).
 
 ## Web and native asset integrity
 
